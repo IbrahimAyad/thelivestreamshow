@@ -44,10 +44,15 @@ const DEFAULT_WAKE_PHRASES = [
 
 const DEFAULT_VISUAL_TRIGGERS = [
   'show me',
+  'show',
+  'bring up',
+  'pull up',
   'find',
   'search for',
   'look up',
   'display',
+  'get me',
+  'fetch',
 ];
 
 export function useSpeechRecognition(
