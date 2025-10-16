@@ -320,33 +320,48 @@ export function useSpeechRecognition(
     }
   }, [processTranscript, isListening]);
 
-  // Helper to create and configure a MediaRecorder
-  const createMediaRecorder = useCallback((stream: MediaStream, onStopHandler: () => Promise<void>) => {
-    const recorder = new MediaRecorder(stream, {
-      mimeType: currentMimeTypeRef.current
-    });
+  // Handler for when MediaRecorder stops
+  const handleMediaRecorderStop = useCallback(async () => {
+    console.log('⏹️ MediaRecorder stopped, processing chunk...');
+    await processAudioChunk();
 
-    recorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        console.log('📼 Audio data received:', event.data.size, 'bytes');
-        audioChunksRef.current.push(event.data);
-      } else {
-        console.warn('⚠️ Audio data received but size is 0');
+    // Restart recording after processing if we should continue
+    if (shouldContinueRecordingRef.current && mediaStreamRef.current) {
+      try {
+        // Create a NEW MediaRecorder (can't reuse stopped ones)
+        const newRecorder = new MediaRecorder(mediaStreamRef.current, {
+          mimeType: currentMimeTypeRef.current
+        });
+
+        // Set up event handlers
+        newRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            console.log('📼 Audio data received:', event.data.size, 'bytes');
+            audioChunksRef.current.push(event.data);
+          } else {
+            console.warn('⚠️ Audio data received but size is 0');
+          }
+        };
+
+        newRecorder.onstart = () => {
+          console.log('▶️ MediaRecorder started recording');
+        };
+
+        newRecorder.onstop = handleMediaRecorderStop;
+
+        newRecorder.onerror = (error) => {
+          console.error('❌ MediaRecorder error:', error);
+        };
+
+        // Start the new recorder
+        newRecorder.start();
+        mediaRecorderRef.current = newRecorder;
+        console.log('🔄 MediaRecorder restarted with new instance');
+      } catch (err) {
+        console.error('❌ Failed to restart MediaRecorder:', err);
       }
-    };
-
-    recorder.onstart = () => {
-      console.log('▶️ MediaRecorder started recording');
-    };
-
-    recorder.onstop = onStopHandler;
-
-    recorder.onerror = (error) => {
-      console.error('❌ MediaRecorder error:', error);
-    };
-
-    return recorder;
-  }, []);
+    }
+  }, [processAudioChunk]);
 
   // Whisper API with MediaRecorder
   const startListeningWhisper = useCallback(async () => {
@@ -385,27 +400,30 @@ export function useSpeechRecognition(
 
       currentMimeTypeRef.current = selectedMimeType;
 
-      // Define the onstop handler that will be reused
-      const handleStop = async () => {
-        console.log('⏹️ MediaRecorder stopped, processing chunk...');
-        await processAudioChunk();
+      // Create initial MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: selectedMimeType
+      });
 
-        // Restart recording after processing if we should continue
-        if (shouldContinueRecordingRef.current && mediaStreamRef.current) {
-          try {
-            // Create a NEW MediaRecorder (can't reuse stopped ones)
-            const newRecorder = createMediaRecorder(mediaStreamRef.current, handleStop);
-            newRecorder.start();
-            mediaRecorderRef.current = newRecorder;
-            console.log('🔄 MediaRecorder restarted with new instance');
-          } catch (err) {
-            console.error('❌ Failed to restart MediaRecorder:', err);
-          }
+      // Set up event handlers
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          console.log('📼 Audio data received:', event.data.size, 'bytes');
+          audioChunksRef.current.push(event.data);
+        } else {
+          console.warn('⚠️ Audio data received but size is 0');
         }
       };
 
-      // Create initial MediaRecorder
-      const mediaRecorder = createMediaRecorder(stream, handleStop);
+      mediaRecorder.onstart = () => {
+        console.log('▶️ MediaRecorder started recording');
+      };
+
+      mediaRecorder.onstop = handleMediaRecorderStop;
+
+      mediaRecorder.onerror = (error) => {
+        console.error('❌ MediaRecorder error:', error);
+      };
 
       console.log('🎬 Starting MediaRecorder...');
       mediaRecorder.start();
@@ -432,7 +450,7 @@ export function useSpeechRecognition(
       setError(err instanceof Error ? err.message : 'Failed to access microphone');
       setIsListening(false);
     }
-  }, [processAudioChunk, createMediaRecorder]);
+  }, [handleMediaRecorderStop]);
 
   // Main start function - tries Whisper first, falls back to browser if unavailable
   const startListening = useCallback(async () => {
