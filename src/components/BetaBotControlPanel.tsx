@@ -51,6 +51,10 @@ export function BetaBotControlPanel() {
   const [obsPassword, setObsPassword] = useState('ZiALI1lrx90P03rf');
   const [obsAudioPort, setObsAudioPort] = useState(4456);
 
+  // Microphone selection for browser mode
+  const [availableMicrophones, setAvailableMicrophones] = useState<MediaDeviceInfo[]>([]);
+  const [selectedMicrophoneId, setSelectedMicrophoneId] = useState<string>('');
+
   // Initialize hooks first (without callbacks)
   const betaBotAI = useBetaBotAI();
   const browserTTS = useTTS();
@@ -323,7 +327,8 @@ export function BetaBotControlPanel() {
   // Only enable wake phrase detection in Co-Host mode
   const speechRecognition = useSpeechRecognition({
     onWakePhraseDetected: betaBotMode === 'co-host' ? handleWakePhraseDetected : undefined,
-    onVisualSearchDetected: betaBotMode === 'co-host' ? handleVisualSearchDetected : undefined
+    onVisualSearchDetected: betaBotMode === 'co-host' ? handleVisualSearchDetected : undefined,
+    microphoneDeviceId: selectedMicrophoneId
   });
 
   // Store in ref for callbacks
@@ -420,6 +425,32 @@ export function BetaBotControlPanel() {
       };
     }
   }, [audioSource, speechRecognition.isListening, obsAudio.connected, obsAudio.selectedSource]);
+
+  // Enumerate available microphones on mount
+  useEffect(() => {
+    const enumerateMicrophones = async () => {
+      try {
+        // Request permission first
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        // Get all devices
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(device => device.kind === 'audioinput');
+
+        console.log('🎤 Available microphones:', audioInputs);
+        setAvailableMicrophones(audioInputs);
+
+        // Set default to first device if none selected
+        if (!selectedMicrophoneId && audioInputs.length > 0) {
+          setSelectedMicrophoneId(audioInputs[0].deviceId);
+        }
+      } catch (error) {
+        console.error('Failed to enumerate microphones:', error);
+      }
+    };
+
+    enumerateMicrophones();
+  }, []);
 
   // Load session history on mount
   useEffect(() => {
@@ -879,7 +910,7 @@ export function BetaBotControlPanel() {
             <div className="source-icon">🌐</div>
             <div className="source-content">
               <div className="source-title">Browser Microphone</div>
-              <div className="source-description">Direct browser mic access</div>
+              <div className="source-description">Direct browser mic access (RECOMMENDED for panel setup)</div>
             </div>
           </button>
           <button
@@ -890,11 +921,45 @@ export function BetaBotControlPanel() {
             <div className="source-icon">🎬</div>
             <div className="source-content">
               <div className="source-title">OBS Audio</div>
-              <div className="source-description">Capture from OBS Studio (streaming mode)</div>
+              <div className="source-description">Capture from OBS Studio (NOT recommended - captures ALL audio)</div>
             </div>
           </button>
         </div>
       </div>
+
+      {/* Microphone Selection - Only show when Browser mode */}
+      {audioSource === 'browser' && (
+      <div className="microphone-selection-section">
+        <h4>🎤 Select Your Microphone</h4>
+        <div className="mic-important-note">
+          <strong>⚠️ IMPORTANT:</strong> Select ONLY your personal microphone (NOT BlackHole/Discord audio!)
+        </div>
+        <select
+          value={selectedMicrophoneId}
+          onChange={(e) => setSelectedMicrophoneId(e.target.value)}
+          className="mic-select"
+          disabled={speechRecognition.isListening}
+        >
+          {availableMicrophones.length === 0 && (
+            <option value="">No microphones detected</option>
+          )}
+          {availableMicrophones.map((device) => (
+            <option key={device.deviceId} value={device.deviceId}>
+              {device.label || `Microphone ${device.deviceId.slice(0, 8)}`}
+            </option>
+          ))}
+        </select>
+        <div className="mic-info-box">
+          <div className="info-header">💡 Why Select Your Mic?</div>
+          <ul className="info-list">
+            <li><strong>BetaBot should only hear YOU</strong> - not Discord panel members</li>
+            <li><strong>Avoid BlackHole/Loopback</strong> - these capture ALL system audio</li>
+            <li><strong>Choose physical microphone</strong> - e.g., "MacBook Pro Microphone" or USB mic name</li>
+            <li><strong>Test first</strong> - Open console (F12) to see audio chunk sizes (should be 100KB+)</li>
+          </ul>
+        </div>
+      </div>
+      )}
 
       {/* OBS Connection Settings - Only show when OBS is selected */}
       {audioSource === 'obs' && (

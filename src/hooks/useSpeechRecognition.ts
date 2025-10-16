@@ -19,6 +19,7 @@ export interface UseSpeechRecognitionOptions {
   visualSearchTriggers?: string[];
   audioSource?: 'browser' | 'obs';
   onAudioBlobReady?: (blob: Blob) => void;
+  microphoneDeviceId?: string;
 }
 
 export interface UseSpeechRecognition {
@@ -391,12 +392,21 @@ export function useSpeechRecognition(
     console.log('🎤 startListeningWhisper() called');
     try {
       console.log('🎤 Requesting microphone access...');
+
+      // Use specific device ID if provided
+      const audioConstraints: MediaTrackConstraints = {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      };
+
+      if (options.microphoneDeviceId) {
+        audioConstraints.deviceId = { exact: options.microphoneDeviceId };
+        console.log('🎤 Using specific microphone device:', options.microphoneDeviceId);
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
+        audio: audioConstraints
       });
       console.log('✅ Microphone access granted');
 
