@@ -73,7 +73,7 @@ export function BetaBotControlPanel() {
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'llama-3.1-sonar-large-128k-online',
+          model: 'sonar',
           messages: [
             {
               role: 'system',
@@ -423,12 +423,17 @@ export function BetaBotControlPanel() {
 
       // Log final transcript to conversation log
       if (speechRecognition.conversationBuffer) {
-        await supabase.from('betabot_conversation_log').insert([{
+        const { error: logError } = await supabase.from('betabot_conversation_log').insert([{
           session_id: sessionId,
           transcript_text: `[SESSION END] Final transcript:\n${speechRecognition.conversationBuffer}`,
           audio_timestamp: sessionTimer,
           speaker_type: 'system'
         }]);
+
+        if (logError) {
+          console.warn('⚠️ Could not log final transcript:', logError.message);
+          // Continue anyway - this is not critical
+        }
       }
 
       // Update session with final metrics
