@@ -20,12 +20,13 @@ export function MediaBrowserOverlay({
   const getSearchUrl = () => {
     const encodedQuery = encodeURIComponent(query)
 
+    // Use Perplexity AI with focus modes for better search experience
     if (type === 'images') {
-      // Google Images search
-      return `https://www.google.com/search?q=${encodedQuery}&tbm=isch&source=lnms`
+      return `https://www.perplexity.ai/search?q=${encodedQuery}&focus=images`
+    } else if (type === 'videos') {
+      return `https://www.perplexity.ai/search?q=${encodedQuery}&focus=youtube`
     } else {
-      // YouTube search
-      return `https://www.youtube.com/results?search_query=${encodedQuery}`
+      return `https://www.perplexity.ai/search?q=${encodedQuery}`
     }
   }
 
@@ -55,7 +56,7 @@ export function MediaBrowserOverlay({
       <div className="media-browser-header">
         <div className="search-info">
           <span className="search-type-badge">
-            {type === 'images' ? '🖼️ Images' : '🎥 Videos'}
+            {type === 'images' ? '🖼️ Perplexity Images' : '🎥 Perplexity Videos'}
           </span>
           <span className="search-query">{query}</span>
         </div>

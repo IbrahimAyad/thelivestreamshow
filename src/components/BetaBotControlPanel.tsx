@@ -3,7 +3,6 @@ import { useSpeechRecognition, WakeDetectionEvent, VisualSearchEvent } from '../
 import { useBetaBotAI } from '../hooks/useBetaBotAI';
 import { useTTS } from '../hooks/useTTS';
 import { useF5TTS } from '../hooks/useF5TTS';
-import { usePerplexitySearch } from '../hooks/usePerplexitySearch';
 import { supabase } from '../lib/supabase';
 
 interface SessionHistory {
@@ -48,7 +47,6 @@ export function BetaBotControlPanel() {
   const betaBotAI = useBetaBotAI();
   const browserTTS = useTTS();
   const f5TTS = useF5TTS();
-  const perplexity = usePerplexitySearch();
 
   // Select TTS provider based on user preference
   const tts = ttsProvider === 'f5tts' ? f5TTS : browserTTS;
@@ -248,7 +246,7 @@ export function BetaBotControlPanel() {
         }]);
       }
     }
-  }, [sessionId, directInteractions, betaBotAI, tts, perplexity, sessionTimer, ttsProvider, browserTTS]);
+  }, [sessionId, directInteractions, betaBotAI, tts, sessionTimer, ttsProvider, browserTTS]);
 
   // Wake phrase handler - doesn't use speechRecognition in dependencies
   const handleWakePhraseDetected = useCallback(async (event: WakeDetectionEvent) => {
@@ -306,7 +304,7 @@ export function BetaBotControlPanel() {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       tts.speak(`Sorry, search failed: ${errorMessage}`);
     }
-  }, [sessionId, perplexity, tts]);
+  }, [sessionId, tts]);
 
   // Initialize speech recognition with callbacks NOW
   // Only enable wake phrase detection in Co-Host mode
