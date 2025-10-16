@@ -328,6 +328,18 @@ export function useSpeechRecognition(
     // Restart recording after processing if we should continue
     if (shouldContinueRecordingRef.current && mediaStreamRef.current) {
       try {
+        // Check if the stream is still active
+        const audioTracks = mediaStreamRef.current.getAudioTracks();
+        const isStreamActive = audioTracks.length > 0 && audioTracks[0].readyState === 'live';
+
+        if (!isStreamActive) {
+          console.warn('⚠️ Media stream inactive, requesting new stream...');
+          // Request new microphone access
+          const newStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaStreamRef.current = newStream;
+          console.log('✅ New media stream acquired');
+        }
+
         // Create a NEW MediaRecorder (can't reuse stopped ones)
         const newRecorder = new MediaRecorder(mediaStreamRef.current, {
           mimeType: currentMimeTypeRef.current
