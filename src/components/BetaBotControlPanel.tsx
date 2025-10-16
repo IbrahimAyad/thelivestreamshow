@@ -896,9 +896,7 @@ export function BetaBotControlPanel() {
       </div>
       )}
 
-      {/* Audio Source Selection - Hidden for now, Browser Mic is the recommended solution */}
-      {/* OBS Audio mode kept in code for future use cases but hidden from UI */}
-      {false && (
+      {/* Audio Source Selection */}
       <div className="audio-source-section">
         <div className="section-header">
           <label>🎤 Audio Input Source</label>
@@ -912,7 +910,7 @@ export function BetaBotControlPanel() {
             <div className="source-icon">🌐</div>
             <div className="source-content">
               <div className="source-title">Browser Microphone</div>
-              <div className="source-description">Direct browser mic access (RECOMMENDED for panel setup)</div>
+              <div className="source-description">Only captures host microphone</div>
             </div>
           </button>
           <button
@@ -922,20 +920,19 @@ export function BetaBotControlPanel() {
           >
             <div className="source-icon">🎬</div>
             <div className="source-content">
-              <div className="source-title">OBS Audio</div>
-              <div className="source-description">Capture from OBS Studio (NOT recommended - captures ALL audio)</div>
+              <div className="source-title">OBS Audio (RECOMMENDED)</div>
+              <div className="source-description">Captures ALL audio - host + panel + stream (best for engagement!)</div>
             </div>
           </button>
         </div>
       </div>
-      )}
 
       {/* Microphone Selection - Only show when Browser mode */}
       {audioSource === 'browser' && (
       <div className="microphone-selection-section">
         <h4>🎤 Select Your Microphone</h4>
         <div className="mic-important-note">
-          <strong>⚠️ IMPORTANT:</strong> Select ONLY your personal microphone (NOT BlackHole/Discord audio!)
+          <strong>ℹ️ Note:</strong> This only captures YOUR microphone. For panel members to interact with BetaBot, use OBS Audio mode instead.
         </div>
         <select
           value={selectedMicrophoneId}
@@ -953,12 +950,12 @@ export function BetaBotControlPanel() {
           ))}
         </select>
         <div className="mic-info-box">
-          <div className="info-header">💡 Why Select Your Mic?</div>
+          <div className="info-header">💡 Browser Mic Mode</div>
           <ul className="info-list">
-            <li><strong>BetaBot should only hear YOU</strong> - not Discord panel members</li>
-            <li><strong>Avoid BlackHole/Loopback</strong> - these capture ALL system audio</li>
+            <li><strong>Only YOU can interact with BetaBot</strong> - panel members won't be heard</li>
+            <li><strong>Use this for</strong>: Private testing, host-only commands</li>
+            <li><strong>For full engagement</strong>: Use OBS Audio mode to hear everyone</li>
             <li><strong>Choose physical microphone</strong> - e.g., "MacBook Pro Microphone" or USB mic name</li>
-            <li><strong>Test first</strong> - Open console (F12) to see audio chunk sizes (should be 100KB+)</li>
           </ul>
         </div>
       </div>
@@ -1062,9 +1059,10 @@ export function BetaBotControlPanel() {
           <ul className="info-list">
             <li><strong>Step 1:</strong> Install OBS Studio v28+ (WebSocket 5.0 built-in)</li>
             <li><strong>Step 2:</strong> Tools → WebSocket Server Settings → Enable</li>
-            <li><strong>Step 3:</strong> Install <code>obs-audio-to-websocket</code> plugin</li>
-            <li><strong>Step 4:</strong> Configure audio source and port in plugin settings</li>
-            <li><strong>Why OBS?</strong> Isolates mic from stream audio, prevents feedback, more reliable</li>
+            <li><strong>Step 3:</strong> Install <code>obs-audio-to-websocket</code> plugin (see setup guide below)</li>
+            <li><strong>Step 4:</strong> Configure to capture OBS mixed output (host + panel + stream)</li>
+            <li><strong>Why OBS?</strong> Captures ALL audio so panel members AND host can interact with BetaBot!</li>
+            <li><strong>Perfect for</strong>: Interactive streams with Discord panels and audience engagement</li>
           </ul>
         </div>
       </div>
