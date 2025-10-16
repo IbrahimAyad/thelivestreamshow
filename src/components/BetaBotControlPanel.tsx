@@ -33,18 +33,21 @@ export function BetaBotControlPanel() {
     return (saved as 'browser' | 'f5tts') || (f5Enabled ? 'f5tts' : 'browser');
   });
   const [showFallbackWarning, setShowFallbackWarning] = useState(false);
+  const [autoQuestionGenInterval, setAutoQuestionGenInterval] = useState(60); // seconds
 
   // Initialize hooks first (without callbacks)
   const betaBotAI = useBetaBotAI();
   const browserTTS = useTTS();
   const f5TTS = useF5TTS();
   const perplexity = usePerplexitySearch();
-  
+
   // Select TTS provider based on user preference
   const tts = ttsProvider === 'f5tts' ? f5TTS : browserTTS;
-  
+
   // Create a ref to hold speech recognition
   const speechRecognitionRef = useRef<any>(null);
+  const autoQuestionGenTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastQuestionGenTimeRef = useRef<number>(0);
 
   // Check if question needs real-time data
   const needsRealTimeData = (text: string): boolean => {
@@ -97,19 +100,10 @@ export function BetaBotControlPanel() {
       return;
     }
 
-    try {
-      // Log interaction
-      if (sessionId) {
-        const { error } = await supabase.from('betabot_interactions').insert([{
-          session_id: sessionId,
-          interaction_type: source,
-          user_input: question,
-          timestamp: new Date().toISOString()
-        }]);
+    const startTime = Date.now();
 
-        if (error) console.error('Error logging interaction:', error);
-        setDirectInteractions(prev => prev + 1);
-      }
+    try {
+      console.log(`🎙️ Handling ${source} question: "${question}"`);
 
       // Get conversation buffer from ref
       const conversationBuffer = speechRecognitionRef.current?.conversationBuffer || '';
@@ -131,8 +125,12 @@ export function BetaBotControlPanel() {
         aiSource = 'gpt4';
         response = await betaBotAI.respondToQuestion(question, conversationBuffer);
       }
-      
+
+      const responseTime = Date.now() - startTime;
+
       if (response) {
+        console.log(`✅ Got response in ${responseTime}ms: "${response.substring(0, 50)}..."`);
+
         // Update session state to 'speaking'
         if (sessionId) {
           await supabase.from('betabot_sessions').update({
@@ -155,14 +153,29 @@ export function BetaBotControlPanel() {
         // Add to chat history
         setChatHistory(prev => [{question, answer: response, aiSource}, ...prev].slice(0, 5));
 
-        // Log conversation
+        // Log interaction to database
         if (sessionId) {
+          // Log to betabot_interactions table
+          await supabase.from('betabot_interactions').insert([{
+            session_id: sessionId,
+            interaction_type: source,
+            user_input: question,
+            bot_response: response,
+            ai_provider: aiSource,
+            response_time_ms: responseTime,
+            created_at: new Date().toISOString()
+          }]);
+
+          // Log to betabot_conversation_log table
           await supabase.from('betabot_conversation_log').insert([{
             session_id: sessionId,
-            user_message: question,
-            bot_response: response,
-            conversation_context: conversationBuffer
+            transcript_text: `User: ${question}\nBeta Bot: ${response}`,
+            audio_timestamp: sessionTimer,
+            speaker_type: 'interaction'
           }]);
+
+          // Update session metrics
+          setDirectInteractions(prev => prev + 1);
 
           // Update session state back to 'listening' after speaking
           await supabase.from('betabot_sessions').update({
@@ -177,10 +190,30 @@ export function BetaBotControlPanel() {
     } catch (error) {
       console.error('Error handling question:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      tts.speak(`Sorry, I encountered an error: ${errorMessage}`);
+
+      // Speak error message
+      try {
+        await tts.speak(`Sorry, I encountered an error: ${errorMessage}`);
+      } catch {
+        console.error('Failed to speak error message');
+      }
+
       setCurrentAISource(null);
+
+      // Log error to database
+      if (sessionId) {
+        await supabase.from('betabot_interactions').insert([{
+          session_id: sessionId,
+          interaction_type: source,
+          user_input: question,
+          bot_response: `ERROR: ${errorMessage}`,
+          ai_provider: null,
+          response_time_ms: Date.now() - startTime,
+          created_at: new Date().toISOString()
+        }]);
+      }
     }
-  }, [sessionId, directInteractions, betaBotAI, tts, perplexity]);
+  }, [sessionId, directInteractions, betaBotAI, tts, perplexity, sessionTimer, ttsProvider, browserTTS]);
 
   // Wake phrase handler - doesn't use speechRecognition in dependencies
   const handleWakePhraseDetected = useCallback(async (event: WakeDetectionEvent) => {
@@ -258,12 +291,47 @@ export function BetaBotControlPanel() {
     return () => clearInterval(interval);
   }, [sessionId]);
 
-  // Auto-generate questions timer
+  // Automatic question generation loop - runs when listening and has conversation content
+  useEffect(() => {
+    // Clear any existing timer
+    if (autoQuestionGenTimerRef.current) {
+      clearInterval(autoQuestionGenTimerRef.current);
+      autoQuestionGenTimerRef.current = null;
+    }
+
+    // Only run auto-generation when actively listening with content
+    if (!speechRecognition.isListening || !sessionId) {
+      console.log('Auto question generation: Disabled (not listening or no session)');
+      return;
+    }
+
+    console.log(`🤖 Auto question generation: Enabled (every ${autoQuestionGenInterval}s)`);
+
+    // Set up the interval
+    autoQuestionGenTimerRef.current = setInterval(async () => {
+      // Only generate if we have sufficient conversation content
+      if (speechRecognition.conversationBuffer && speechRecognition.conversationBuffer.split(' ').length >= 50) {
+        console.log('⏰ Auto-generating questions based on conversation...');
+        await handleGenerateQuestions();
+      } else {
+        console.log('⏰ Skipping auto-generation - not enough conversation content yet');
+      }
+    }, autoQuestionGenInterval * 1000);
+
+    return () => {
+      if (autoQuestionGenTimerRef.current) {
+        clearInterval(autoQuestionGenTimerRef.current);
+        autoQuestionGenTimerRef.current = null;
+      }
+    };
+  }, [speechRecognition.isListening, sessionId, autoQuestionGenInterval]);
+
+  // Legacy auto-generate toggle (kept for manual control)
   useEffect(() => {
     if (!autoGenerate || !sessionId || !speechRecognition.conversationBuffer) return;
 
     const interval = setInterval(async () => {
-      console.log('⏰ Auto-generating questions based on conversation...');
+      console.log('⏰ Manual auto-generate triggered...');
       await handleGenerateQuestions();
     }, autoGenerateInterval * 1000);
 
@@ -321,9 +389,29 @@ export function BetaBotControlPanel() {
     if (!sessionId) return;
 
     try {
-      // Calculate word count from conversation buffer
-      const wordCount = speechRecognition.conversationBuffer.split(/\s+/).filter(w => w.length > 0).length;
+      console.log('🛑 Ending Beta Bot session...');
 
+      // Stop auto-question generation
+      if (autoQuestionGenTimerRef.current) {
+        clearInterval(autoQuestionGenTimerRef.current);
+        autoQuestionGenTimerRef.current = null;
+      }
+
+      // Calculate final metrics
+      const wordCount = speechRecognition.conversationBuffer.split(/\s+/).filter(w => w.length > 0).length;
+      const sessionDuration = sessionTimer;
+
+      // Log final transcript to conversation log
+      if (speechRecognition.conversationBuffer) {
+        await supabase.from('betabot_conversation_log').insert([{
+          session_id: sessionId,
+          transcript_text: `[SESSION END] Final transcript:\n${speechRecognition.conversationBuffer}`,
+          audio_timestamp: sessionTimer,
+          speaker_type: 'system'
+        }]);
+      }
+
+      // Update session with final metrics
       const { error } = await supabase.from('betabot_sessions').update({
         is_active: false,
         current_state: 'idle',
@@ -338,12 +426,27 @@ export function BetaBotControlPanel() {
         throw error;
       }
 
+      console.log(`✅ Session ended successfully:
+        - Duration: ${Math.floor(sessionDuration / 60)}m ${sessionDuration % 60}s
+        - Questions Generated: ${generatedQuestions.length}
+        - Direct Interactions: ${directInteractions}
+        - Words Transcribed: ${wordCount}`);
+
+      // Reset state
       setSessionId(null);
       setSessionTimer(0);
+      setGeneratedQuestions([]);
+      setDirectInteractions(0);
+      setChatHistory([]);
+      setCurrentAISource(null);
+
+      // Stop speech recognition and clear buffer
       speechRecognition.stopListening();
       speechRecognition.clearBuffer();
+
+      // Reload session history
       loadSessionHistory();
-      console.log('✅ Session ended successfully');
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Failed to end session:', errorMessage, error);
@@ -385,32 +488,61 @@ export function BetaBotControlPanel() {
   };
 
   const handleGenerateQuestions = async () => {
-    if (!speechRecognition.conversationBuffer) return;
+    if (!speechRecognition.conversationBuffer) {
+      console.log('No conversation buffer available for question generation');
+      return;
+    }
 
-    const questions = await betaBotAI.generateQuestions(speechRecognition.conversationBuffer);
-    
-    if (questions.length > 0) {
-      const newQuestions = questions.map(q => ({
-        text: q,
-        context: speechRecognition.conversationBuffer.substring(0, 200)
-      }));
-      setGeneratedQuestions(prev => [...newQuestions, ...prev]);
+    // Check if enough time has passed since last generation (avoid spam)
+    const now = Date.now();
+    const timeSinceLastGen = now - lastQuestionGenTimeRef.current;
+    if (timeSinceLastGen < 30000) { // Minimum 30 seconds between generations
+      console.log('Skipping question generation - too soon since last generation');
+      return;
+    }
 
-      // Save to database
-      for (const question of questions) {
-        await supabase.from('betabot_generated_questions').insert([{
-          question_text: question,
-          conversation_context: speechRecognition.conversationBuffer,
-          session_id: sessionId
-        }]);
+    console.log('🤖 Auto-generating questions from conversation buffer...');
+    lastQuestionGenTimeRef.current = now;
 
-        // Auto-add to show questions queue
-        await supabase.from('show_questions').insert([{
-          question_text: question,
-          source: 'betabot',
-          context_metadata: { conversation_context: speechRecognition.conversationBuffer }
-        }]);
+    try {
+      const questions = await betaBotAI.generateQuestions(speechRecognition.conversationBuffer);
+
+      if (questions.length > 0) {
+        const newQuestions = questions.map(q => ({
+          text: q,
+          context: speechRecognition.conversationBuffer.substring(0, 200)
+        }));
+        setGeneratedQuestions(prev => [...newQuestions, ...prev]);
+
+        // Save to database
+        for (const question of questions) {
+          await supabase.from('betabot_generated_questions').insert([{
+            question_text: question,
+            conversation_context: speechRecognition.conversationBuffer,
+            session_id: sessionId
+          }]);
+
+          // Auto-add to show questions queue
+          await supabase.from('show_questions').insert([{
+            question_text: question,
+            source: 'betabot',
+            context_metadata: { conversation_context: speechRecognition.conversationBuffer }
+          }]);
+        }
+
+        console.log(`✅ Generated ${questions.length} questions and added to queue`);
+
+        // Log to conversation log
+        if (sessionId) {
+          await supabase.from('betabot_conversation_log').insert([{
+            session_id: sessionId,
+            transcript_text: speechRecognition.conversationBuffer,
+            audio_timestamp: Math.floor((now - (sessionTimer * 1000)) / 1000)
+          }]);
+        }
       }
+    } catch (error) {
+      console.error('Error generating questions:', error);
     }
   };
 
@@ -700,6 +832,25 @@ export function BetaBotControlPanel() {
           <div className="info-item">
             <span className="label">Words</span>
             <span className="value">{speechRecognition.conversationBuffer.split(/\s+/).filter(w => w.length > 0).length}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Auto-Generation Status */}
+      {sessionId && speechRecognition.isListening && (
+        <div className="auto-gen-status">
+          <div className="status-header">
+            <span className="status-icon">🤖</span>
+            <span className="status-text">Auto-Generation Active</span>
+            <span className={`status-indicator ${speechRecognition.conversationBuffer.split(' ').length >= 50 ? 'ready' : 'waiting'}`}>
+              {speechRecognition.conversationBuffer.split(' ').length >= 50 ? 'Ready' : 'Building Context'}
+            </span>
+          </div>
+          <div className="status-detail">
+            Next generation in: {autoQuestionGenInterval}s intervals
+            {speechRecognition.conversationBuffer.split(' ').length < 50 && (
+              <span className="words-needed"> • Need {50 - speechRecognition.conversationBuffer.split(' ').length} more words</span>
+            )}
           </div>
         </div>
       )}
@@ -1496,6 +1647,63 @@ export function BetaBotControlPanel() {
         .chat-ai-badge.perplexity {
           background: rgba(239, 68, 68, 0.2);
           color: #ef4444;
+        }
+
+        /* Auto-Generation Status Styles */
+        .auto-gen-status {
+          background: rgba(16, 185, 129, 0.1);
+          border: 1px solid rgba(16, 185, 129, 0.3);
+          border-radius: 8px;
+          padding: 12px 15px;
+          margin-bottom: 20px;
+        }
+
+        .auto-gen-status .status-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 6px;
+        }
+
+        .auto-gen-status .status-icon {
+          font-size: 18px;
+        }
+
+        .auto-gen-status .status-text {
+          color: #10b981;
+          font-size: 14px;
+          font-weight: 600;
+          flex: 1;
+        }
+
+        .auto-gen-status .status-indicator {
+          padding: 3px 10px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .auto-gen-status .status-indicator.ready {
+          background: rgba(16, 185, 129, 0.2);
+          color: #10b981;
+        }
+
+        .auto-gen-status .status-indicator.waiting {
+          background: rgba(251, 146, 60, 0.2);
+          color: #fb923c;
+        }
+
+        .auto-gen-status .status-detail {
+          color: #9ca3af;
+          font-size: 12px;
+          padding-left: 28px;
+        }
+
+        .auto-gen-status .words-needed {
+          color: #fb923c;
+          font-weight: 600;
         }
       `}</style>
     </div>
