@@ -241,6 +241,15 @@ export function useSpeechRecognition(
 
     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
     console.log('🔄 Created audio blob:', audioBlob.size, 'bytes');
+
+    // Check if audio blob is large enough (minimum 1KB = 1024 bytes)
+    // Small blobs (< 1KB) are usually silence or corrupted data
+    if (audioBlob.size < 1024) {
+      console.warn('⚠️ Audio blob too small (likely silence):', audioBlob.size, 'bytes - skipping transcription');
+      audioChunksRef.current = [];
+      return;
+    }
+
     audioChunksRef.current = [];
 
     try {
@@ -359,8 +368,19 @@ export function useSpeechRecognition(
         console.log('▶️ MediaRecorder started recording');
       };
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         console.log('⏹️ MediaRecorder stopped, processing chunk...');
+        await processAudioChunk();
+
+        // Restart recording after processing
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
+          try {
+            mediaRecorderRef.current.start();
+            console.log('🔄 MediaRecorder restarted after processing');
+          } catch (err) {
+            console.error('❌ Failed to restart MediaRecorder:', err);
+          }
+        }
       };
 
       mediaRecorder.onerror = (error) => {
@@ -378,9 +398,8 @@ export function useSpeechRecognition(
       recordingIntervalRef.current = setInterval(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           console.log('⏱️ 10-second interval triggered, stopping to process chunk...');
+          // Just stop - the onstop handler will process and restart
           mediaRecorderRef.current.stop();
-          processAudioChunk();
-          mediaRecorderRef.current.start();
         } else {
           console.warn('⚠️ MediaRecorder not recording, state:', mediaRecorderRef.current?.state);
         }
