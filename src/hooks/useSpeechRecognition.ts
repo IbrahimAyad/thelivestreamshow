@@ -17,6 +17,8 @@ export interface UseSpeechRecognitionOptions {
   onVisualSearchDetected?: (event: VisualSearchEvent) => void;
   wakePhrases?: string[];
   visualSearchTriggers?: string[];
+  audioSource?: 'browser' | 'obs';
+  onAudioBlobReady?: (blob: Blob) => void;
 }
 
 export interface UseSpeechRecognition {
@@ -29,6 +31,9 @@ export interface UseSpeechRecognition {
   error: string | null;
   transcriptionMode: 'whisper' | 'browser' | 'idle';
   whisperAvailable: boolean;
+  audioSource: 'browser' | 'obs';
+  setAudioSource: (source: 'browser' | 'obs') => void;
+  processAudioBlob: (blob: Blob) => Promise<void>;
 }
 
 const WHISPER_API_URL = 'https://api.openai.com/v1/audio/transcriptions';
@@ -64,6 +69,7 @@ export function useSpeechRecognition(
   const [error, setError] = useState<string | null>(null);
   const [transcriptionMode, setTranscriptionMode] = useState<'whisper' | 'browser' | 'idle'>('idle');
   const [whisperAvailable, setWhisperAvailable] = useState(true);
+  const [audioSource, setAudioSource] = useState<'browser' | 'obs'>(options.audioSource || 'browser');
 
   const wakePhrases = options.wakePhrases || DEFAULT_WAKE_PHRASES;
   const visualSearchTriggers = options.visualSearchTriggers || DEFAULT_VISUAL_TRIGGERS;
@@ -542,6 +548,25 @@ export function useSpeechRecognition(
     };
   }, [stopListening]);
 
+  // Process audio blob directly (for OBS audio)
+  const processAudioBlob = useCallback(async (blob: Blob) => {
+    try {
+      console.log('📡 Processing OBS audio blob:', blob.size, 'bytes');
+
+      if (blob.size < 1024) {
+        console.warn('⚠️ Audio blob too small:', blob.size, 'bytes');
+        return;
+      }
+
+      const transcribedText = await transcribeWithWhisper(blob);
+      console.log('✅ OBS audio transcribed:', transcribedText);
+      processTranscript(transcribedText);
+    } catch (err) {
+      console.error('❌ Failed to process OBS audio:', err);
+      setError(err instanceof Error ? err.message : 'OBS audio processing failed');
+    }
+  }, [transcribeWithWhisper, processTranscript]);
+
   return {
     isListening,
     transcript,
@@ -551,6 +576,9 @@ export function useSpeechRecognition(
     clearBuffer,
     error,
     transcriptionMode,
-    whisperAvailable
+    whisperAvailable,
+    audioSource,
+    setAudioSource,
+    processAudioBlob
   };
 }

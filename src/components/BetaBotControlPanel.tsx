@@ -3,6 +3,7 @@ import { useSpeechRecognition, WakeDetectionEvent, VisualSearchEvent } from '../
 import { useBetaBotAI } from '../hooks/useBetaBotAI';
 import { useTTS } from '../hooks/useTTS';
 import { useF5TTS } from '../hooks/useF5TTS';
+import { useOBSAudio } from '../hooks/useOBSAudio';
 import { supabase } from '../lib/supabase';
 
 interface SessionHistory {
@@ -43,10 +44,22 @@ export function BetaBotControlPanel() {
     created_at: string;
   }>>([]);
 
+  // OBS Audio state
+  const [audioSource, setAudioSource] = useState<'browser' | 'obs'>('browser');
+  const [obsHost, setObsHost] = useState('localhost');
+  const [obsPort, setObsPort] = useState(4455);
+  const [obsPassword, setObsPassword] = useState('');
+  const [obsAudioPort, setObsAudioPort] = useState(4456);
+
   // Initialize hooks first (without callbacks)
   const betaBotAI = useBetaBotAI();
   const browserTTS = useTTS();
   const f5TTS = useF5TTS();
+  const obsAudio = useOBSAudio({
+    host: obsHost,
+    port: obsPort,
+    password: obsPassword
+  });
 
   // Select TTS provider based on user preference
   const tts = ttsProvider === 'f5tts' ? f5TTS : browserTTS;
@@ -382,6 +395,31 @@ export function BetaBotControlPanel() {
       createSession();
     }
   }, [speechRecognition.isListening, sessionId]);
+
+  // Handle OBS audio when source is OBS
+  useEffect(() => {
+    if (audioSource === 'obs' && speechRecognition.isListening && obsAudio.connected && obsAudio.selectedSource) {
+      console.log('🎬 Setting up OBS audio capture...');
+
+      // Set up audio chunk processing
+      obsAudio.onAudioChunk((chunk) => {
+        console.log('🎤 OBS audio chunk received:', chunk.data.length, 'samples');
+      });
+
+      // Process audio every 5 seconds
+      const interval = setInterval(async () => {
+        const audioBlob = await obsAudio.getAudioBlob();
+        if (audioBlob) {
+          console.log('📡 Processing OBS audio blob:', audioBlob.size, 'bytes');
+          await speechRecognition.processAudioBlob(audioBlob);
+        }
+      }, 5000);
+
+      return () => {
+        clearInterval(interval);
+      };
+    }
+  }, [audioSource, speechRecognition.isListening, obsAudio.connected, obsAudio.selectedSource]);
 
   // Load session history on mount
   useEffect(() => {
@@ -827,6 +865,143 @@ export function BetaBotControlPanel() {
       </div>
       )}
 
+      {/* Audio Source Selection */}
+      <div className="audio-source-section">
+        <div className="section-header">
+          <label>🎤 Audio Input Source</label>
+        </div>
+        <div className="audio-source-buttons">
+          <button
+            className={`source-btn ${audioSource === 'browser' ? 'active' : ''}`}
+            onClick={() => setAudioSource('browser')}
+            disabled={speechRecognition.isListening}
+          >
+            <div className="source-icon">🌐</div>
+            <div className="source-content">
+              <div className="source-title">Browser Microphone</div>
+              <div className="source-description">Direct browser mic access</div>
+            </div>
+          </button>
+          <button
+            className={`source-btn ${audioSource === 'obs' ? 'active' : ''}`}
+            onClick={() => setAudioSource('obs')}
+            disabled={speechRecognition.isListening}
+          >
+            <div className="source-icon">🎬</div>
+            <div className="source-content">
+              <div className="source-title">OBS Audio</div>
+              <div className="source-description">Capture from OBS Studio (streaming mode)</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* OBS Connection Settings - Only show when OBS is selected */}
+      {audioSource === 'obs' && (
+      <div className="obs-settings-section">
+        <h4>🎬 OBS WebSocket Connection</h4>
+
+        <div className="obs-connection-status">
+          <div className={`status-indicator ${obsAudio.connected ? 'connected' : 'disconnected'}`}>
+            <span className="status-dot"></span>
+            <span>{obsAudio.connected ? 'Connected to OBS' : 'Disconnected'}</span>
+          </div>
+          {obsAudio.error && (
+            <div className="error-message">
+              Error: {obsAudio.error}
+            </div>
+          )}
+        </div>
+
+        {!obsAudio.connected ? (
+          <div className="obs-connect-form">
+            <div className="form-row">
+              <label>Host:</label>
+              <input
+                type="text"
+                value={obsHost}
+                onChange={(e) => setObsHost(e.target.value)}
+                placeholder="localhost"
+              />
+            </div>
+            <div className="form-row">
+              <label>WebSocket Port:</label>
+              <input
+                type="number"
+                value={obsPort}
+                onChange={(e) => setObsPort(Number(e.target.value))}
+                placeholder="4455"
+              />
+            </div>
+            <div className="form-row">
+              <label>Password:</label>
+              <input
+                type="password"
+                value={obsPassword}
+                onChange={(e) => setObsPassword(e.target.value)}
+                placeholder="Optional"
+              />
+            </div>
+            <div className="form-row">
+              <label>Audio WebSocket Port:</label>
+              <input
+                type="number"
+                value={obsAudioPort}
+                onChange={(e) => setObsAudioPort(Number(e.target.value))}
+                placeholder="4456"
+              />
+            </div>
+            <button
+              className="btn-obs-connect"
+              onClick={obsAudio.connect}
+            >
+              Connect to OBS
+            </button>
+          </div>
+        ) : (
+          <div className="obs-connected-controls">
+            <div className="audio-source-select">
+              <label>Select Audio Source:</label>
+              <select
+                value={obsAudio.selectedSource || ''}
+                onChange={(e) => {
+                  const sourceName = e.target.value;
+                  if (sourceName) {
+                    obsAudio.startAudioCapture(sourceName, obsAudioPort);
+                  }
+                }}
+                disabled={!obsAudio.audioSources.length}
+              >
+                <option value="">-- Select Audio Input --</option>
+                {obsAudio.audioSources.map((source) => (
+                  <option key={source} value={source}>
+                    {source}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              className="btn-obs-disconnect"
+              onClick={obsAudio.disconnect}
+            >
+              Disconnect from OBS
+            </button>
+          </div>
+        )}
+
+        <div className="obs-info-box">
+          <div className="info-header">ℹ️ OBS WebSocket Setup</div>
+          <ul className="info-list">
+            <li><strong>Step 1:</strong> Install OBS Studio v28+ (WebSocket 5.0 built-in)</li>
+            <li><strong>Step 2:</strong> Tools → WebSocket Server Settings → Enable</li>
+            <li><strong>Step 3:</strong> Install <code>obs-audio-to-websocket</code> plugin</li>
+            <li><strong>Step 4:</strong> Configure audio source and port in plugin settings</li>
+            <li><strong>Why OBS?</strong> Isolates mic from stream audio, prevents feedback, more reliable</li>
+          </ul>
+        </div>
+      </div>
+      )}
+
       {/* Voice Selection - Only show for browser TTS in Co-Host mode */}
       {betaBotMode === 'co-host' && ttsProvider === 'browser' && (
       <div className="voice-section">
@@ -933,9 +1108,23 @@ export function BetaBotControlPanel() {
             if (speechRecognition.isListening) {
               endSession();
             } else {
-              speechRecognition.startListening();
+              // Only start browser mic listening if browser source is selected
+              // OBS audio is handled separately via the OBS connection
+              if (audioSource === 'browser') {
+                speechRecognition.startListening();
+              } else if (audioSource === 'obs') {
+                // For OBS, just mark as listening - audio comes from OBS hook
+                if (!obsAudio.connected || !obsAudio.selectedSource) {
+                  alert('Please connect to OBS and select an audio source first');
+                  return;
+                }
+                // Set internal state to "listening" to activate the session
+                speechRecognition.setAudioSource('obs');
+                createSession();
+              }
             }
           }}
+          disabled={audioSource === 'obs' && (!obsAudio.connected || !obsAudio.selectedSource)}
         >
           {speechRecognition.isListening ? '⏹ End Session' : '▶️ Start Session'}
         </button>
