@@ -160,29 +160,10 @@ export function BetaBotControlPanel() {
       if (response) {
         console.log(`✅ Got response in ${responseTime}ms: "${response.substring(0, 50)}..."`);
 
-        // Update session state to 'speaking'
-        if (sessionId) {
-          await supabase.from('betabot_sessions').update({
-            current_state: 'speaking'
-          }).eq('id', sessionId);
-        }
-
-        // Speak the response with fallback logic
-        try {
-          await tts.speak(response);
-        } catch (ttsError) {
-          console.error('TTS failed, falling back to browser TTS:', ttsError);
-          if (ttsProvider === 'f5tts') {
-            setShowFallbackWarning(true);
-            setTimeout(() => setShowFallbackWarning(false), 5000);
-            await browserTTS.speak(response);
-          }
-        }
-
         // Add to chat history
         setChatHistory(prev => [{question, answer: response, aiSource}, ...prev].slice(0, 5));
 
-        // Log interaction to database
+        // Log interaction to database first (before speaking)
         if (sessionId) {
           // Log to betabot_interactions table
           await supabase.from('betabot_interactions').insert([{
@@ -205,13 +186,39 @@ export function BetaBotControlPanel() {
 
           // Update session metrics
           setDirectInteractions(prev => prev + 1);
-
-          // Update session state back to 'listening' after speaking
           await supabase.from('betabot_sessions').update({
-            current_state: 'listening',
             total_direct_interactions: directInteractions + 1
           }).eq('id', sessionId);
         }
+
+        // Speak the response with state change callback
+        try {
+          await tts.speak(response, async (state) => {
+            // Update session state when TTS actually starts/stops speaking
+            if (sessionId) {
+              await supabase.from('betabot_sessions').update({
+                current_state: state === 'speaking' ? 'speaking' : 'listening'
+              }).eq('id', sessionId);
+              console.log(`🎨 Updated session state to: ${state === 'speaking' ? 'speaking' : 'listening'}`);
+            }
+          });
+        } catch (ttsError) {
+          console.error('TTS failed, falling back to browser TTS:', ttsError);
+          if (ttsProvider === 'f5tts') {
+            setShowFallbackWarning(true);
+            setTimeout(() => setShowFallbackWarning(false), 5000);
+            await browserTTS.speak(response, async (state) => {
+              // Same callback for fallback TTS
+              if (sessionId) {
+                await supabase.from('betabot_sessions').update({
+                  current_state: state === 'speaking' ? 'speaking' : 'listening'
+                }).eq('id', sessionId);
+                console.log(`🎨 Updated session state to: ${state === 'speaking' ? 'speaking' : 'listening'}`);
+              }
+            });
+          }
+        }
+      }
 
         // Clear AI source indicator after 2 seconds
         setTimeout(() => setCurrentAISource(null), 2000);
@@ -272,22 +279,42 @@ export function BetaBotControlPanel() {
       
       if (result.urls.length > 0) {
         // Save to database and show on broadcast
-        const { error } = await supabase.from('betabot_visual_content').insert([{
+        console.log('💾 Attempting to save visual content to database:', {
           search_query: event.query,
           content_type: 'images',
           content_urls: result.urls,
           session_id: sessionId,
           is_visible: true
-        }]);
+        });
+
+        const { data, error } = await supabase.from('betabot_visual_content').insert([{
+          search_query: event.query,
+          content_type: 'images',
+          content_urls: result.urls,
+          session_id: sessionId,
+          is_visible: true
+        }]).select();
 
         if (error) {
-          console.error('Error saving visual content:', error);
-          throw error;
+          console.error('❌ Error saving visual content - Full error object:', JSON.stringify(error, null, 2));
+          console.error('Error code:', error.code);
+          console.error('Error message:', error.message);
+          console.error('Error details:', error.details);
+          console.error('Error hint:', error.hint);
+          throw new Error(`Database error: ${error.message || error.code || 'Unknown error'}`);
         }
 
-        // Speak confirmation
-        tts.speak(`Showing results for ${event.query}`);
-        console.log('✅ Visual search results displayed');
+        console.log('✅ Successfully saved visual content to database:', data);
+
+        // Speak confirmation with callback to update session state
+        tts.speak(`Showing results for ${event.query}`, async (state) => {
+          if (sessionId) {
+            await supabase.from('betabot_sessions').update({
+              current_state: state === 'speaking' ? 'speaking' : 'listening'
+            }).eq('id', sessionId);
+          }
+        });
+        console.log('✅ Visual search results displayed on broadcast');
       } else {
         tts.speak(`Sorry, I couldn't find any results for ${event.query}`);
       }

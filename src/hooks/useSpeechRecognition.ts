@@ -377,6 +377,20 @@ export function useSpeechRecognition(
       });
       console.log('✅ Microphone access granted');
 
+      // Debug: Check stream details
+      const audioTracks = stream.getAudioTracks();
+      console.log('🔍 Audio tracks:', audioTracks.length);
+      if (audioTracks.length > 0) {
+        const track = audioTracks[0];
+        console.log('🔍 Track details:', {
+          label: track.label,
+          enabled: track.enabled,
+          muted: track.muted,
+          readyState: track.readyState,
+          settings: track.getSettings()
+        });
+      }
+
       // Store stream for creating new recorders
       mediaStreamRef.current = stream;
       shouldContinueRecordingRef.current = true;
