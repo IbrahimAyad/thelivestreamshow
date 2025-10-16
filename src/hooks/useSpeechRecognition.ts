@@ -118,7 +118,10 @@ export function useSpeechRecognition(
   }, [visualSearchTriggers]);
 
   const transcribeWithWhisper = useCallback(async (audioBlob: Blob): Promise<string> => {
+    console.log('🔊 transcribeWithWhisper() called');
     const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    console.log('🔊 API key present:', !!apiKey, 'Length:', apiKey?.length);
+
     if (!apiKey) {
       throw new Error('OpenAI API key not configured');
     }
@@ -131,12 +134,20 @@ export function useSpeechRecognition(
     else if (mimeType.includes('wav')) extension = 'wav';
     else if (mimeType.includes('webm')) extension = 'webm';
 
+    console.log('🔊 Audio details:', {
+      size: audioBlob.size,
+      type: audioBlob.type,
+      mimeType: mimeType,
+      extension: extension
+    });
+
     const formData = new FormData();
     formData.append('file', audioBlob, `audio.${extension}`);
     formData.append('model', 'whisper-1');
     formData.append('language', 'en');
 
     try {
+      console.log('📡 Calling Whisper API:', WHISPER_API_URL);
       const response = await fetch(WHISPER_API_URL, {
         method: 'POST',
         headers: {
@@ -145,31 +156,36 @@ export function useSpeechRecognition(
         body: formData
       });
 
+      console.log('📡 Whisper API response status:', response.status, response.statusText);
+
       if (!response.ok) {
         const errorText = await response.text();
         let errorMessage = 'Transcription failed';
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error?.message || errorMessage;
+          console.error('❌ Whisper API error data:', errorData);
         } catch {
           errorMessage = errorText || errorMessage;
         }
-        console.error('Whisper API error response:', errorText);
+        console.error('❌ Whisper API error response:', errorText);
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      console.log('✅ Whisper API success, transcribed text length:', data.text?.length);
       // Reset failure count on success
       whisperFailureCountRef.current = 0;
       return data.text || '';
     } catch (err) {
-      console.error('Whisper API error:', err);
-      console.error('Audio blob details:', {
+      console.error('❌ Whisper API error:', err);
+      console.error('❌ Audio blob details:', {
         type: audioBlob.type,
         size: audioBlob.size,
         mimeType: mimeType,
         extension: extension
       });
+      console.error('❌ Failure count:', whisperFailureCountRef.current + 1);
       whisperFailureCountRef.current++;
       throw err;
     }
@@ -215,21 +231,30 @@ export function useSpeechRecognition(
   }, [detectWakePhrase, detectVisualSearch, options]);
 
   const processAudioChunk = useCallback(async () => {
-    if (audioChunksRef.current.length === 0) return;
+    console.log('🔄 processAudioChunk() called');
+    console.log('🔄 Audio chunks in buffer:', audioChunksRef.current.length);
+
+    if (audioChunksRef.current.length === 0) {
+      console.warn('⚠️ No audio chunks to process');
+      return;
+    }
 
     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+    console.log('🔄 Created audio blob:', audioBlob.size, 'bytes');
     audioChunksRef.current = [];
 
     try {
+      console.log('📡 Sending to Whisper API...');
       const transcribedText = await transcribeWithWhisper(audioBlob);
+      console.log('✅ Whisper transcription received:', transcribedText);
       processTranscript(transcribedText);
     } catch (err) {
-      console.error('Failed to transcribe audio chunk:', err);
+      console.error('❌ Failed to transcribe audio chunk:', err);
       setError(err instanceof Error ? err.message : 'Transcription failed');
-      
+
       // If Whisper fails too many times, switch to browser fallback
       if (whisperFailureCountRef.current >= MAX_WHISPER_FAILURES) {
-        console.warn('Whisper API failed multiple times, switching to browser fallback');
+        console.warn('⚠️ Whisper API failed multiple times, switching to browser fallback');
         setWhisperAvailable(false);
         stopListening();
         // Auto-restart with browser mode
@@ -286,14 +311,17 @@ export function useSpeechRecognition(
 
   // Whisper API with MediaRecorder
   const startListeningWhisper = useCallback(async () => {
+    console.log('🎤 startListeningWhisper() called');
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      console.log('🎤 Requesting microphone access...');
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true
-        } 
+        }
       });
+      console.log('✅ Microphone access granted');
 
       // Try to find a Whisper-compatible MIME type
       const supportedMimeTypes = [
@@ -320,10 +348,26 @@ export function useSpeechRecognition(
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
+          console.log('📼 Audio data received:', event.data.size, 'bytes');
           audioChunksRef.current.push(event.data);
+        } else {
+          console.warn('⚠️ Audio data received but size is 0');
         }
       };
 
+      mediaRecorder.onstart = () => {
+        console.log('▶️ MediaRecorder started recording');
+      };
+
+      mediaRecorder.onstop = () => {
+        console.log('⏹️ MediaRecorder stopped, processing chunk...');
+      };
+
+      mediaRecorder.onerror = (error) => {
+        console.error('❌ MediaRecorder error:', error);
+      };
+
+      console.log('🎬 Starting MediaRecorder...');
       mediaRecorder.start();
       mediaRecorderRef.current = mediaRecorder;
       setIsListening(true);
@@ -333,13 +377,16 @@ export function useSpeechRecognition(
       // Process audio every 10 seconds
       recordingIntervalRef.current = setInterval(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          console.log('⏱️ 10-second interval triggered, stopping to process chunk...');
           mediaRecorderRef.current.stop();
           processAudioChunk();
           mediaRecorderRef.current.start();
+        } else {
+          console.warn('⚠️ MediaRecorder not recording, state:', mediaRecorderRef.current?.state);
         }
       }, 10000);
 
-      console.log('Started Whisper API transcription with MIME type:', selectedMimeType);
+      console.log('✅ Started Whisper API transcription with MIME type:', selectedMimeType);
 
     } catch (err) {
       console.error('Failed to start audio capture:', err);
@@ -350,9 +397,15 @@ export function useSpeechRecognition(
 
   // Main start function - tries Whisper first, falls back to browser if unavailable
   const startListening = useCallback(async () => {
+    console.log('🎤 startListening() called');
+    console.log('🎤 Whisper available:', whisperAvailable);
+    console.log('🎤 OpenAI API Key configured:', !!import.meta.env.VITE_OPENAI_API_KEY);
+
     if (whisperAvailable) {
+      console.log('🎤 Attempting to start Whisper API mode...');
       await startListeningWhisper();
     } else {
+      console.log('🎤 Starting browser fallback mode...');
       startListeningBrowser();
     }
   }, [whisperAvailable, startListeningWhisper, startListeningBrowser]);
