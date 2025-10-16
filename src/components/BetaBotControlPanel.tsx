@@ -273,50 +273,34 @@ export function BetaBotControlPanel() {
         if (error) console.error('Error logging visual search interaction:', error);
       }
 
-      // Perform search
-      const result = await perplexity.search(event.query, 'images');
-      
-      if (result.urls.length > 0) {
-        // Save to database and show on broadcast
-        console.log('💾 Attempting to save visual content to database:', {
-          search_query: event.query,
-          content_type: 'images',
-          content_urls: result.urls,
-          session_id: sessionId,
-          is_visible: true
-        });
+      // Trigger media browser overlay (no Perplexity search needed - Google does it all!)
+      console.log('🌐 Triggering media browser overlay for query:', event.query);
 
-        const { data, error } = await supabase.from('betabot_visual_content').insert([{
-          search_query: event.query,
-          content_type: 'images',
-          content_urls: result.urls,
-          session_id: sessionId,
-          is_visible: true
-        }]).select();
+      // Determine if it's images or videos based on keywords
+      const type = event.query.toLowerCase().includes('video') ? 'videos' : 'images';
 
-        if (error) {
-          console.error('❌ Error saving visual content - Full error object:', JSON.stringify(error, null, 2));
-          console.error('Error code:', error.code);
-          console.error('Error message:', error.message);
-          console.error('Error details:', error.details);
-          console.error('Error hint:', error.hint);
-          throw new Error(`Database error: ${error.message || error.code || 'Unknown error'}`);
-        }
+      const { data, error } = await supabase.from('betabot_media_browser').insert([{
+        search_query: event.query,
+        content_type: type,
+        session_id: sessionId,
+        is_visible: true
+      }]).select();
 
-        console.log('✅ Successfully saved visual content to database:', data);
-
-        // Speak confirmation with callback to update session state
-        tts.speak(`Showing results for ${event.query}`, async (state) => {
-          if (sessionId) {
-            await supabase.from('betabot_sessions').update({
-              current_state: state === 'speaking' ? 'speaking' : 'listening'
-            }).eq('id', sessionId);
-          }
-        });
-        console.log('✅ Visual search results displayed on broadcast');
-      } else {
-        tts.speak(`Sorry, I couldn't find any results for ${event.query}`);
+      if (error) {
+        console.error('❌ Error triggering media browser:', JSON.stringify(error, null, 2));
+        throw new Error(`Database error: ${error.message || error.code || 'Unknown error'}`);
       }
+
+      console.log('✅ Media browser overlay triggered:', data);
+
+      // Speak confirmation with callback to update session state
+      tts.speak(`Showing ${type} for ${event.query}`, async (state) => {
+        if (sessionId) {
+          await supabase.from('betabot_sessions').update({
+            current_state: state === 'speaking' ? 'speaking' : 'listening'
+          }).eq('id', sessionId);
+        }
+      });
     } catch (error) {
       console.error('Error handling visual search:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

@@ -3,6 +3,7 @@ import { supabase, ShowQuestion, ShowSegment } from '../lib/supabase'
 import { BetaBotPopup } from './BetaBotPopup'
 import { BetaBotAvatar } from './BetaBotAvatar'
 import { VisualContentDisplay } from './VisualContentDisplay'
+import { MediaBrowserOverlay } from './MediaBrowserOverlay'
 import LowerThirdOverlay from './LowerThirdOverlay'
 import EpisodeInfoDisplay from './EpisodeInfoDisplay'
 import { BroadcastGraphicsDisplay } from './BroadcastGraphicsDisplay'
@@ -29,8 +30,11 @@ export function BroadcastOverlayView() {
   // Beta Bot Avatar state
   const [betaBotState, setBetaBotState] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle')
   
-  // Visual Content state
+  // Visual Content state (legacy - keeping for backward compatibility)
   const [visualContent, setVisualContent] = useState<{images?: string[]; searchQuery?: string} | null>(null)
+
+  // Media Browser Overlay state (new approach)
+  const [mediaBrowser, setMediaBrowser] = useState<{query: string; type: 'images' | 'videos'} | null>(null)
 
   // Apply broadcast mode styles
   useEffect(() => {
@@ -88,7 +92,7 @@ export function BroadcastOverlayView() {
     }
   }, [])
 
-  // Subscribe to Beta Bot visual content
+  // Subscribe to Beta Bot visual content (legacy)
   useEffect(() => {
     const visualChannel = supabase
       .channel('betabot_visual_content_channel')
@@ -98,6 +102,7 @@ export function BroadcastOverlayView() {
         table: 'betabot_visual_content'
       }, (payload) => {
         const content = payload.new as any
+        console.log('📺 Legacy visual content received:', content)
         setVisualContent({
           images: content.content_urls || [],
           searchQuery: content.search_query
@@ -107,6 +112,32 @@ export function BroadcastOverlayView() {
 
     return () => {
       visualChannel.unsubscribe()
+    }
+  }, [])
+
+  // Subscribe to Media Browser triggers (new approach)
+  useEffect(() => {
+    const mediaBrowserChannel = supabase
+      .channel('betabot_media_browser_channel')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'betabot_media_browser'
+      }, (payload) => {
+        const browserRequest = payload.new as any
+        console.log('🌐 Media browser request received:', browserRequest)
+
+        if (browserRequest.is_visible) {
+          setMediaBrowser({
+            query: browserRequest.search_query,
+            type: browserRequest.content_type
+          })
+        }
+      })
+      .subscribe()
+
+    return () => {
+      mediaBrowserChannel.unsubscribe()
     }
   }, [])
 
@@ -420,12 +451,22 @@ export function BroadcastOverlayView() {
         <BetaBotAvatar state={betaBotState} size={120} />
       </div>
 
-      {/* VISUAL CONTENT DISPLAY - Side panel */}
+      {/* VISUAL CONTENT DISPLAY - Side panel (legacy) */}
       {visualContent && (
         <VisualContentDisplay
           images={visualContent.images}
           searchQuery={visualContent.searchQuery}
           onHide={() => setVisualContent(null)}
+        />
+      )}
+
+      {/* MEDIA BROWSER OVERLAY - Full-screen iframe overlay (new approach) */}
+      {mediaBrowser && (
+        <MediaBrowserOverlay
+          query={mediaBrowser.query}
+          type={mediaBrowser.type}
+          onClose={() => setMediaBrowser(null)}
+          durationSeconds={30}
         />
       )}
 
