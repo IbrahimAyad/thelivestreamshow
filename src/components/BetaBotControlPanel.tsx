@@ -46,9 +46,9 @@ export function BetaBotControlPanel() {
 
   // OBS Audio state
   const [audioSource, setAudioSource] = useState<'browser' | 'obs'>('browser');
-  const [obsHost, setObsHost] = useState('localhost');
+  const [obsHost, setObsHost] = useState('192.168.1.199');
   const [obsPort, setObsPort] = useState(4455);
-  const [obsPassword, setObsPassword] = useState('');
+  const [obsPassword, setObsPassword] = useState('ZiALI1lrx90P03rf');
   const [obsAudioPort, setObsAudioPort] = useState(4456);
 
   // Initialize hooks first (without callbacks)
