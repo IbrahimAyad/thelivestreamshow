@@ -16,6 +16,9 @@ interface SessionHistory {
 }
 
 export function BetaBotControlPanel() {
+  // Mode selection: 'question-generator' or 'co-host'
+  const [betaBotMode, setBetaBotMode] = useState<'question-generator' | 'co-host'>('co-host');
+
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionTimer, setSessionTimer] = useState(0);
   const [generatedQuestions, setGeneratedQuestions] = useState<Array<{text: string; context: string}>>([]);
@@ -296,9 +299,10 @@ export function BetaBotControlPanel() {
   }, [sessionId, perplexity, tts]);
 
   // Initialize speech recognition with callbacks NOW
+  // Only enable wake phrase detection in Co-Host mode
   const speechRecognition = useSpeechRecognition({
-    onWakePhraseDetected: handleWakePhraseDetected,
-    onVisualSearchDetected: handleVisualSearchDetected
+    onWakePhraseDetected: betaBotMode === 'co-host' ? handleWakePhraseDetected : undefined,
+    onVisualSearchDetected: betaBotMode === 'co-host' ? handleVisualSearchDetected : undefined
   });
 
   // Store in ref for callbacks
@@ -713,7 +717,7 @@ export function BetaBotControlPanel() {
   return (
     <div className="betabot-control-panel">
       <div className="panel-header">
-        <h3>🤖 Beta Bot AI Co-Host</h3>
+        <h3>🤖 Beta Bot</h3>
         <div className="status-indicator">
           <div className={`status-dot ${speechRecognition.isListening ? 'listening' : tts.isSpeaking ? 'speaking' : 'idle'}`} />
           <span>{speechRecognition.isListening ? 'Listening' : tts.isSpeaking ? 'Speaking' : 'Ready'}</span>
@@ -723,7 +727,52 @@ export function BetaBotControlPanel() {
         </div>
       </div>
 
-      {/* TTS Provider Selection */}
+      {/* Mode Selection */}
+      <div className="mode-selection">
+        <div className="mode-header">
+          <label>Beta Bot Mode</label>
+          <span className="mode-info">Choose how Beta Bot operates</span>
+        </div>
+        <div className="mode-buttons">
+          <button
+            className={`mode-btn ${betaBotMode === 'question-generator' ? 'active' : ''}`}
+            onClick={() => {
+              if (speechRecognition.isListening) {
+                alert('Please stop the current session before switching modes');
+                return;
+              }
+              setBetaBotMode('question-generator');
+            }}
+            disabled={speechRecognition.isListening}
+          >
+            <div className="mode-icon">📝</div>
+            <div className="mode-content">
+              <div className="mode-title">Question Generator</div>
+              <div className="mode-description">Silent listening - Generates questions from conversation</div>
+            </div>
+          </button>
+          <button
+            className={`mode-btn ${betaBotMode === 'co-host' ? 'active' : ''}`}
+            onClick={() => {
+              if (speechRecognition.isListening) {
+                alert('Please stop the current session before switching modes');
+                return;
+              }
+              setBetaBotMode('co-host');
+            }}
+            disabled={speechRecognition.isListening}
+          >
+            <div className="mode-icon">🎙️</div>
+            <div className="mode-content">
+              <div className="mode-title">AI Co-Host</div>
+              <div className="mode-description">Interactive - Responds to wake phrases & engages in conversation</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* TTS Provider Selection - Only show in Co-Host mode */}
+      {betaBotMode === 'co-host' && (
       <div className="tts-provider-section">
         <div className="provider-header">
           <label htmlFor="tts-provider">TTS Engine</label>
@@ -768,9 +817,10 @@ export function BetaBotControlPanel() {
           </div>
         )}
       </div>
+      )}
 
-      {/* Voice Selection - Only show for browser TTS */}
-      {ttsProvider === 'browser' && (
+      {/* Voice Selection - Only show for browser TTS in Co-Host mode */}
+      {betaBotMode === 'co-host' && ttsProvider === 'browser' && (
       <div className="voice-section">
         <div className="voice-header">
           <label htmlFor="voice-select">🎤 Voice Selection</label>
@@ -813,7 +863,8 @@ export function BetaBotControlPanel() {
       </div>
       )}
 
-      {/* Text Chat Input */}
+      {/* Text Chat Input - Only show in Co-Host mode */}
+      {betaBotMode === 'co-host' && (
       <div className="text-chat-section">
         <h4>💬 Text Chat</h4>
         <div className="chat-input-group">
@@ -840,9 +891,10 @@ export function BetaBotControlPanel() {
           </div>
         )}
       </div>
+      )}
 
-      {/* Chat History */}
-      {chatHistory.length > 0 && (
+      {/* Chat History - Only show in Co-Host mode */}
+      {betaBotMode === 'co-host' && chatHistory.length > 0 && (
         <div className="chat-history">
           <h4>Recent Conversations</h4>
           <div className="chat-list">
@@ -1140,6 +1192,94 @@ export function BetaBotControlPanel() {
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
+        }
+
+        /* Mode Selection Styles */
+        .mode-selection {
+          margin-bottom: 20px;
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 8px;
+          padding: 15px;
+          border: 1px solid rgba(75, 85, 99, 0.3);
+        }
+
+        .mode-header {
+          margin-bottom: 12px;
+        }
+
+        .mode-header label {
+          color: #f3f4f6;
+          font-size: 14px;
+          font-weight: 600;
+          display: block;
+          margin-bottom: 4px;
+        }
+
+        .mode-info {
+          color: #9ca3af;
+          font-size: 11px;
+          display: block;
+        }
+
+        .mode-buttons {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+
+        .mode-btn {
+          background: rgba(17, 24, 39, 0.8);
+          border: 2px solid rgba(75, 85, 99, 0.5);
+          border-radius: 8px;
+          padding: 12px;
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          text-align: left;
+        }
+
+        .mode-btn:hover:not(:disabled) {
+          border-color: rgba(250, 204, 21, 0.5);
+          background: rgba(17, 24, 39, 0.95);
+          transform: translateY(-2px);
+        }
+
+        .mode-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .mode-btn.active {
+          border-color: #facc15;
+          background: rgba(250, 204, 21, 0.1);
+        }
+
+        .mode-icon {
+          font-size: 24px;
+          line-height: 1;
+        }
+
+        .mode-content {
+          flex: 1;
+        }
+
+        .mode-title {
+          color: #f3f4f6;
+          font-size: 13px;
+          font-weight: 600;
+          margin-bottom: 4px;
+        }
+
+        .mode-description {
+          color: #9ca3af;
+          font-size: 11px;
+          line-height: 1.4;
+        }
+
+        .mode-btn.active .mode-title {
+          color: #facc15;
         }
 
         .controls-section {
