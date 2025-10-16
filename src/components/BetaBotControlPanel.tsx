@@ -34,6 +34,12 @@ export function BetaBotControlPanel() {
   });
   const [showFallbackWarning, setShowFallbackWarning] = useState(false);
   const [autoQuestionGenInterval, setAutoQuestionGenInterval] = useState(60); // seconds
+  const [betaBotSuggestions, setBetaBotSuggestions] = useState<Array<{
+    id: string;
+    question_text: string;
+    context_metadata: any;
+    created_at: string;
+  }>>([]);
 
   // Initialize hooks first (without callbacks)
   const betaBotAI = useBetaBotAI();
@@ -368,6 +374,26 @@ export function BetaBotControlPanel() {
   // Load session history on mount
   useEffect(() => {
     loadSessionHistory();
+    loadBetaBotSuggestions();
+  }, []);
+
+  // Subscribe to new BetaBot suggestions
+  useEffect(() => {
+    const suggestionsChannel = supabase
+      .channel('betabot_suggestions')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'show_questions',
+        filter: 'source=eq.betabot_conversation_helper'
+      }, () => {
+        loadBetaBotSuggestions();
+      })
+      .subscribe();
+
+    return () => {
+      suggestionsChannel.unsubscribe();
+    };
   }, []);
 
   const createSession = async () => {
@@ -494,6 +520,60 @@ export function BetaBotControlPanel() {
     }
   };
 
+  const loadBetaBotSuggestions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('show_questions')
+        .select('id, question_text, context_metadata, created_at')
+        .eq('source', 'betabot_conversation_helper')
+        .eq('show_on_overlay', false) // Only show pending suggestions
+        .order('created_at', { ascending: false})
+        .limit(10);
+
+      if (error) throw error;
+      setBetaBotSuggestions(data || []);
+    } catch (error) {
+      console.error('Failed to load BetaBot suggestions:', error);
+    }
+  };
+
+  const addSuggestionToPopupQueue = async (questionId: string) => {
+    try {
+      // The question is already in the database with show_on_overlay=false
+      // The Popup Queue Manager will display it automatically in its queue
+      // We just need to update its position to prioritize it at the top
+
+      // Set position to 0 so it appears first in the queue
+      await supabase
+        .from('show_questions')
+        .update({ position: 0 })
+        .eq('id', questionId);
+
+      // Remove from suggestions list (it's now in the main queue)
+      setBetaBotSuggestions(prev => prev.filter(s => s.id !== questionId));
+
+      console.log('✅ Question added to Popup Queue Manager');
+    } catch (error) {
+      console.error('Error adding question to queue:', error);
+      // Even if position update fails, still remove from suggestions
+      setBetaBotSuggestions(prev => prev.filter(s => s.id !== questionId));
+    }
+  };
+
+  const dismissSuggestion = async (questionId: string) => {
+    try {
+      await supabase
+        .from('show_questions')
+        .delete()
+        .eq('id', questionId);
+
+      setBetaBotSuggestions(prev => prev.filter(s => s.id !== questionId));
+      console.log('✅ Dismissed suggestion');
+    } catch (error) {
+      console.error('Error dismissing suggestion:', error);
+    }
+  };
+
   const exportTranscript = () => {
     const transcript = speechRecognition.conversationBuffer;
     if (!transcript) {
@@ -547,11 +627,22 @@ export function BetaBotControlPanel() {
             session_id: sessionId
           }]);
 
-          // Auto-add to show questions queue
+          // Auto-add to show questions queue for review
           await supabase.from('show_questions').insert([{
+            topic: 'BetaBot Suggestion',
             question_text: question,
-            source: 'betabot',
-            context_metadata: { conversation_context: speechRecognition.conversationBuffer }
+            source: 'betabot_conversation_helper',
+            context_metadata: {
+              generated_from: speechRecognition.conversationBuffer.substring(
+                Math.max(0, speechRecognition.conversationBuffer.length - 200)
+              ),
+              generated_at: new Date().toISOString(),
+              session_id: sessionId,
+              word_count: speechRecognition.conversationBuffer.split(/\s+/).length
+            },
+            show_on_overlay: false, // Not shown until manually approved
+            tts_generated: false,
+            position: 9999 // Put at end of queue
           }]);
         }
 
@@ -940,14 +1031,44 @@ export function BetaBotControlPanel() {
         )}
       </div>
 
-      {/* Generated Questions Preview */}
-      {generatedQuestions.length > 0 && (
-        <div className="questions-preview">
-          <h4>Recent Generated Questions</h4>
-          <div className="questions-list">
-            {generatedQuestions.slice(0, 5).map((q, index) => (
-              <div key={index} className="question-item">
-                <p>{q.text}</p>
+      {/* BetaBot Suggestions - Questions Generated from Conversation */}
+      {betaBotSuggestions.length > 0 && (
+        <div className="betabot-suggestions">
+          <div className="suggestions-header">
+            <h4>🤖 BetaBot Suggestions</h4>
+            <span className="suggestion-count">{betaBotSuggestions.length} pending</span>
+          </div>
+          <div className="suggestions-list">
+            {betaBotSuggestions.map((suggestion) => (
+              <div key={suggestion.id} className="suggestion-item">
+                <div className="suggestion-content">
+                  <p className="suggestion-text">{suggestion.question_text}</p>
+                  {suggestion.context_metadata?.generated_from && (
+                    <p className="suggestion-context">
+                      Context: "{suggestion.context_metadata.generated_from.substring(0, 80)}..."
+                    </p>
+                  )}
+                  <p className="suggestion-meta">
+                    Generated {new Date(suggestion.created_at).toLocaleTimeString()} •
+                    {suggestion.context_metadata?.word_count || 0} words analyzed
+                  </p>
+                </div>
+                <div className="suggestion-actions">
+                  <button
+                    className="btn-add-queue"
+                    onClick={() => addSuggestionToPopupQueue(suggestion.id)}
+                    title="Add to Popup Queue"
+                  >
+                    ➕ Add to Queue
+                  </button>
+                  <button
+                    className="btn-dismiss"
+                    onClick={() => dismissSuggestion(suggestion.id)}
+                    title="Dismiss suggestion"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -1279,23 +1400,128 @@ export function BetaBotControlPanel() {
           color: #9ca3af;
         }
 
-        .questions-preview h4 {
-          color: #f3f4f6;
-          font-size: 14px;
-          margin: 0 0 10px 0;
+        .betabot-suggestions {
+          margin-top: 20px;
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 8px;
+          padding: 15px;
+          border: 1px solid rgba(250, 204, 21, 0.3);
         }
 
-        .questions-list {
+        .suggestions-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 15px;
+        }
+
+        .suggestions-header h4 {
+          color: #facc15;
+          font-size: 14px;
+          margin: 0;
+          font-weight: 600;
+        }
+
+        .suggestion-count {
+          background: rgba(250, 204, 21, 0.2);
+          color: #facc15;
+          padding: 4px 10px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 600;
+        }
+
+        .suggestions-list {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 12px;
+          max-height: 400px;
+          overflow-y: auto;
         }
 
-        .question-item {
-          background: rgba(0, 0, 0, 0.3);
-          padding: 10px;
+        .suggestion-item {
+          background: rgba(17, 24, 39, 0.8);
+          padding: 12px;
+          border-radius: 8px;
+          border: 1px solid rgba(75, 85, 99, 0.5);
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 12px;
+          transition: all 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+          border-color: rgba(250, 204, 21, 0.5);
+          background: rgba(17, 24, 39, 0.95);
+        }
+
+        .suggestion-content {
+          flex: 1;
+        }
+
+        .suggestion-text {
+          color: #f3f4f6;
+          font-size: 13px;
+          margin: 0 0 8px 0;
+          line-height: 1.5;
+          font-weight: 500;
+        }
+
+        .suggestion-context {
+          color: #9ca3af;
+          font-size: 11px;
+          margin: 0 0 6px 0;
+          font-style: italic;
+          line-height: 1.4;
+        }
+
+        .suggestion-meta {
+          color: #6b7280;
+          font-size: 10px;
+          margin: 0;
+        }
+
+        .suggestion-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .btn-add-queue {
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          color: white;
+          border: none;
+          padding: 8px 12px;
           border-radius: 6px;
-          border-left: 3px solid #facc15;
+          cursor: pointer;
+          font-size: 11px;
+          font-weight: 600;
+          white-space: nowrap;
+          transition: all 0.2s ease;
+        }
+
+        .btn-add-queue:hover {
+          background: linear-gradient(135deg, #059669 0%, #047857 100%);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-dismiss {
+          background: rgba(239, 68, 68, 0.1);
+          color: #ef4444;
+          border: 1px solid rgba(239, 68, 68, 0.3);
+          padding: 6px 10px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 600;
+          transition: all 0.2s ease;
+        }
+
+        .btn-dismiss:hover {
+          background: rgba(239, 68, 68, 0.2);
+          border-color: rgba(239, 68, 68, 0.5);
         }
 
         .question-item p {
