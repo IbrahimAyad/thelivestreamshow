@@ -120,10 +120,25 @@ export function BroadcastOverlayView() {
         table: 'betabot_sessions'
       }, (payload) => {
         const session = payload.new as any
-        // Update avatar state based on session activity
-        if (session.is_active) {
+        console.log('🤖 Beta Bot session update:', session)
+
+        // Update avatar state based on current_state field
+        if (session.is_active && session.current_state) {
+          // Map session state directly to avatar state
+          const validStates = ['idle', 'listening', 'thinking', 'speaking']
+          if (validStates.includes(session.current_state)) {
+            console.log(`🎨 Setting avatar state to: ${session.current_state}`)
+            setBetaBotState(session.current_state)
+          } else {
+            // Fallback to listening if current_state is invalid
+            console.warn(`⚠️ Invalid state: ${session.current_state}, defaulting to listening`)
+            setBetaBotState('listening')
+          }
+        } else if (session.is_active) {
+          // Session active but no current_state, default to listening
           setBetaBotState('listening')
         } else {
+          // Session not active, set to idle
           setBetaBotState('idle')
         }
       })

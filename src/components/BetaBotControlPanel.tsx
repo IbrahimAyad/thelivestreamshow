@@ -64,6 +64,8 @@ export function BetaBotControlPanel() {
     }
 
     try {
+      console.log('🔴 Perplexity AI: Fetching real-time answer for:', question);
+
       const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
         headers: {
@@ -72,23 +74,41 @@ export function BetaBotControlPanel() {
         },
         body: JSON.stringify({
           model: 'llama-3.1-sonar-large-128k-online',
-          messages: [{
-            role: 'user',
-            content: question
-          }],
-          temperature: 0.2,
-          max_tokens: 300
+          messages: [
+            {
+              role: 'system',
+              content: 'You are Beta Bot, an AI co-host for a professional live stream. Provide concise, accurate, up-to-date answers (2-3 sentences maximum). Focus on recent information and real-time data. Be conversational and engaging.'
+            },
+            {
+              role: 'user',
+              content: question
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 150
         })
       });
 
       if (!response.ok) {
-        throw new Error('Perplexity API request failed');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+        console.error('❌ Perplexity API error:', errorMessage);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      return data.choices?.[0]?.message?.content || 'I couldn\'t find an answer to that question.';
+      const answer = data.choices?.[0]?.message?.content;
+
+      if (!answer || answer.trim().length === 0) {
+        throw new Error('Perplexity returned empty response');
+      }
+
+      console.log('✅ Perplexity answer received:', answer.substring(0, 100) + '...');
+      return answer.trim();
+
     } catch (error) {
-      console.error('Perplexity API error:', error);
+      console.error('❌ Perplexity API error:', error);
+      // Re-throw so caller can handle fallback
       throw error;
     }
   };
