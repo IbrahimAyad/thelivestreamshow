@@ -220,9 +220,8 @@ export function BetaBotControlPanel() {
         }
       }
 
-        // Clear AI source indicator after 2 seconds
-        setTimeout(() => setCurrentAISource(null), 2000);
-      }
+      // Clear AI source indicator after 2 seconds
+      setTimeout(() => setCurrentAISource(null), 2000);
     } catch (error) {
       console.error('Error handling question:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
