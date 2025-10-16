@@ -1,0 +1,386 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+import { Radio, PlayCircle, StopCircle, RotateCcw, AlertTriangle } from 'lucide-react'
+import type { ShowMetadata } from '../lib/supabase'
+
+export function ShowMetadataControl() {
+  const [metadata, setMetadata] = useState<ShowMetadata | null>(null)
+  const [showStartConfirm, setShowStartConfirm] = useState(false)
+  const [showEndConfirm, setShowEndConfirm] = useState(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+
+  useEffect(() => {
+    loadMetadata()
+
+    const channel = supabase
+      .channel('show_metadata_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'show_metadata'
+      }, () => {
+        loadMetadata()
+      })
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+    }
+  }, [])
+
+  const loadMetadata = async () => {
+    const { data } = await supabase
+      .from('show_metadata')
+      .select('*')
+      .single()
+    
+    if (data) setMetadata(data)
+  }
+
+  const toggleLive = async () => {
+    if (!metadata) return
+
+    const { error } = await supabase
+      .from('show_metadata')
+      .update({ 
+        is_live: !metadata.is_live,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', metadata.id)
+
+    if (error) {
+      console.error('Error toggling live status:', error)
+      alert('Failed to update live status')
+    }
+  }
+
+  const toggleRehearsal = async () => {
+    if (!metadata) return
+
+    const { error } = await supabase
+      .from('show_metadata')
+      .update({ 
+        is_rehearsal: !metadata.is_rehearsal,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', metadata.id)
+
+    if (error) {
+      console.error('Error toggling rehearsal status:', error)
+      alert('Failed to update rehearsal status')
+    }
+  }
+
+  const toggleAutoAdvance = async () => {
+    if (!metadata) return
+
+    const { error } = await supabase
+      .from('show_metadata')
+      .update({ 
+        auto_advance_enabled: !metadata.auto_advance_enabled,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', metadata.id)
+
+    if (error) {
+      console.error('Error toggling auto-advance:', error)
+      alert('Failed to update auto-advance setting')
+    }
+  }
+
+  const startShow = async () => {
+    if (!metadata) return
+
+    const { error } = await supabase
+      .from('show_metadata')
+      .update({ 
+        show_start_time: new Date().toISOString(),
+        is_live: true,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', metadata.id)
+
+    if (error) {
+      console.error('Error starting show:', error)
+      alert('Failed to start show')
+    } else {
+      setShowStartConfirm(false)
+    }
+  }
+
+  const endShow = async () => {
+    if (!metadata) return
+
+    const { error } = await supabase
+      .from('show_metadata')
+      .update({ 
+        is_live: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', metadata.id)
+
+    if (error) {
+      console.error('Error ending show:', error)
+      alert('Failed to end show')
+    } else {
+      setShowEndConfirm(false)
+    }
+  }
+
+  const resetShow = async () => {
+    if (!metadata) return
+
+    const { error } = await supabase
+      .from('show_metadata')
+      .update({ 
+        show_start_time: null,
+        total_elapsed_seconds: 0,
+        is_live: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', metadata.id)
+
+    if (error) {
+      console.error('Error resetting show:', error)
+      alert('Failed to reset show')
+    } else {
+      setShowResetConfirm(false)
+    }
+  }
+
+  const formatDateTime = (dateStr: string | null) => {
+    if (!dateStr) return 'Not started'
+    const date = new Date(dateStr)
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  if (!metadata) {
+    return (
+      <div className="bg-black border-2 border-gray-700 rounded-lg p-6">
+        <p className="text-gray-500">Loading metadata...</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-black border-2 border-orange-700 rounded-lg p-6">
+      <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+        <Radio className="w-7 h-7 text-orange-400" />
+        Show Metadata Control
+      </h2>
+
+      {/* Current Status Display */}
+      <div className="mb-4 p-4 bg-gradient-to-r from-orange-900/40 to-red-900/40 border-2 border-orange-400 rounded-lg">
+        <p className="text-xs text-orange-300 font-semibold mb-2">CURRENT STATUS</p>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-white font-semibold">Show Status:</span>
+            <span className={`px-3 py-1 rounded-full font-bold text-sm ${
+              metadata.is_live 
+                ? 'bg-red-600 text-white animate-pulse' 
+                : 'bg-gray-700 text-gray-300'
+            }`}>
+              {metadata.is_live ? '🔴 LIVE' : 'OFF AIR'}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-white font-semibold">Mode:</span>
+            <span className={`px-3 py-1 rounded-full font-bold text-sm ${
+              metadata.is_rehearsal 
+                ? 'bg-yellow-600 text-white' 
+                : 'bg-green-700 text-white'
+            }`}>
+              {metadata.is_rehearsal ? '⚠️ REHEARSAL' : '✓ PRODUCTION'}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-white font-semibold">Start Time:</span>
+            <span className="text-gray-300 text-sm">
+              {formatDateTime(metadata.show_start_time)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Toggle Controls */}
+      <div className="mb-4 space-y-3">
+        <div className="p-3 bg-gray-900/50 border border-gray-700 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white font-semibold">Live Status</p>
+              <p className="text-xs text-gray-400">Toggle broadcast live state</p>
+            </div>
+            <button
+              onClick={toggleLive}
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                metadata.is_live ? 'bg-red-600' : 'bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                  metadata.is_live ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-3 bg-gray-900/50 border border-gray-700 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white font-semibold">Rehearsal Mode</p>
+              <p className="text-xs text-gray-400">Enable for practice runs</p>
+            </div>
+            <button
+              onClick={toggleRehearsal}
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                metadata.is_rehearsal ? 'bg-yellow-600' : 'bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                  metadata.is_rehearsal ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-3 bg-gray-900/50 border border-gray-700 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white font-semibold">Auto-Advance Segments</p>
+              <p className="text-xs text-gray-400">Automatic segment transitions</p>
+            </div>
+            <button
+              onClick={toggleAutoAdvance}
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                metadata.auto_advance_enabled ? 'bg-green-600' : 'bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                  metadata.auto_advance_enabled ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="space-y-2">
+        {/* Start Show Button */}
+        {!showStartConfirm ? (
+          <button
+            onClick={() => setShowStartConfirm(true)}
+            disabled={metadata.is_live}
+            className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+          >
+            <PlayCircle className="w-5 h-5" />
+            Start Show
+          </button>
+        ) : (
+          <div className="p-3 bg-green-900/40 border-2 border-green-500 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-400" />
+              <p className="text-sm font-semibold text-white">Start the show now?</p>
+            </div>
+            <p className="text-xs text-gray-300 mb-3">This will set start time and go LIVE</p>
+            <div className="flex gap-2">
+              <button
+                onClick={startShow}
+                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all"
+              >
+                Confirm Start
+              </button>
+              <button
+                onClick={() => setShowStartConfirm(false)}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* End Show Button */}
+        {!showEndConfirm ? (
+          <button
+            onClick={() => setShowEndConfirm(true)}
+            disabled={!metadata.is_live}
+            className="w-full py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+          >
+            <StopCircle className="w-5 h-5" />
+            End Show
+          </button>
+        ) : (
+          <div className="p-3 bg-orange-900/40 border-2 border-orange-500 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-400" />
+              <p className="text-sm font-semibold text-white">End the show?</p>
+            </div>
+            <p className="text-xs text-gray-300 mb-3">This will set live status to OFF</p>
+            <div className="flex gap-2">
+              <button
+                onClick={endShow}
+                className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg transition-all"
+              >
+                Confirm End
+              </button>
+              <button
+                onClick={() => setShowEndConfirm(false)}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Reset Show Button */}
+        {!showResetConfirm ? (
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+          >
+            <RotateCcw className="w-5 h-5" />
+            Reset Show
+          </button>
+        ) : (
+          <div className="p-3 bg-red-900/40 border-2 border-red-500 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-400" />
+              <p className="text-sm font-semibold text-white">⚠️ Reset all show data?</p>
+            </div>
+            <p className="text-xs text-gray-300 mb-3">This will clear start time, timers, and set to OFF</p>
+            <div className="flex gap-2">
+              <button
+                onClick={resetShow}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all"
+              >
+                Confirm Reset
+              </button>
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 p-3 bg-orange-900/20 border border-orange-500/30 rounded text-sm text-orange-300">
+        <p className="font-semibold">⚠️ Production Controls</p>
+        <p className="text-xs mt-1">Use these controls carefully during live broadcasts</p>
+      </div>
+    </div>
+  )
+}
