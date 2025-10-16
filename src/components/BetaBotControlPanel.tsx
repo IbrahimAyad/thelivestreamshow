@@ -896,7 +896,9 @@ export function BetaBotControlPanel() {
       </div>
       )}
 
-      {/* Audio Source Selection */}
+      {/* Audio Source Selection - Hidden for now, Browser Mic is the recommended solution */}
+      {/* OBS Audio mode kept in code for future use cases but hidden from UI */}
+      {false && (
       <div className="audio-source-section">
         <div className="section-header">
           <label>🎤 Audio Input Source</label>
@@ -926,6 +928,7 @@ export function BetaBotControlPanel() {
           </button>
         </div>
       </div>
+      )}
 
       {/* Microphone Selection - Only show when Browser mode */}
       {audioSource === 'browser' && (
