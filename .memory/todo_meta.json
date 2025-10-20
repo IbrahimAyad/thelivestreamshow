@@ -1,0 +1,20 @@
+{
+  "todos": {
+    "Coordinator": {
+      "1": {
+        "id": "1",
+        "content": "Design UI/UX for Smart YouTube Video Player feature",
+        "details": "Design comprehensive interface including:\n- Video Queue Manager (add, remove, reorder videos)\n- YouTube Search & Browse interface\n- Smart Recommendations panel\n- Scheduling interface (set play times)\n- OBS Player View (broadcast display)\n- Analytics dashboard (track engagement)\n- Control panel (play, pause, skip, volume)\n- Video preview with thumbnail and metadata",
+        "status": "pending",
+        "priority": "high"
+      },
+      "2": {
+        "id": "2",
+        "content": "Build Smart YouTube Video Player feature",
+        "details": "Implement full-stack application:\n- YouTube API integration (search, metadata, embed)\n- Video queue management system\n- Supabase database (video queue, play history, preferences, engagement data)\n- Smart recommendation engine (category-based, history-based, engagement-based)\n- Scheduling system (auto-play at specified times)\n- OBS broadcast view integration\n- Control dashboard with real-time sync\n- Analytics and tracking\n- Start/end time markers for video clips",
+        "status": "pending",
+        "priority": "high"
+      }
+    }
+  }
+}
