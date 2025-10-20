@@ -14,15 +14,25 @@
 
 ## New Feature Request: Smart YouTube Video Player
 **Goal**: Preload YouTube videos for stream reactions with smart recommendations and scheduled playback
+**Integration**: This will be a NEW FEATURE integrated INTO the existing project (not standalone)
 
 ### Requirements
 1. Preload YouTube videos to react to
 2. Smart recommendation system (learns over time)
 3. Scheduled auto-play at specific times
 4. Simple, powerful, creative design
+5. Must integrate with existing dashboard and brand design
+6. Must follow existing project structure and patterns
+
+### Integration Points
+- Add new route to existing React app (e.g., /video-player)
+- Integrate with existing Supabase instance
+- Add YouTube player to /broadcast view for OBS
+- Follow existing brand colors: Red #EF4444, Black #000000, Yellow #EAB308, Grey #6B7280, White #FFFFFF
+- Use existing tech stack: React 18.3 + TypeScript + Tailwind CSS + Supabase
 
 ### Credentials
 - YouTube API Key: AIzaSyAx49jehLQgehTn7VKMvktzOMcuhqfOyTw
 
 ### Status
-- Planning phase
+- Planning phase - awaiting user confirmation
