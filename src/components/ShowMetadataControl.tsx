@@ -38,11 +38,13 @@ export function ShowMetadataControl() {
   }
 
   const toggleLive = async () => {
+    console.log('🔴 toggleLive clicked!')
     if (!metadata) return
 
+    console.log('🔴 Toggling live from', metadata.is_live, 'to', !metadata.is_live)
     const { error } = await supabase
       .from('show_metadata')
-      .update({ 
+      .update({
         is_live: !metadata.is_live,
         updated_at: new Date().toISOString()
       })
@@ -51,15 +53,20 @@ export function ShowMetadataControl() {
     if (error) {
       console.error('Error toggling live status:', error)
       alert('Failed to update live status')
+    } else {
+      console.log('✅ Live status updated successfully')
+      loadMetadata() // Immediately reload to update UI
     }
   }
 
   const toggleRehearsal = async () => {
+    console.log('⚠️ toggleRehearsal clicked!')
     if (!metadata) return
 
+    console.log('⚠️ Toggling rehearsal from', metadata.is_rehearsal, 'to', !metadata.is_rehearsal)
     const { error } = await supabase
       .from('show_metadata')
-      .update({ 
+      .update({
         is_rehearsal: !metadata.is_rehearsal,
         updated_at: new Date().toISOString()
       })
@@ -68,15 +75,20 @@ export function ShowMetadataControl() {
     if (error) {
       console.error('Error toggling rehearsal status:', error)
       alert('Failed to update rehearsal status')
+    } else {
+      console.log('✅ Rehearsal status updated successfully')
+      loadMetadata() // Immediately reload to update UI
     }
   }
 
   const toggleAutoAdvance = async () => {
+    console.log('🤖 toggleAutoAdvance clicked!')
     if (!metadata) return
 
+    console.log('🤖 Toggling AI Automation from', metadata.auto_advance_enabled, 'to', !metadata.auto_advance_enabled)
     const { error } = await supabase
       .from('show_metadata')
-      .update({ 
+      .update({
         auto_advance_enabled: !metadata.auto_advance_enabled,
         updated_at: new Date().toISOString()
       })
@@ -85,6 +97,9 @@ export function ShowMetadataControl() {
     if (error) {
       console.error('Error toggling auto-advance:', error)
       alert('Failed to update auto-advance setting')
+    } else {
+      console.log('✅ AI Automation updated successfully')
+      loadMetadata() // Immediately reload to update UI
     }
   }
 
@@ -93,7 +108,7 @@ export function ShowMetadataControl() {
 
     const { error } = await supabase
       .from('show_metadata')
-      .update({ 
+      .update({
         show_start_time: new Date().toISOString(),
         is_live: true,
         updated_at: new Date().toISOString()
@@ -105,6 +120,7 @@ export function ShowMetadataControl() {
       alert('Failed to start show')
     } else {
       setShowStartConfirm(false)
+      loadMetadata() // Immediately reload to update UI
     }
   }
 
@@ -113,7 +129,7 @@ export function ShowMetadataControl() {
 
     const { error } = await supabase
       .from('show_metadata')
-      .update({ 
+      .update({
         is_live: false,
         updated_at: new Date().toISOString()
       })
@@ -124,6 +140,7 @@ export function ShowMetadataControl() {
       alert('Failed to end show')
     } else {
       setShowEndConfirm(false)
+      loadMetadata() // Immediately reload to update UI
     }
   }
 
@@ -132,7 +149,7 @@ export function ShowMetadataControl() {
 
     const { error } = await supabase
       .from('show_metadata')
-      .update({ 
+      .update({
         show_start_time: null,
         total_elapsed_seconds: 0,
         is_live: false,
@@ -145,6 +162,7 @@ export function ShowMetadataControl() {
       alert('Failed to reset show')
     } else {
       setShowResetConfirm(false)
+      loadMetadata() // Immediately reload to update UI
     }
   }
 
@@ -217,9 +235,10 @@ export function ShowMetadataControl() {
             </div>
             <button
               onClick={toggleLive}
-              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors cursor-pointer z-10 ${
                 metadata.is_live ? 'bg-red-600' : 'bg-gray-600'
               }`}
+              style={{ pointerEvents: 'auto' }}
             >
               <span
                 className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
@@ -238,9 +257,10 @@ export function ShowMetadataControl() {
             </div>
             <button
               onClick={toggleRehearsal}
-              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors cursor-pointer z-10 ${
                 metadata.is_rehearsal ? 'bg-yellow-600' : 'bg-gray-600'
               }`}
+              style={{ pointerEvents: 'auto' }}
             >
               <span
                 className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
@@ -254,14 +274,15 @@ export function ShowMetadataControl() {
         <div className="p-3 bg-gray-900/50 border border-gray-700 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white font-semibold">Auto-Advance Segments</p>
-              <p className="text-xs text-gray-400">Automatic segment transitions</p>
+              <p className="text-white font-semibold">🤖 AI Automation</p>
+              <p className="text-xs text-gray-400">Master switch: Producer AI, Auto-Director, AI Context Analyzer</p>
             </div>
             <button
               onClick={toggleAutoAdvance}
-              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-                metadata.auto_advance_enabled ? 'bg-green-600' : 'bg-gray-600'
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors cursor-pointer z-10 ${
+                metadata.auto_advance_enabled ? 'bg-purple-600' : 'bg-gray-600'
               }`}
+              style={{ pointerEvents: 'auto' }}
             >
               <span
                 className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${

@@ -5,6 +5,14 @@ export interface F5TTSSettings {
   enabled: boolean;
 }
 
+export interface PiperVoice {
+  name: string;
+  model_file: string;
+  available: boolean;
+  gender: 'female' | 'male';
+  quality: 'low' | 'medium' | 'high';
+}
+
 export interface UseF5TTS {
   speak: (text: string, onStateChange?: (state: 'speaking' | 'idle') => void) => Promise<void>;
   stop: () => void;
@@ -12,6 +20,10 @@ export interface UseF5TTS {
   isConnected: boolean;
   error: string | null;
   checkConnection: () => Promise<boolean>;
+  voices: PiperVoice[];
+  selectedVoice: PiperVoice | null;
+  setSelectedVoice: (voice: PiperVoice) => void;
+  loadVoices: () => Promise<void>;
 }
 
 const DEFAULT_API_URL = 'http://localhost:8000';
@@ -20,7 +32,9 @@ export function useF5TTS(): UseF5TTS {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+  const [voices, setVoices] = useState<PiperVoice[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<PiperVoice | null>(null);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const onStateChangeRef = useRef<((state: 'speaking' | 'idle') => void) | undefined>();
   const apiUrl = import.meta.env.VITE_F5_TTS_API_URL || DEFAULT_API_URL;
@@ -36,15 +50,15 @@ export function useF5TTS(): UseF5TTS {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       const response = await fetch(`${apiUrl}/health`, {
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
       const connected = response.ok;
       setIsConnected(connected);
-      
+
       if (connected) {
         console.log('F5-TTS: Server connected at', apiUrl);
         setError(null);
@@ -52,7 +66,7 @@ export function useF5TTS(): UseF5TTS {
         console.warn('F5-TTS: Server returned non-OK status');
         setError('Server not healthy');
       }
-      
+
       return connected;
     } catch (err) {
       console.error('F5-TTS: Connection check failed:', err);
@@ -61,6 +75,40 @@ export function useF5TTS(): UseF5TTS {
       return false;
     }
   }, [apiUrl]);
+
+  const loadVoices = useCallback(async (): Promise<void> => {
+    try {
+      console.log('F5-TTS: Loading available voices...');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(`${apiUrl}/voices`, {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error('Failed to load voices');
+      }
+
+      const data = await response.json();
+      const availableVoices = data.voices.filter((v: PiperVoice) => v.available);
+
+      console.log('F5-TTS: Loaded voices:', availableVoices);
+      setVoices(availableVoices);
+
+      // Set default voice if none selected (prefer danny-low)
+      if (!selectedVoice && availableVoices.length > 0) {
+        const dannyVoice = availableVoices.find((v: PiperVoice) => v.name === 'danny-low');
+        setSelectedVoice(dannyVoice || availableVoices[0]);
+        console.log('F5-TTS: Set default voice to', dannyVoice ? 'danny-low' : availableVoices[0].name);
+      }
+    } catch (err) {
+      console.error('F5-TTS: Failed to load voices:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load voices');
+    }
+  }, [apiUrl, selectedVoice]);
 
   const speak = useCallback(async (text: string, onStateChange?: (state: 'speaking' | 'idle') => void) => {
     console.log('F5-TTS: speak() called with text:', text.substring(0, 50) + '...');
@@ -90,7 +138,8 @@ export function useF5TTS(): UseF5TTS {
         body: JSON.stringify({
           text: text,
           reference_audio: null,
-          reference_text: null
+          reference_text: null,
+          voice: selectedVoice?.name || 'lessac-medium'
         }),
         signal: controller.signal
       });
@@ -151,7 +200,7 @@ export function useF5TTS(): UseF5TTS {
       // Propagate error so caller can handle fallback
       throw new Error(`F5-TTS failed: ${errorMessage}`);
     }
-  }, [apiUrl]);
+  }, [apiUrl, selectedVoice]);
 
   const stop = useCallback(() => {
     if (audioRef.current) {
@@ -170,6 +219,10 @@ export function useF5TTS(): UseF5TTS {
     isSpeaking,
     isConnected,
     error,
-    checkConnection
+    checkConnection,
+    voices,
+    selectedVoice,
+    setSelectedVoice,
+    loadVoices
   };
 }

@@ -76,18 +76,18 @@ export default function EpisodeInfoDisplay() {
       <style>{`
         .episode-info-display {
           position: fixed;
-          bottom: 24px;
-          right: 24px;
+          bottom: 30px;
+          right: 30px;
           z-index: 100;
         }
 
         .episode-info-minimal {
           background: rgba(15, 15, 15, 0.92);
-          border-right: 3px solid #22D3EE;
+          border-right: 3px solid #FCD34D;
           border-radius: 2px;
           padding: 12px 20px;
           backdrop-filter: blur(8px);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
           text-align: right;
           min-width: 200px;
         }
@@ -95,7 +95,7 @@ export default function EpisodeInfoDisplay() {
         .episode-number {
           font-size: 13px;
           font-weight: 600;
-          color: #22D3EE;
+          color: #FCD34D;
           letter-spacing: 0.5px;
           margin-bottom: 4px;
         }

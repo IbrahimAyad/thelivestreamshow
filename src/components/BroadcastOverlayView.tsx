@@ -7,8 +7,12 @@ import { MediaBrowserOverlay } from './MediaBrowserOverlay'
 import LowerThirdOverlay from './LowerThirdOverlay'
 import EpisodeInfoDisplay from './EpisodeInfoDisplay'
 import { BroadcastGraphicsDisplay } from './BroadcastGraphicsDisplay'
+import { useTTS } from '../hooks/useTTS'
+import { useF5TTS } from '../hooks/useF5TTS'
 
 export function BroadcastOverlayView() {
+  const tts = useTTS()
+  const f5TTS = useF5TTS()
   const [activeSegment, setActiveSegment] = useState<ShowSegment | null>(null)
   const [allSegments, setAllSegments] = useState<ShowSegment[]>([])
   const [isLive, setIsLive] = useState(false)
@@ -29,22 +33,40 @@ export function BroadcastOverlayView() {
   
   // Beta Bot Avatar state
   const [betaBotState, setBetaBotState] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle')
+  const [betaBotMood, setBetaBotMood] = useState<'neutral' | 'bored' | 'amused' | 'spicy'>('neutral')
+  const [betaBotMovement, setBetaBotMovement] = useState<'home' | 'run_left' | 'run_right' | 'bounce' | 'hide'>('home')
+  const [showIncoming, setShowIncoming] = useState(false)
+  const [incomingCount, setIncomingCount] = useState(0)
   
   // Visual Content state (legacy - keeping for backward compatibility)
   const [visualContent, setVisualContent] = useState<{images?: string[]; searchQuery?: string} | null>(null)
 
   // Media Browser Overlay state (new approach)
-  const [mediaBrowser, setMediaBrowser] = useState<{query: string; type: 'images' | 'videos'} | null>(null)
+  const [mediaBrowser, setMediaBrowser] = useState<{
+    query: string;
+    type: 'images' | 'videos';
+    metadata?: {
+      recency?: 'day' | 'week' | 'month' | 'year';
+      domains?: string[];
+      model?: 'sonar' | 'sonar-pro';
+    };
+  } | null>(null)
 
-  // Apply broadcast mode styles
+  // Apply broadcast mode styles and load voices
   useEffect(() => {
     document.body.classList.add('broadcast-mode')
     document.documentElement.classList.add('broadcast-mode')
+
+    // Load available voices for display
+    if (f5TTS.isConnected) {
+      f5TTS.loadVoices()
+    }
+
     return () => {
       document.body.classList.remove('broadcast-mode')
       document.documentElement.classList.remove('broadcast-mode')
     }
-  }, [])
+  }, [f5TTS.isConnected])
 
   // Load initial data and subscribe to changes
   useEffect(() => {
@@ -126,11 +148,26 @@ export function BroadcastOverlayView() {
       }, (payload) => {
         const browserRequest = payload.new as any
         console.log('🌐 Media browser request received:', browserRequest)
+        console.log('📋 Query:', browserRequest.search_query)
+        console.log('🎯 Content Type:', browserRequest.content_type)
+        console.log('👁️ Is Visible:', browserRequest.is_visible)
 
         if (browserRequest.is_visible) {
+          const overlayType = browserRequest.content_type
+          const metadata = browserRequest.metadata
+
+          console.log('✅ Setting MediaBrowser overlay with type:', overlayType)
+          console.log('ℹ️ If type is "images" → Perplexity AI search')
+          console.log('ℹ️ If type is "videos" → YouTube/Reddit search')
+
+          if (metadata) {
+            console.log('🎤 Voice-activated filters received:', metadata)
+          }
+
           setMediaBrowser({
             query: browserRequest.search_query,
-            type: browserRequest.content_type
+            type: overlayType,
+            metadata: metadata || undefined
           })
         }
       })
@@ -180,6 +217,60 @@ export function BroadcastOverlayView() {
     }
   }, [])
 
+  // Subscribe to Beta Bot mood changes
+  useEffect(() => {
+    // Load initial mood state
+    const loadMood = async () => {
+      console.log('🔄 [BROADCAST] Loading initial mood state...')
+      const { data, error } = await supabase
+        .from('betabot_mood')
+        .select('*')
+        .limit(1)
+        .maybeSingle()
+
+      if (error) {
+        console.error('❌ [BROADCAST] Failed to load mood:', error)
+        return
+      }
+
+      if (data) {
+        console.log('✅ [BROADCAST] Initial mood loaded:', data)
+        setBetaBotMood(data.mood || 'neutral')
+        setBetaBotMovement(data.movement || 'home')
+        setShowIncoming(data.show_incoming || false)
+        setIncomingCount(data.incoming_count || 0)
+      } else {
+        console.warn('⚠️ [BROADCAST] No mood data found')
+      }
+    }
+
+    loadMood()
+
+    console.log('📡 [BROADCAST] Setting up mood realtime subscription...')
+    const moodChannel = supabase
+      .channel('betabot_mood_broadcast_channel')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'betabot_mood'
+      }, (payload) => {
+        const moodData = payload.new as any
+        console.log('🎭 [BROADCAST] Beta Bot mood update received:', moodData)
+        setBetaBotMood(moodData.mood || 'neutral')
+        setBetaBotMovement(moodData.movement || 'home')
+        setShowIncoming(moodData.show_incoming || false)
+        setIncomingCount(moodData.incoming_count || 0)
+      })
+      .subscribe((status) => {
+        console.log('📡 [BROADCAST] Mood channel status:', status)
+      })
+
+    return () => {
+      console.log('🔌 [BROADCAST] Unsubscribing from mood channel')
+      moodChannel.unsubscribe()
+    }
+  }, [])
+
   // Track audio playback state
   useEffect(() => {
     const audio = audioRef.current
@@ -212,6 +303,26 @@ export function BroadcastOverlayView() {
 
     return () => clearInterval(interval)
   }, [showStartTime, isLive])
+
+  // Show timeline when stream goes live
+  useEffect(() => {
+    if (isLive && allSegments.length > 0) {
+      // Clear any existing timeout
+      if (timelineTimeout) {
+        clearTimeout(timelineTimeout)
+      }
+
+      // Show timeline
+      setShowTimeline(true)
+
+      // Hide after 7 seconds
+      const timeout = setTimeout(() => {
+        setShowTimeline(false)
+      }, 7000)
+
+      setTimelineTimeout(timeout)
+    }
+  }, [isLive, allSegments.length])
 
   // Calculate next segment and show/hide Next Up preview
   useEffect(() => {
@@ -310,11 +421,11 @@ export function BroadcastOverlayView() {
       
       // Show timeline
       setShowTimeline(true)
-      
-      // Hide after 3 seconds
+
+      // Hide after 7 seconds
       const timeout = setTimeout(() => {
         setShowTimeline(false)
-      }, 3000)
+      }, 7000)
       
       setTimelineTimeout(timeout)
     }
@@ -330,9 +441,34 @@ export function BroadcastOverlayView() {
 
   // BetaBot Popup handlers
   const handlePopupPlay = async (question: ShowQuestion) => {
-    if (question.tts_audio_url && audioRef.current) {
-      audioRef.current.src = question.tts_audio_url
-      audioRef.current.play().catch(console.error)
+    try {
+      // Check TTS provider setting from localStorage
+      const ttsProvider = localStorage.getItem('betabot_tts_provider') as 'browser' | 'f5tts' || 'browser'
+
+      // Try Piper TTS first if enabled and connected
+      if (ttsProvider === 'f5tts' && f5TTS.isConnected) {
+        console.log('🎤 Using Piper TTS to play BetaBot question')
+        await f5TTS.speak(question.question_text)
+        console.log('✅ Piper TTS playback started')
+        return
+      }
+
+      // Fallback to pre-recorded audio if available
+      if (question.tts_audio_url && audioRef.current) {
+        console.log('🔊 Using pre-recorded TTS audio')
+        audioRef.current.src = question.tts_audio_url
+        audioRef.current.play().catch(console.error)
+        return
+      }
+
+      // Last fallback: use browser TTS
+      console.log('🗣️ Using browser TTS as fallback')
+      tts.speak(question.question_text)
+
+    } catch (error) {
+      console.error('❌ Error playing BetaBot question:', error)
+      // Try browser TTS as final fallback
+      tts.speak(question.question_text)
     }
   }
 
@@ -361,15 +497,15 @@ export function BroadcastOverlayView() {
   }
 
   return (
-    <div 
+    <div
       className="premium-broadcast-container"
-      style={{ 
-        width: '1920px', 
+      style={{
+        width: '1920px',
         height: '1080px',
         position: 'fixed',
         top: 0,
         left: 0,
-        background: '#000000',
+        background: 'radial-gradient(ellipse at center, #0a0a0a 0%, #000000 100%)',
       }}
     >
       {/* Hidden audio element */}
@@ -378,14 +514,6 @@ export function BroadcastOverlayView() {
       {/* ULTRA-MINIMAL STATUS BAR - 24px height */}
       <div className="status-bar">
         <div className="status-bar-content">
-          {/* Live Indicator */}
-          {isLive && (
-            <div className="live-indicator">
-              <div className="live-dot" />
-              <span>LIVE</span>
-            </div>
-          )}
-          
           {/* Total Show Timer */}
           {isLive && showStartTime && (
             <div className="show-timer">
@@ -419,14 +547,14 @@ export function BroadcastOverlayView() {
         <div className="timeline-container">
           <div className="timeline-content">
             {allSegments.map((segment, index) => (
-              <div 
+              <div
                 key={segment.id}
                 className={`timeline-segment ${
                   segment.id === activeSegment?.id ? 'active' : ''
                 } ${index < allSegments.findIndex(s => s.id === activeSegment?.id) ? 'completed' : ''}`}
               >
-                <div className="segment-marker" />
                 <span className="segment-name">{segment.segment_name}</span>
+                <div className="segment-marker" />
               </div>
             ))}
           </div>
@@ -444,11 +572,85 @@ export function BroadcastOverlayView() {
       {/* BETA BOT AVATAR - Top-right corner */}
       <div style={{
         position: 'fixed',
-        top: '30px',
-        right: '30px',
+        top: '40px',
+        right: '40px',
         zIndex: 95
       }}>
-        <BetaBotAvatar state={betaBotState} size={120} />
+        <BetaBotAvatar
+          state={betaBotState}
+          size={160}
+          streamStatus={isLive ? 'live' : 'off_air'}
+          mood={betaBotMood}
+          movement={betaBotMovement}
+          showIncoming={showIncoming}
+          incomingCount={incomingCount}
+        />
+
+        {/* LIVE INDICATOR & TIMER - Under BetaBot */}
+        {isLive && showStartTime && (
+          <div style={{
+            marginTop: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            {/* Live Badge */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'rgba(239, 68, 68, 0.15)',
+              backdropFilter: 'blur(10px)',
+              border: '2px solid #EF4444',
+              borderRadius: '20px',
+              padding: '6px 16px',
+              boxShadow: '0 0 20px rgba(239, 68, 68, 0.4)'
+            }}>
+              <div style={{
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                background: '#EF4444',
+                animation: 'pulse-live 1.5s ease-in-out infinite'
+              }} />
+              <span style={{
+                fontSize: '14px',
+                fontWeight: 700,
+                letterSpacing: '1.5px',
+                color: '#EF4444',
+                textTransform: 'uppercase'
+              }}>LIVE</span>
+            </div>
+
+            {/* Stream Timer */}
+            <div style={{
+              background: 'rgba(0, 0, 0, 0.8)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(252, 211, 77, 0.3)',
+              borderRadius: '12px',
+              padding: '8px 20px',
+              minWidth: '120px',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                fontSize: '10px',
+                fontWeight: 600,
+                color: '#FCD34D',
+                letterSpacing: '1px',
+                marginBottom: '2px',
+                textTransform: 'uppercase'
+              }}>Stream Time</div>
+              <div style={{
+                fontSize: '20px',
+                fontWeight: 700,
+                color: '#FFFFFF',
+                fontVariantNumeric: 'tabular-nums',
+                letterSpacing: '1px'
+              }}>{formatTime(totalElapsed)}</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* VISUAL CONTENT DISPLAY - Side panel (legacy) */}
@@ -466,7 +668,76 @@ export function BroadcastOverlayView() {
           query={mediaBrowser.query}
           type={mediaBrowser.type}
           onClose={() => setMediaBrowser(null)}
-          durationSeconds={30}
+          durationSeconds={60}
+          metadata={mediaBrowser.metadata}
+          onReadAloud={async (text) => {
+            console.log('🔊 Reading answer aloud...')
+            console.log('🔌 F5TTS Connection Status:', f5TTS.isConnected)
+            console.log('🎙️ Selected Voice:', f5TTS.selectedVoice)
+
+            try {
+              // Use Piper TTS if connected, fallback to browser TTS
+              if (f5TTS.isConnected) {
+                console.log('🎤 Using Piper TTS for Read Aloud')
+                await f5TTS.speak(text)
+              } else {
+                console.log('🗣️ Using browser TTS for Read Aloud (Piper not connected)')
+                console.log('⚠️ Reason: f5TTS.isConnected =', f5TTS.isConnected)
+                tts.speak(text)
+              }
+            } catch (error) {
+              console.error('❌ Failed to read aloud:', error)
+              console.log('🔄 Falling back to browser TTS')
+              tts.speak(text) // Fallback to browser TTS
+            }
+          }}
+          onSummarize={async (text) => {
+            console.log('📝 Creating summary...')
+            console.log('🔌 F5TTS Connection Status:', f5TTS.isConnected)
+            console.log('🎙️ Selected Voice:', f5TTS.selectedVoice)
+
+            try {
+              const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
+                },
+                body: JSON.stringify({
+                  model: 'gpt-4',
+                  messages: [
+                    {
+                      role: 'system',
+                      content: 'You are a helpful assistant that creates concise summaries. Summarize in 2-3 sentences.'
+                    },
+                    {
+                      role: 'user',
+                      content: `Summarize this in 2-3 sentences:\n\n${text}`
+                    }
+                  ],
+                  temperature: 0.3,
+                  max_tokens: 150
+                })
+              })
+              const data = await response.json()
+              const summary = data.choices[0].message.content
+              console.log('✅ Summary created:', summary)
+
+              // Use Piper TTS if connected, fallback to browser TTS
+              if (f5TTS.isConnected) {
+                console.log('🎤 Using Piper TTS for summary')
+                await f5TTS.speak(summary)
+              } else {
+                console.log('🗣️ Using browser TTS for summary (Piper not connected)')
+                console.log('⚠️ Reason: f5TTS.isConnected =', f5TTS.isConnected)
+                tts.speak(summary)
+              }
+            } catch (error) {
+              console.error('❌ Failed to create summary:', error)
+              console.log('🔄 Falling back to browser TTS')
+              tts.speak('Sorry, I could not create a summary.')
+            }
+          }}
         />
       )}
 
@@ -493,7 +764,7 @@ export function BroadcastOverlayView() {
         /* Premium Color Palette */
         :root {
           --accent-red: #EF4444;
-          --accent-yellow: #FBBF24;
+          --accent-yellow: #FCD34D;
           --accent-gold: #F59E0B;
           --bg-black: #000000;
           --bg-gray-900: #0F0F0F;
@@ -503,12 +774,25 @@ export function BroadcastOverlayView() {
           --text-gray-300: #D1D5DB;
           --text-gray-500: #6B7280;
           --border-gray: #2A2A2A;
-          --border-accent: #FBBF24;
+          --border-accent: #FCD34D;
         }
 
         .premium-broadcast-container {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
           overflow: hidden;
+          position: relative;
+        }
+
+        .premium-broadcast-container::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          pointer-events: none;
+          background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.4) 100%);
+          z-index: 1;
         }
 
         /* STATUS BAR - Ultra minimal, 24px */
@@ -584,7 +868,8 @@ export function BroadcastOverlayView() {
           right: 0;
           background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.85));
           backdrop-filter: blur(10px);
-          border-top: 2px solid var(--accent-yellow);
+          border-top: 1px solid var(--accent-yellow);
+          box-shadow: 0 -1px 8px rgba(252, 211, 77, 0.3);
           z-index: 90;
           animation: slideUp 300ms ease-out;
         }
@@ -601,32 +886,33 @@ export function BroadcastOverlayView() {
         }
 
         .question-content {
-          padding: 48px 80px;
+          padding: 32px 80px;
           max-width: 1600px;
           margin: 0 auto;
+          text-align: center;
         }
 
         .segment-topic {
-          font-size: 20px;
+          font-size: 18px;
           font-weight: 700;
           letter-spacing: 1px;
           text-transform: uppercase;
           color: var(--accent-yellow);
-          margin: 0 0 16px 0;
+          margin: 0 0 12px 0;
         }
 
         .question-text {
-          font-size: 36px;
+          font-size: 38px;
           font-weight: 600;
           line-height: 1.8;
           color: var(--text-white);
           margin: 0;
         }
 
-        /* TIMELINE - Auto-show/hide */
+        /* TIMELINE - Integrated with yellow line */
         .timeline-container {
           position: fixed;
-          bottom: 20px;
+          bottom: 0;
           left: 50%;
           transform: translateX(-50%);
           z-index: 95;
@@ -647,50 +933,58 @@ export function BroadcastOverlayView() {
         .timeline-content {
           display: flex;
           align-items: center;
-          gap: 12px;
-          background: rgba(0, 0, 0, 0.8);
-          padding: 12px 24px;
-          border-radius: 24px;
-          border: 1px solid var(--border-accent);
-          backdrop-filter: blur(10px);
+          gap: 0;
+          position: relative;
         }
 
         .timeline-segment {
           display: flex;
+          flex-direction: column;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
           position: relative;
+          padding: 0 20px;
         }
 
+        /* The connecting line between segments */
         .timeline-segment:not(:last-child)::after {
           content: '';
           position: absolute;
-          right: -12px;
-          width: 12px;
-          height: 2px;
-          background: var(--border-gray);
+          bottom: 0;
+          right: -2px;
+          width: 40px;
+          height: 1px;
+          background: rgba(107, 114, 128, 0.5);
+          z-index: -1;
         }
 
         .timeline-segment.active::after {
           background: var(--accent-yellow);
+          box-shadow: 0 0 8px var(--accent-yellow);
         }
 
         .timeline-segment.completed::after {
           background: var(--accent-yellow);
         }
 
+        /* Segment marker dots */
         .segment-marker {
-          width: 10px;
-          height: 10px;
+          width: 12px;
+          height: 12px;
           border-radius: 50%;
-          background: var(--bg-gray-700);
-          border: 2px solid var(--border-gray);
+          background: rgba(26, 26, 26, 0.9);
+          border: 2px solid rgba(107, 114, 128, 0.6);
+          transition: all 300ms ease;
+          margin-top: -1px;
         }
 
         .timeline-segment.active .segment-marker {
           background: var(--accent-yellow);
           border-color: var(--accent-yellow);
-          box-shadow: 0 0 10px var(--accent-yellow);
+          box-shadow: 0 0 16px var(--accent-yellow), 0 0 32px rgba(251, 191, 36, 0.4);
+          width: 16px;
+          height: 16px;
+          margin-top: -2px;
         }
 
         .timeline-segment.completed .segment-marker {
@@ -698,20 +992,25 @@ export function BroadcastOverlayView() {
           border-color: var(--accent-gold);
         }
 
+        /* Segment names */
         .segment-name {
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 600;
-          color: var(--text-gray-500);
+          color: rgba(107, 114, 128, 0.6);
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.8px;
+          white-space: nowrap;
+          transition: all 300ms ease;
         }
 
         .timeline-segment.active .segment-name {
           color: var(--accent-yellow);
+          font-size: 12px;
+          text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
         }
 
         .timeline-segment.completed .segment-name {
-          color: var(--text-gray-300);
+          color: rgba(209, 213, 219, 0.5);
         }
 
         /* NEXT UP PREVIEW - Shows 20s before segment transition */

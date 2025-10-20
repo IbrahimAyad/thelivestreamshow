@@ -1,13 +1,32 @@
 import { useState, useEffect } from 'react'
 import { supabase, BroadcastGraphic } from '../lib/supabase'
-import { Radio, Coffee, Clock, AlertTriangle, Image } from 'lucide-react'
+import {
+  Radio, Coffee, Clock, AlertTriangle, Image,
+  BarChart3, Trophy, MessageSquare, Sparkles,
+  Award, Zap, UserPlus, Gauge, Swords
+} from 'lucide-react'
 
 const GRAPHIC_CONFIGS = [
-  { type: 'live_indicator', label: 'LIVE', icon: Radio, color: 'red' },
-  { type: 'brb', label: 'BRB', icon: Coffee, color: 'yellow' },
-  { type: 'starting_soon', label: 'Starting Soon', icon: Clock, color: 'blue' },
-  { type: 'tech_difficulties', label: 'Tech Issues', icon: AlertTriangle, color: 'orange' },
-  { type: 'logo', label: 'Logo', icon: Image, color: 'white' }
+  // Core Graphics
+  { type: 'starting_soon', label: 'Starting Soon', icon: Clock, color: 'blue', htmlFile: '/stream-starting-soon.html' },
+  { type: 'brb', label: 'BRB', icon: Coffee, color: 'yellow', htmlFile: '/stream-brb-screen.html' },
+  { type: 'tech_difficulties', label: 'Tech Issues', icon: AlertTriangle, color: 'orange', htmlFile: '/stream-technical-issues.html' },
+  { type: 'outro', label: 'OUTRO', icon: Radio, color: 'red', htmlFile: '/stream-outro-screen.html' },
+
+  // NEW: Interactive Graphics with Audio
+  { type: 'poll', label: 'Poll/Vote', icon: BarChart3, color: 'purple', htmlFile: '/stream-poll-screen.html' },
+  { type: 'milestone', label: 'Milestone', icon: Trophy, color: 'gold', htmlFile: '/stream-milestone-screen.html' },
+  { type: 'chat_highlight', label: 'Chat Highlight', icon: MessageSquare, color: 'blue', htmlFile: '/stream-chat-highlight.html' },
+
+  // NEW: Additional Interactive Graphics
+  { type: 'award_show', label: 'Award Show', icon: Award, color: 'gold', htmlFile: '/stream-award-show.html' },
+  { type: 'finish_him', label: 'Finish Him', icon: Zap, color: 'red', htmlFile: '/stream-finish-him.html' },
+  { type: 'new_member', label: 'New Member', icon: UserPlus, color: 'green', htmlFile: '/stream-new-member.html' },
+  { type: 'rage_meter', label: 'Rage Meter', icon: Gauge, color: 'red', htmlFile: '/stream-rage-meter.html' },
+  { type: 'versus', label: 'Versus', icon: Swords, color: 'purple', htmlFile: '/stream-versus-screen.html' },
+
+  // Placeholder for logo
+  { type: 'logo', label: 'Logo', icon: Image, color: 'white', htmlFile: null }
 ]
 
 export function GraphicsGallery() {
@@ -49,17 +68,18 @@ export function GraphicsGallery() {
     }
   }
 
-  const toggleGraphic = async (graphicId: string, isVisible: boolean) => {
+  const toggleGraphic = async (graphicId: string, isVisible: boolean, htmlFile: string | null) => {
     try {
       setError(null)
       const { error: updateError } = await supabase
         .from('broadcast_graphics')
-        .update({ 
+        .update({
           is_visible: !isVisible,
+          html_file: htmlFile,
           updated_at: new Date().toISOString()
         })
         .eq('id', graphicId)
-      
+
       if (updateError) throw updateError
     } catch (err) {
       console.error('Failed to toggle graphic:', err)
@@ -83,7 +103,7 @@ export function GraphicsGallery() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {GRAPHIC_CONFIGS.map((config) => {
           const graphic = getGraphic(config.type)
           const isActive = graphic?.is_visible || false
@@ -92,7 +112,7 @@ export function GraphicsGallery() {
           return (
             <button
               key={config.type}
-              onClick={() => graphic && toggleGraphic(graphic.id, isActive)}
+              onClick={() => graphic && toggleGraphic(graphic.id, isActive, config.htmlFile)}
               className={`relative h-32 rounded-lg border-2 transition-all transform ${
                 isActive
                   ? 'bg-gradient-to-br from-cyan-900/40 to-blue-900/40 border-cyan-400 shadow-lg shadow-cyan-500/60 scale-105'

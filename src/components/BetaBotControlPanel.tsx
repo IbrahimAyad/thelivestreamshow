@@ -1,31 +1,33 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSpeechRecognition, WakeDetectionEvent, VisualSearchEvent } from '../hooks/useSpeechRecognition';
-import { useBetaBotAI } from '../hooks/useBetaBotAI';
 import { useTTS } from '../hooks/useTTS';
 import { useF5TTS } from '../hooks/useF5TTS';
 import { useOBSAudio } from '../hooks/useOBSAudio';
+import { useDiscordAudio } from '../hooks/useDiscordAudio';
+import { useBetaBotConversation } from '../hooks/useBetaBotConversation';
+import { useBetaBotSuggestionsManager } from '../hooks/useBetaBotSuggestionsManager';
+import { useSessionManager } from '../hooks/useSessionManager';
+import { calculateIntentScores, needsRealTimeData } from '../lib/intentDetection';
 import { supabase } from '../lib/supabase';
-
-interface SessionHistory {
-  id: string;
-  session_name: string;
-  created_at: string;
-  total_questions_generated: number;
-  total_direct_interactions: number;
-  total_transcript_words: number;
-}
+import { SessionInfo } from './betabot/SessionInfo';
+import { APIHealthStatus } from './betabot/APIHealthStatus';
+import { LiveTranscript } from './betabot/LiveTranscript';
+import { ChatHistory } from './betabot/ChatHistory';
+import { SessionHistory } from './betabot/SessionHistory';
+import { BetaBotSuggestions } from './betabot/BetaBotSuggestions';
+import { ModeSelection } from './betabot/ModeSelection';
+import { TTSProviderSelector } from './betabot/TTSProviderSelector';
+import { AudioSourceSelector } from './betabot/AudioSourceSelector';
+import { MicrophoneSelector } from './betabot/MicrophoneSelector';
+import { OBSConnectionPanel } from './betabot/OBSConnectionPanel';
+import { VoiceSelector } from './betabot/VoiceSelector';
+import { TextChatInput } from './betabot/TextChatInput';
+import './BetaBotControlPanel.css';
 
 export function BetaBotControlPanel() {
   // Mode selection: 'question-generator' or 'co-host'
   const [betaBotMode, setBetaBotMode] = useState<'question-generator' | 'co-host'>('co-host');
 
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [sessionTimer, setSessionTimer] = useState(0);
-  const [generatedQuestions, setGeneratedQuestions] = useState<Array<{text: string; context: string}>>([]);
-  const [autoGenerate, setAutoGenerate] = useState(false);
-  const [autoGenerateInterval, setAutoGenerateInterval] = useState(300); // 5 minutes default
-  const [sessionHistory, setSessionHistory] = useState<SessionHistory[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
   const [directInteractions, setDirectInteractions] = useState(0);
   const [chatHistory, setChatHistory] = useState<Array<{question: string; answer: string; aiSource: string}>>([]);
   const [textInput, setTextInput] = useState('');
@@ -36,13 +38,6 @@ export function BetaBotControlPanel() {
     return (saved as 'browser' | 'f5tts') || (f5Enabled ? 'f5tts' : 'browser');
   });
   const [showFallbackWarning, setShowFallbackWarning] = useState(false);
-  const [autoQuestionGenInterval, setAutoQuestionGenInterval] = useState(60); // seconds
-  const [betaBotSuggestions, setBetaBotSuggestions] = useState<Array<{
-    id: string;
-    question_text: string;
-    context_metadata: any;
-    created_at: string;
-  }>>([]);
 
   // OBS Audio state
   const [audioSource, setAudioSource] = useState<'browser' | 'obs'>('browser');
@@ -55,8 +50,12 @@ export function BetaBotControlPanel() {
   const [availableMicrophones, setAvailableMicrophones] = useState<MediaDeviceInfo[]>([]);
   const [selectedMicrophoneId, setSelectedMicrophoneId] = useState<string>('');
 
+  // Discord panel audio
+  const [discordPanelListening, setDiscordPanelListening] = useState(false);
+  const [discordExpanded, setDiscordExpanded] = useState(false);
+
   // Initialize hooks first (without callbacks)
-  const betaBotAI = useBetaBotAI();
+  const betaBotConversation = useBetaBotConversation();
   const browserTTS = useTTS();
   const f5TTS = useF5TTS();
   const obsAudio = useOBSAudio({
@@ -64,14 +63,16 @@ export function BetaBotControlPanel() {
     port: obsPort,
     password: obsPassword
   });
+  const discordAudio = useDiscordAudio();
+
+  // BetaBot suggestions management
+  const betaBotSuggestionsManager = useBetaBotSuggestionsManager();
 
   // Select TTS provider based on user preference
   const tts = ttsProvider === 'f5tts' ? f5TTS : browserTTS;
 
   // Create a ref to hold speech recognition
   const speechRecognitionRef = useRef<any>(null);
-  const autoQuestionGenTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastQuestionGenTimeRef = useRef<number>(0);
 
   // Check if question needs real-time data
   const needsRealTimeData = (text: string): boolean => {
@@ -149,6 +150,142 @@ export function BetaBotControlPanel() {
     try {
       console.log(`🎙️ Handling ${source} question: "${question}"`);
 
+      // NEW: Priority-Based Intent Detection with Scoring
+      // ===================================================
+
+      // Build enhanced conversation context for intent detection
+      const conversationContext = {
+        hasRecentContext: betaBotConversation.context.history.length > 0 &&
+                         (Date.now() - betaBotConversation.context.lastInteraction < 120000), // 2 minutes
+        lastTimestamp: betaBotConversation.context.lastInteraction || undefined,
+        turnCount: betaBotConversation.context.history.length,
+        recentMessages: betaBotConversation.context.history.slice(-5).map(msg => msg.content),
+        showContext: betaBotConversation.context.showContext // Include current episode/segment context
+      };
+
+      // Calculate intent scores with full context
+      const intentResult = calculateIntentScores(question, conversationContext);
+
+      console.log('🎯 Intent Detection Result:', {
+        type: intentResult.type,
+        confidence: intentResult.confidence,
+        reasoning: intentResult.reasoning
+      });
+
+      // Route based on intent type
+      // ===========================
+
+      if (intentResult.type === 'search_video') {
+        console.log('📺 Routing to VIDEO search...');
+
+        // Insert into betabot_media_browser table to trigger overlay
+        await supabase.from('betabot_media_browser').insert([{
+          search_query: question,
+          content_type: 'videos',
+          is_visible: true,
+          created_at: new Date().toISOString()
+        }]);
+
+        console.log('✅ Media browser trigger inserted for videos');
+
+        // Speak confirmation
+        await tts.speak("Searching for videos now.");
+        return; // Exit early
+      }
+
+      if (intentResult.type === 'search_web') {
+        console.log('🔍 Routing to WEB search (Perplexity)...');
+
+        // Log voice-activated filters if present
+        if (intentResult.metadata) {
+          console.log('🎤 Voice filters detected:', intentResult.metadata);
+        }
+
+        // Insert into betabot_media_browser table to trigger overlay
+        await supabase.from('betabot_media_browser').insert([{
+          search_query: question,
+          content_type: 'images', // Database compatibility
+          is_visible: true,
+          created_at: new Date().toISOString(),
+          metadata: intentResult.metadata || null
+        }]);
+
+        console.log('✅ Media browser trigger inserted for Perplexity search');
+        return; // Exit early
+      }
+
+      if (intentResult.type === 'follow_up' || intentResult.type === 'conversation') {
+        console.log(`💬 Routing to CONVERSATION mode (${intentResult.type})...`);
+
+        // Use BetaBot conversation hook
+        const mode = intentResult.metadata?.mode || 'creative';
+        console.log(`🎭 BetaBot Mode: ${mode}`);
+
+        let conversationResponse = '';
+
+        // Stream the response to TTS
+        const streamedChunks: string[] = [];
+
+        await betaBotConversation.chat(
+          question,
+          mode,
+          (chunk) => {
+            // Collect chunks for streaming
+            streamedChunks.push(chunk);
+            conversationResponse += chunk;
+
+            // Start speaking after we have a few words (more natural)
+            if (streamedChunks.length === 5) {
+              const firstSentence = streamedChunks.join('');
+              tts.speak(firstSentence, async (state) => {
+                if (sessionManager.sessionId) {
+                  await supabase.from('betabot_sessions').update({
+                    current_state: state === 'speaking' ? 'speaking' : 'listening'
+                  }).eq('id', sessionManager.sessionId);
+                }
+              }).catch(err => console.error('TTS error:', err));
+            }
+          }
+        );
+
+        console.log('✅ BetaBot conversation complete');
+
+        // Speak the full response if it wasn't already spoken
+        if (streamedChunks.length < 5 && conversationResponse) {
+          await tts.speak(conversationResponse, async (state) => {
+            if (sessionManager.sessionId) {
+              await supabase.from('betabot_sessions').update({
+                current_state: state === 'speaking' ? 'speaking' : 'listening'
+              }).eq('id', sessionManager.sessionId);
+            }
+          });
+        }
+
+        // Log interaction
+        if (sessionManager.sessionId) {
+          await supabase.from('betabot_interactions').insert([{
+            session_id: sessionManager.sessionId,
+            interaction_type: source,
+            user_input: question,
+            bot_response: conversationResponse,
+            ai_provider: 'conversation',
+            response_time_ms: Date.now() - startTime,
+            created_at: new Date().toISOString()
+          }]);
+
+          setDirectInteractions(prev => prev + 1);
+        }
+
+        // Add to chat history
+        setChatHistory(prev => [{
+          question,
+          answer: conversationResponse,
+          aiSource: 'gpt4' // Show as GPT-4 in UI
+        }, ...prev].slice(0, 5));
+
+        return; // Exit early
+      }
+
       // Get conversation buffer from ref
       const conversationBuffer = speechRecognitionRef.current?.conversationBuffer || '';
 
@@ -163,11 +300,11 @@ export function BetaBotControlPanel() {
         aiSource = 'perplexity';
         response = await getPerplexityAnswer(question);
       } else {
-        // Use GPT-4 for general questions
-        console.log('🟢 Routing to GPT-4 for general question');
+        // Use GPT-4o with context awareness
+        console.log('🟢 Routing to BetaBot Conversation (GPT-4o with context)');
         setCurrentAISource('gpt4');
         aiSource = 'gpt4';
-        response = await betaBotAI.respondToQuestion(question, conversationBuffer);
+        response = await betaBotConversation.chat(question, 'creative');
       }
 
       const responseTime = Date.now() - startTime;
@@ -179,10 +316,10 @@ export function BetaBotControlPanel() {
         setChatHistory(prev => [{question, answer: response, aiSource}, ...prev].slice(0, 5));
 
         // Log interaction to database first (before speaking)
-        if (sessionId) {
+        if (sessionManager.sessionId) {
           // Log to betabot_interactions table
           await supabase.from('betabot_interactions').insert([{
-            session_id: sessionId,
+            session_id: sessionManager.sessionId,
             interaction_type: source,
             user_input: question,
             bot_response: response,
@@ -193,9 +330,9 @@ export function BetaBotControlPanel() {
 
           // Log to betabot_conversation_log table
           await supabase.from('betabot_conversation_log').insert([{
-            session_id: sessionId,
+            session_id: sessionManager.sessionId,
             transcript_text: `User: ${question}\nBeta Bot: ${response}`,
-            audio_timestamp: sessionTimer,
+            audio_timestamp: sessionManager.sessionTimer,
             speaker_type: 'interaction'
           }]);
 
@@ -203,17 +340,17 @@ export function BetaBotControlPanel() {
           setDirectInteractions(prev => prev + 1);
           await supabase.from('betabot_sessions').update({
             total_direct_interactions: directInteractions + 1
-          }).eq('id', sessionId);
+          }).eq('id', sessionManager.sessionId);
         }
 
         // Speak the response with state change callback
         try {
           await tts.speak(response, async (state) => {
             // Update session state when TTS actually starts/stops speaking
-            if (sessionId) {
+            if (sessionManager.sessionId) {
               await supabase.from('betabot_sessions').update({
                 current_state: state === 'speaking' ? 'speaking' : 'listening'
-              }).eq('id', sessionId);
+              }).eq('id', sessionManager.sessionId);
               console.log(`🎨 Updated session state to: ${state === 'speaking' ? 'speaking' : 'listening'}`);
             }
           });
@@ -224,10 +361,10 @@ export function BetaBotControlPanel() {
             setTimeout(() => setShowFallbackWarning(false), 5000);
             await browserTTS.speak(response, async (state) => {
               // Same callback for fallback TTS
-              if (sessionId) {
+              if (sessionManager.sessionId) {
                 await supabase.from('betabot_sessions').update({
                   current_state: state === 'speaking' ? 'speaking' : 'listening'
-                }).eq('id', sessionId);
+                }).eq('id', sessionManager.sessionId);
                 console.log(`🎨 Updated session state to: ${state === 'speaking' ? 'speaking' : 'listening'}`);
               }
             });
@@ -251,9 +388,9 @@ export function BetaBotControlPanel() {
       setCurrentAISource(null);
 
       // Log error to database
-      if (sessionId) {
+      if (sessionManager.sessionId) {
         await supabase.from('betabot_interactions').insert([{
-          session_id: sessionId,
+          session_id: sessionManager.sessionId,
           interaction_type: source,
           user_input: question,
           bot_response: `ERROR: ${errorMessage}`,
@@ -263,7 +400,7 @@ export function BetaBotControlPanel() {
         }]);
       }
     }
-  }, [sessionId, directInteractions, betaBotAI, tts, sessionTimer, ttsProvider, browserTTS]);
+  }, [directInteractions, betaBotConversation, tts, ttsProvider, browserTTS]); // sessionManager accessed directly, not in deps
 
   // Wake phrase handler - doesn't use speechRecognition in dependencies
   const handleWakePhraseDetected = useCallback(async (event: WakeDetectionEvent) => {
@@ -277,9 +414,9 @@ export function BetaBotControlPanel() {
 
     try {
       // Log interaction
-      if (sessionId) {
+      if (sessionManager.sessionId) {
         const { error } = await supabase.from('betabot_interactions').insert([{
-          session_id: sessionId,
+          session_id: sessionManager.sessionId,
           interaction_type: 'visual_search',
           user_input: event.query,
           timestamp: new Date().toISOString()
@@ -288,16 +425,40 @@ export function BetaBotControlPanel() {
         if (error) console.error('Error logging visual search interaction:', error);
       }
 
-      // Trigger media browser overlay (no Perplexity search needed - Google does it all!)
+      // Trigger media browser overlay
       console.log('🌐 Triggering media browser overlay for query:', event.query);
 
-      // Determine if it's images or videos based on keywords
-      const type = event.query.toLowerCase().includes('video') ? 'videos' : 'images';
+      // Smart detection for videos vs images
+      const query = event.query.toLowerCase();
+
+      // Video keywords
+      const videoKeywords = [
+        'video', 'videos', 'clip', 'clips', 'shorts', 'short',
+        'trending', 'viral', 'popular', 'latest', 'recent',
+        'watch', 'show me', 'pull up', 'find',
+        'youtube', 'reddit'
+      ];
+
+      // Popular channel names
+      const channelNames = [
+        'joe rogan', 'jre', 'lex fridman',
+        'mkbhd', 'marques brownlee', 'linus tech tips',
+        'mrbeast', 'pewdiepie', 'ninja',
+        'espn', 'cnn'
+      ];
+
+      // Check if query mentions videos explicitly or channels
+      const hasVideoKeyword = videoKeywords.some(keyword => query.includes(keyword));
+      const hasChannelName = channelNames.some(channel => query.includes(channel));
+
+      const type = (hasVideoKeyword || hasChannelName) ? 'videos' : 'images';
+
+      console.log(`📺 Detected content type: ${type} (videoKeyword: ${hasVideoKeyword}, channel: ${hasChannelName})`);
 
       const { data, error } = await supabase.from('betabot_media_browser').insert([{
         search_query: event.query,
         content_type: type,
-        session_id: sessionId,
+        session_id: sessionManager.sessionId,
         is_visible: true
       }]).select();
 
@@ -309,11 +470,11 @@ export function BetaBotControlPanel() {
       console.log('✅ Media browser overlay triggered:', data);
 
       // Speak confirmation with callback to update session state
-      tts.speak(`Showing ${type} for ${event.query}`, async (state) => {
-        if (sessionId) {
+      tts.speak(`Looking that up for you...`, async (state) => {
+        if (sessionManager.sessionId) {
           await supabase.from('betabot_sessions').update({
             current_state: state === 'speaking' ? 'speaking' : 'listening'
-          }).eq('id', sessionId);
+          }).eq('id', sessionManager.sessionId);
         }
       });
     } catch (error) {
@@ -321,7 +482,7 @@ export function BetaBotControlPanel() {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       tts.speak(`Sorry, search failed: ${errorMessage}`);
     }
-  }, [sessionId, tts]);
+  }, [tts]); // sessionManager accessed directly, not in deps
 
   // Initialize speech recognition with callbacks NOW
   // Only enable wake phrase detection in Co-Host mode
@@ -331,75 +492,31 @@ export function BetaBotControlPanel() {
     microphoneDeviceId: selectedMicrophoneId
   });
 
+  // Session management
+  const sessionManager = useSessionManager({
+    generatedQuestionsCount: 0, // Deprecated - Producer AI now handles question generation
+    directInteractions,
+    conversationBuffer: speechRecognition.conversationBuffer,
+    onStopListening: () => speechRecognition.stopListening(),
+    onClearBuffer: () => speechRecognition.clearBuffer(),
+    onResetChatState: () => {
+      setChatHistory([]);
+      setCurrentAISource(null);
+      setDirectInteractions(0);
+    }
+  });
+
   // Store in ref for callbacks
   useEffect(() => {
     speechRecognitionRef.current = speechRecognition;
   }, [speechRecognition]);
 
-  // Session timer
-  useEffect(() => {
-    if (!sessionId) return;
-
-    const interval = setInterval(() => {
-      setSessionTimer(prev => prev + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [sessionId]);
-
-  // Automatic question generation loop - runs when listening and has conversation content
-  useEffect(() => {
-    // Clear any existing timer
-    if (autoQuestionGenTimerRef.current) {
-      clearInterval(autoQuestionGenTimerRef.current);
-      autoQuestionGenTimerRef.current = null;
-    }
-
-    // Only run auto-generation when actively listening with content
-    if (!speechRecognition.isListening || !sessionId) {
-      console.log('Auto question generation: Disabled (not listening or no session)');
-      return;
-    }
-
-    console.log(`🤖 Auto question generation: Enabled (every ${autoQuestionGenInterval}s)`);
-
-    // Set up the interval
-    autoQuestionGenTimerRef.current = setInterval(async () => {
-      // Only generate if we have sufficient conversation content
-      if (speechRecognition.conversationBuffer && speechRecognition.conversationBuffer.split(' ').length >= 50) {
-        console.log('⏰ Auto-generating questions based on conversation...');
-        await handleGenerateQuestions();
-      } else {
-        console.log('⏰ Skipping auto-generation - not enough conversation content yet');
-      }
-    }, autoQuestionGenInterval * 1000);
-
-    return () => {
-      if (autoQuestionGenTimerRef.current) {
-        clearInterval(autoQuestionGenTimerRef.current);
-        autoQuestionGenTimerRef.current = null;
-      }
-    };
-  }, [speechRecognition.isListening, sessionId, autoQuestionGenInterval]);
-
-  // Legacy auto-generate toggle (kept for manual control)
-  useEffect(() => {
-    if (!autoGenerate || !sessionId || !speechRecognition.conversationBuffer) return;
-
-    const interval = setInterval(async () => {
-      console.log('⏰ Manual auto-generate triggered...');
-      await handleGenerateQuestions();
-    }, autoGenerateInterval * 1000);
-
-    return () => clearInterval(interval);
-  }, [autoGenerate, sessionId, autoGenerateInterval, speechRecognition.conversationBuffer]);
-
   // Create session when listening starts
   useEffect(() => {
-    if (speechRecognition.isListening && !sessionId) {
-      createSession();
+    if (speechRecognition.isListening && !sessionManager.sessionId) {
+      sessionManager.createSession();
     }
-  }, [speechRecognition.isListening, sessionId]);
+  }, [speechRecognition.isListening, sessionManager.sessionId]);
 
   // Handle OBS audio when source is OBS
   useEffect(() => {
@@ -452,208 +569,13 @@ export function BetaBotControlPanel() {
     enumerateMicrophones();
   }, []);
 
-  // Load session history on mount
+  // Load Piper voices when f5TTS is connected
   useEffect(() => {
-    loadSessionHistory();
-    loadBetaBotSuggestions();
-  }, []);
-
-  // Subscribe to new BetaBot suggestions
-  useEffect(() => {
-    const suggestionsChannel = supabase
-      .channel('betabot_suggestions')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'show_questions',
-        filter: 'source=eq.betabot_conversation_helper'
-      }, () => {
-        loadBetaBotSuggestions();
-      })
-      .subscribe();
-
-    return () => {
-      suggestionsChannel.unsubscribe();
-    };
-  }, []);
-
-  const createSession = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('betabot_sessions')
-        .insert([{ 
-          session_name: `Session ${new Date().toLocaleString()}`, 
-          is_active: true,
-          current_state: 'listening'
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Supabase error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        throw error;
-      }
-      
-      setSessionId(data.id);
-      setSessionTimer(0);
-      setGeneratedQuestions([]);
-      setDirectInteractions(0);
-      console.log('✅ Session created successfully:', data.id);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      console.error('Failed to create session:', errorMessage, error);
-      alert(`Failed to create session: ${errorMessage}\n\nPlease check the console for details.`);
-      speechRecognition.stopListening();
+    if (ttsProvider === 'f5tts' && f5TTS.isConnected && f5TTS.voices.length === 0) {
+      console.log('Loading Piper voices...');
+      f5TTS.loadVoices();
     }
-  };
-
-  const endSession = async () => {
-    if (!sessionId) return;
-
-    try {
-      console.log('🛑 Ending Beta Bot session...');
-
-      // Stop auto-question generation
-      if (autoQuestionGenTimerRef.current) {
-        clearInterval(autoQuestionGenTimerRef.current);
-        autoQuestionGenTimerRef.current = null;
-      }
-
-      // Calculate final metrics
-      const wordCount = speechRecognition.conversationBuffer.split(/\s+/).filter(w => w.length > 0).length;
-      const sessionDuration = sessionTimer;
-
-      // Log final transcript to conversation log
-      if (speechRecognition.conversationBuffer) {
-        const { error: logError } = await supabase.from('betabot_conversation_log').insert([{
-          session_id: sessionId,
-          transcript_text: `[SESSION END] Final transcript:\n${speechRecognition.conversationBuffer}`,
-          audio_timestamp: sessionTimer,
-          speaker_type: 'system'
-        }]);
-
-        if (logError) {
-          console.warn('⚠️ Could not log final transcript:', logError.message);
-          // Continue anyway - this is not critical
-        }
-      }
-
-      // Update session with final metrics
-      const { error } = await supabase.from('betabot_sessions').update({
-        is_active: false,
-        current_state: 'idle',
-        total_questions_generated: generatedQuestions.length,
-        total_direct_interactions: directInteractions,
-        total_transcript_words: wordCount,
-        ended_at: new Date().toISOString()
-      }).eq('id', sessionId);
-
-      if (error) {
-        console.error('Error ending session:', error);
-        throw error;
-      }
-
-      console.log(`✅ Session ended successfully:
-        - Duration: ${Math.floor(sessionDuration / 60)}m ${sessionDuration % 60}s
-        - Questions Generated: ${generatedQuestions.length}
-        - Direct Interactions: ${directInteractions}
-        - Words Transcribed: ${wordCount}`);
-
-      // Reset state
-      setSessionId(null);
-      setSessionTimer(0);
-      setGeneratedQuestions([]);
-      setDirectInteractions(0);
-      setChatHistory([]);
-      setCurrentAISource(null);
-
-      // Stop speech recognition and clear buffer
-      speechRecognition.stopListening();
-      speechRecognition.clearBuffer();
-
-      // Reload session history
-      loadSessionHistory();
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Failed to end session:', errorMessage, error);
-      alert(`Failed to end session properly: ${errorMessage}`);
-    }
-  };
-
-  const loadSessionHistory = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('betabot_sessions')
-        .select('id, session_name, created_at, total_questions_generated, total_direct_interactions, total_transcript_words')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-      setSessionHistory(data || []);
-    } catch (error) {
-      console.error('Failed to load session history:', error);
-    }
-  };
-
-  const loadBetaBotSuggestions = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('show_questions')
-        .select('id, question_text, context_metadata, created_at')
-        .eq('source', 'betabot_conversation_helper')
-        .eq('show_on_overlay', false) // Only show pending suggestions
-        .order('created_at', { ascending: false})
-        .limit(10);
-
-      if (error) throw error;
-      setBetaBotSuggestions(data || []);
-    } catch (error) {
-      console.error('Failed to load BetaBot suggestions:', error);
-    }
-  };
-
-  const addSuggestionToPopupQueue = async (questionId: string) => {
-    try {
-      // The question is already in the database with show_on_overlay=false
-      // The Popup Queue Manager will display it automatically in its queue
-      // We just need to update its position to prioritize it at the top
-
-      // Set position to 0 so it appears first in the queue
-      await supabase
-        .from('show_questions')
-        .update({ position: 0 })
-        .eq('id', questionId);
-
-      // Remove from suggestions list (it's now in the main queue)
-      setBetaBotSuggestions(prev => prev.filter(s => s.id !== questionId));
-
-      console.log('✅ Question added to Popup Queue Manager');
-    } catch (error) {
-      console.error('Error adding question to queue:', error);
-      // Even if position update fails, still remove from suggestions
-      setBetaBotSuggestions(prev => prev.filter(s => s.id !== questionId));
-    }
-  };
-
-  const dismissSuggestion = async (questionId: string) => {
-    try {
-      await supabase
-        .from('show_questions')
-        .delete()
-        .eq('id', questionId);
-
-      setBetaBotSuggestions(prev => prev.filter(s => s.id !== questionId));
-      console.log('✅ Dismissed suggestion');
-    } catch (error) {
-      console.error('Error dismissing suggestion:', error);
-    }
-  };
+  }, [ttsProvider, f5TTS.isConnected]);
 
   const exportTranscript = () => {
     const transcript = speechRecognition.conversationBuffer;
@@ -671,76 +593,6 @@ export function BetaBotControlPanel() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  };
-
-  const handleGenerateQuestions = async () => {
-    if (!speechRecognition.conversationBuffer) {
-      console.log('No conversation buffer available for question generation');
-      return;
-    }
-
-    // Check if enough time has passed since last generation (avoid spam)
-    const now = Date.now();
-    const timeSinceLastGen = now - lastQuestionGenTimeRef.current;
-    if (timeSinceLastGen < 30000) { // Minimum 30 seconds between generations
-      console.log('Skipping question generation - too soon since last generation');
-      return;
-    }
-
-    console.log('🤖 Auto-generating questions from conversation buffer...');
-    lastQuestionGenTimeRef.current = now;
-
-    try {
-      const questions = await betaBotAI.generateQuestions(speechRecognition.conversationBuffer);
-
-      if (questions.length > 0) {
-        const newQuestions = questions.map(q => ({
-          text: q,
-          context: speechRecognition.conversationBuffer.substring(0, 200)
-        }));
-        setGeneratedQuestions(prev => [...newQuestions, ...prev]);
-
-        // Save to database
-        for (const question of questions) {
-          await supabase.from('betabot_generated_questions').insert([{
-            question_text: question,
-            conversation_context: speechRecognition.conversationBuffer,
-            session_id: sessionId
-          }]);
-
-          // Auto-add to show questions queue for review
-          await supabase.from('show_questions').insert([{
-            topic: 'BetaBot Suggestion',
-            question_text: question,
-            source: 'betabot_conversation_helper',
-            context_metadata: {
-              generated_from: speechRecognition.conversationBuffer.substring(
-                Math.max(0, speechRecognition.conversationBuffer.length - 200)
-              ),
-              generated_at: new Date().toISOString(),
-              session_id: sessionId,
-              word_count: speechRecognition.conversationBuffer.split(/\s+/).length
-            },
-            show_on_overlay: false, // Not shown until manually approved
-            tts_generated: false,
-            position: 9999 // Put at end of queue
-          }]);
-        }
-
-        console.log(`✅ Generated ${questions.length} questions and added to queue`);
-
-        // Log to conversation log
-        if (sessionId) {
-          await supabase.from('betabot_conversation_log').insert([{
-            session_id: sessionId,
-            transcript_text: speechRecognition.conversationBuffer,
-            audio_timestamp: Math.floor((now - (sessionTimer * 1000)) / 1000)
-          }]);
-        }
-      }
-    } catch (error) {
-      console.error('Error generating questions:', error);
-    }
   };
 
   const formatTime = (seconds: number) => {
@@ -805,365 +657,159 @@ export function BetaBotControlPanel() {
       </div>
 
       {/* Mode Selection */}
-      <div className="mode-selection">
-        <div className="mode-header">
-          <label>Beta Bot Mode</label>
-          <span className="mode-info">Choose how Beta Bot operates</span>
-        </div>
-        <div className="mode-buttons">
-          <button
-            className={`mode-btn ${betaBotMode === 'question-generator' ? 'active' : ''}`}
-            onClick={() => {
-              if (speechRecognition.isListening) {
-                alert('Please stop the current session before switching modes');
-                return;
-              }
-              setBetaBotMode('question-generator');
-            }}
-            disabled={speechRecognition.isListening}
-          >
-            <div className="mode-icon">📝</div>
-            <div className="mode-content">
-              <div className="mode-title">Question Generator</div>
-              <div className="mode-description">Silent listening - Generates questions from conversation</div>
-            </div>
-          </button>
-          <button
-            className={`mode-btn ${betaBotMode === 'co-host' ? 'active' : ''}`}
-            onClick={() => {
-              if (speechRecognition.isListening) {
-                alert('Please stop the current session before switching modes');
-                return;
-              }
-              setBetaBotMode('co-host');
-            }}
-            disabled={speechRecognition.isListening}
-          >
-            <div className="mode-icon">🎙️</div>
-            <div className="mode-content">
-              <div className="mode-title">AI Co-Host</div>
-              <div className="mode-description">Interactive - Responds to wake phrases & engages in conversation</div>
-            </div>
-          </button>
-        </div>
-      </div>
+      <ModeSelection
+        betaBotMode={betaBotMode}
+        isListening={speechRecognition.isListening}
+        onModeChange={setBetaBotMode}
+      />
 
       {/* TTS Provider Selection - Only show in Co-Host mode */}
       {betaBotMode === 'co-host' && (
-      <div className="tts-provider-section">
-        <div className="provider-header">
-          <label htmlFor="tts-provider">TTS Engine</label>
-        </div>
-        <select
-          id="tts-provider"
-          value={ttsProvider}
-          onChange={(e) => {
-            const newProvider = e.target.value as 'browser' | 'f5tts';
-            setTtsProvider(newProvider);
-            localStorage.setItem('betabot_tts_provider', newProvider);
-            console.log('TTS Provider changed to:', newProvider);
-          }}
-          className="provider-select"
-        >
-          <option value="browser">Browser Voices (Built-in)</option>
-          <option value="f5tts">F5-TTS (Local Server)</option>
-        </select>
-        
-        {ttsProvider === 'f5tts' && (
-          <div className="connection-status-box">
-            <div className={`status-indicator ${f5TTS.isConnected ? 'connected' : 'disconnected'}`}>
-              <span className="status-dot"></span>
-              <span>{f5TTS.isConnected ? 'Connected to F5-TTS Server' : 'Disconnected - Check server is running'}</span>
-            </div>
-            {f5TTS.error && (
-              <div className="error-message">
-                Error: {f5TTS.error}
-              </div>
-            )}
-            {!f5TTS.isConnected && (
-              <div className="server-info">
-                Expected server: {import.meta.env.VITE_F5_TTS_API_URL || 'http://localhost:8000'}
-              </div>
-            )}
-          </div>
-        )}
-        
-        {showFallbackWarning && (
-          <div className="fallback-warning">
-            F5-TTS unavailable - using browser TTS as fallback
-          </div>
-        )}
-      </div>
+        <TTSProviderSelector
+          ttsProvider={ttsProvider}
+          onProviderChange={setTtsProvider}
+          f5TTSConnected={f5TTS.isConnected}
+          f5TTSError={f5TTS.error}
+          showFallbackWarning={showFallbackWarning}
+        />
       )}
 
       {/* Audio Source Selection */}
-      <div className="audio-source-section">
-        <div className="section-header">
-          <label>🎤 Audio Input Source</label>
-        </div>
-        <div className="audio-source-buttons">
-          <button
-            className={`source-btn ${audioSource === 'browser' ? 'active' : ''}`}
-            onClick={() => setAudioSource('browser')}
-            disabled={speechRecognition.isListening}
-          >
-            <div className="source-icon">🌐</div>
-            <div className="source-content">
-              <div className="source-title">Browser Microphone</div>
-              <div className="source-description">Only captures host microphone</div>
-            </div>
-          </button>
-          <button
-            className={`source-btn ${audioSource === 'obs' ? 'active' : ''}`}
-            onClick={() => setAudioSource('obs')}
-            disabled={speechRecognition.isListening}
-          >
-            <div className="source-icon">🎬</div>
-            <div className="source-content">
-              <div className="source-title">OBS Audio (RECOMMENDED)</div>
-              <div className="source-description">Captures ALL audio - host + panel + stream (best for engagement!)</div>
-            </div>
-          </button>
-        </div>
-      </div>
+      <AudioSourceSelector
+        audioSource={audioSource}
+        isListening={speechRecognition.isListening}
+        onSourceChange={setAudioSource}
+      />
 
       {/* Microphone Selection - Only show when Browser mode */}
       {audioSource === 'browser' && (
-      <div className="microphone-selection-section">
-        <h4>🎤 Select Your Microphone</h4>
-        <div className="mic-important-note">
-          <strong>ℹ️ Note:</strong> This only captures YOUR microphone. For panel members to interact with BetaBot, use OBS Audio mode instead.
-        </div>
-        <select
-          value={selectedMicrophoneId}
-          onChange={(e) => setSelectedMicrophoneId(e.target.value)}
-          className="mic-select"
-          disabled={speechRecognition.isListening}
-        >
-          {availableMicrophones.length === 0 && (
-            <option value="">No microphones detected</option>
-          )}
-          {availableMicrophones.map((device) => (
-            <option key={device.deviceId} value={device.deviceId}>
-              {device.label || `Microphone ${device.deviceId.slice(0, 8)}`}
-            </option>
-          ))}
-        </select>
-        <div className="mic-info-box">
-          <div className="info-header">💡 Browser Mic Mode</div>
-          <ul className="info-list">
-            <li><strong>Only YOU can interact with BetaBot</strong> - panel members won't be heard</li>
-            <li><strong>Use this for</strong>: Private testing, host-only commands</li>
-            <li><strong>For full engagement</strong>: Use OBS Audio mode to hear everyone</li>
-            <li><strong>Choose physical microphone</strong> - e.g., "MacBook Pro Microphone" or USB mic name</li>
-          </ul>
-        </div>
-      </div>
+        <MicrophoneSelector
+          selectedMicrophoneId={selectedMicrophoneId}
+          availableMicrophones={availableMicrophones}
+          isListening={speechRecognition.isListening}
+          onMicrophoneChange={setSelectedMicrophoneId}
+        />
       )}
 
       {/* OBS Connection Settings - Only show when OBS is selected */}
       {audioSource === 'obs' && (
-      <div className="obs-settings-section">
-        <h4>🎬 OBS WebSocket Connection</h4>
+        <OBSConnectionPanel
+          obsConnected={obsAudio.connected}
+          obsError={obsAudio.error}
+          obsHost={obsHost}
+          obsPort={obsPort}
+          obsPassword={obsPassword}
+          obsAudioPort={obsAudioPort}
+          obsAudioSources={obsAudio.audioSources}
+          selectedSource={obsAudio.selectedSource}
+          onHostChange={setObsHost}
+          onPortChange={setObsPort}
+          onPasswordChange={setObsPassword}
+          onAudioPortChange={setObsAudioPort}
+          onConnect={obsAudio.connect}
+          onDisconnect={obsAudio.disconnect}
+          onSourceSelect={obsAudio.startAudioCapture}
+        />
+      )}
 
-        <div className="obs-connection-status">
-          <div className={`status-indicator ${obsAudio.connected ? 'connected' : 'disconnected'}`}>
-            <span className="status-dot"></span>
-            <span>{obsAudio.connected ? 'Connected to OBS' : 'Disconnected'}</span>
+      {/* Discord Panel Audio - Only show in Co-Host mode */}
+      {betaBotMode === 'co-host' && (
+        <div className="discord-panel-compact">
+          <div className="discord-header" onClick={() => setDiscordExpanded(!discordExpanded)}>
+            <span>🎮 Discord Panel</span>
+            <div className={`discord-status ${discordAudio.state.connected ? 'connected' : 'disconnected'}`}>
+              <div className="status-dot" />
+              <span>{discordAudio.state.connected ? 'Connected' : 'Offline'}</span>
+            </div>
+            <button className="btn-expand">{discordExpanded ? '▼' : '▶'}</button>
           </div>
-          {obsAudio.error && (
-            <div className="error-message">
-              Error: {obsAudio.error}
+
+          {discordExpanded && (
+            <div className="discord-panel-content">
+              {discordAudio.state.panelMembersCount > 0 && (
+                <div className="panel-members-count">{discordAudio.state.panelMembersCount} panel members</div>
+              )}
+
+              <div className="discord-controls">
+                <button
+                  className={`btn-discord ${discordPanelListening ? 'active' : ''}`}
+                  onClick={async () => {
+                    if (discordPanelListening) {
+                      discordAudio.stopReceiving();
+                      setDiscordPanelListening(false);
+                    } else {
+                      try {
+                        setDiscordPanelListening(true);
+                        console.log('✅ Discord panel listening enabled');
+                      } catch (error) {
+                        console.error('Failed to start Discord listening:', error);
+                        setDiscordPanelListening(false);
+                      }
+                    }
+                  }}
+                  disabled={!discordAudio.state.connected}
+                >
+                  {discordPanelListening ? '🔇 Stop Panel Listening' : '🎤 Listen to Panel'}
+                </button>
+                <button
+                  className="btn-test-connection"
+                  onClick={() => discordAudio.checkConnection()}
+                >
+                  🔄 Check Connection
+                </button>
+              </div>
+
+              <details className="discord-setup-details">
+                <summary>💡 Audio Routing Setup</summary>
+                <div className="setup-info">
+                  <p>See <code>DISCORD_AUDIO_INTEGRATION.md</code> for complete setup guide.</p>
+                </div>
+              </details>
             </div>
           )}
         </div>
-
-        {!obsAudio.connected ? (
-          <div className="obs-connect-form">
-            <div className="form-row">
-              <label>Host:</label>
-              <input
-                type="text"
-                value={obsHost}
-                onChange={(e) => setObsHost(e.target.value)}
-                placeholder="localhost"
-              />
-            </div>
-            <div className="form-row">
-              <label>WebSocket Port:</label>
-              <input
-                type="number"
-                value={obsPort}
-                onChange={(e) => setObsPort(Number(e.target.value))}
-                placeholder="4455"
-              />
-            </div>
-            <div className="form-row">
-              <label>Password:</label>
-              <input
-                type="password"
-                value={obsPassword}
-                onChange={(e) => setObsPassword(e.target.value)}
-                placeholder="Optional"
-              />
-            </div>
-            <div className="form-row">
-              <label>Audio WebSocket Port:</label>
-              <input
-                type="number"
-                value={obsAudioPort}
-                onChange={(e) => setObsAudioPort(Number(e.target.value))}
-                placeholder="4456"
-              />
-            </div>
-            <button
-              className="btn-obs-connect"
-              onClick={obsAudio.connect}
-            >
-              Connect to OBS
-            </button>
-          </div>
-        ) : (
-          <div className="obs-connected-controls">
-            <div className="audio-source-select">
-              <label>Select Audio Source:</label>
-              <select
-                value={obsAudio.selectedSource || ''}
-                onChange={(e) => {
-                  const sourceName = e.target.value;
-                  if (sourceName) {
-                    obsAudio.startAudioCapture(sourceName, obsAudioPort);
-                  }
-                }}
-                disabled={!obsAudio.audioSources.length}
-              >
-                <option value="">-- Select Audio Input --</option>
-                {obsAudio.audioSources.map((source) => (
-                  <option key={source} value={source}>
-                    {source}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button
-              className="btn-obs-disconnect"
-              onClick={obsAudio.disconnect}
-            >
-              Disconnect from OBS
-            </button>
-          </div>
-        )}
-
-        <div className="obs-info-box">
-          <div className="info-header">ℹ️ OBS WebSocket Setup</div>
-          <ul className="info-list">
-            <li><strong>Step 1:</strong> Install OBS Studio v28+ (WebSocket 5.0 built-in)</li>
-            <li><strong>Step 2:</strong> Tools → WebSocket Server Settings → Enable</li>
-            <li><strong>Step 3:</strong> Install <code>obs-audio-to-websocket</code> plugin (see setup guide below)</li>
-            <li><strong>Step 4:</strong> Configure to capture OBS mixed output (host + panel + stream)</li>
-            <li><strong>Why OBS?</strong> Captures ALL audio so panel members AND host can interact with BetaBot!</li>
-            <li><strong>Perfect for</strong>: Interactive streams with Discord panels and audience engagement</li>
-          </ul>
-        </div>
-      </div>
       )}
 
       {/* Voice Selection - Only show for browser TTS in Co-Host mode */}
       {betaBotMode === 'co-host' && ttsProvider === 'browser' && (
-      <div className="voice-section">
-        <div className="voice-header">
-          <label htmlFor="voice-select">🎤 Voice Selection</label>
-          <button
-            className="btn-preview"
-            onClick={handlePreviewVoice}
-            disabled={!browserTTS.selectedVoice || browserTTS.isSpeaking}
-          >
-            ▶️ Preview
-          </button>
-        </div>
-        <select
-          id="voice-select"
-          value={browserTTS.selectedVoice?.name || ''}
-          onChange={(e) => {
-            const voice = browserTTS.voices.find(v => v.name === e.target.value);
-            if (voice) browserTTS.setSelectedVoice(voice);
-          }}
-          className="voice-select"
-        >
-          {browserTTS.voices.map((voice) => (
-            <option key={voice.name} value={voice.name}>
-              {voice.name} ({voice.lang})
-            </option>
-          ))}
-        </select>
-        <div className="voice-tip">
-          💡 <strong>Tip:</strong> For best quality, choose voices starting with "Microsoft" or "Google". Your selection is saved automatically.
-        </div>
-        <div className="voice-info-box">
-          <div className="info-header">🔊 Voice Quality Information</div>
-          <ul className="info-list">
-            <li><strong>Current:</strong> Using browser built-in voices (free, basic quality)</li>
-            <li><strong>Quality varies</strong> by operating system and installed voices</li>
-            <li><strong>Windows:</strong> Install additional voices via Settings → Time & Language → Speech</li>
-            <li><strong>macOS:</strong> System Preferences → Accessibility → Spoken Content → System Voice</li>
-            <li><strong>For Premium Quality:</strong> Microsoft Azure TTS API can be integrated (requires API key)</li>
-          </ul>
-        </div>
-      </div>
+        <VoiceSelector
+          mode="browser"
+          voices={browserTTS.voices}
+          selectedVoice={browserTTS.selectedVoice}
+          isSpeaking={browserTTS.isSpeaking}
+          onVoiceChange={browserTTS.setSelectedVoice}
+          onPreview={handlePreviewVoice}
+        />
+      )}
+
+      {/* Piper Voice Selection - Only show for F5-TTS (Piper) in Co-Host mode */}
+      {betaBotMode === 'co-host' && ttsProvider === 'f5tts' && f5TTS.isConnected && (
+        <VoiceSelector
+          mode="piper"
+          voices={f5TTS.voices}
+          selectedVoice={f5TTS.selectedVoice}
+          isSpeaking={f5TTS.isSpeaking}
+          onVoiceChange={f5TTS.setSelectedVoice}
+          onPreview={() => f5TTS.speak("Hello! This is a test of the Piper text to speech system.")}
+        />
       )}
 
       {/* Text Chat Input - Only show in Co-Host mode */}
       {betaBotMode === 'co-host' && (
-      <div className="text-chat-section">
-        <h4>💬 Text Chat</h4>
-        <div className="chat-input-group">
-          <input
-            type="text"
-            value={textInput}
-            onChange={(e) => setTextInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleTextChatSubmit()}
-            placeholder="Type a question for Beta Bot..."
-            className="chat-input"
-            disabled={!sessionId || betaBotAI.isProcessing || tts.isSpeaking}
-          />
-          <button
-            className="btn-send"
-            onClick={handleTextChatSubmit}
-            disabled={!sessionId || !textInput.trim() || betaBotAI.isProcessing || tts.isSpeaking}
-          >
-            Send ➤
-          </button>
-        </div>
-        {currentAISource && (
-          <div className={`ai-indicator ${currentAISource}`}>
-            {currentAISource === 'gpt4' ? '🟢 Using GPT-4' : '🔴 Using Perplexity (Real-time)'}
-          </div>
-        )}
-      </div>
+        <TextChatInput
+          textInput={textInput}
+          sessionId={sessionManager.sessionId}
+          isResponding={betaBotConversation.isResponding}
+          isSpeaking={tts.isSpeaking}
+          currentAISource={currentAISource}
+          onTextChange={setTextInput}
+          onSubmit={handleTextChatSubmit}
+        />
       )}
 
       {/* Chat History - Only show in Co-Host mode */}
-      {betaBotMode === 'co-host' && chatHistory.length > 0 && (
-        <div className="chat-history">
-          <h4>Recent Conversations</h4>
-          <div className="chat-list">
-            {chatHistory.map((chat, index) => (
-              <div key={index} className="chat-item">
-                <div className="chat-question">
-                  <span className="chat-label">Q:</span>
-                  <span>{chat.question}</span>
-                  <span className={`chat-ai-badge ${chat.aiSource}`}>
-                    {chat.aiSource === 'gpt4' ? 'GPT-4' : 'Perplexity'}
-                  </span>
-                </div>
-                <div className="chat-answer">
-                  <span className="chat-label">A:</span>
-                  <span>{chat.answer}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {betaBotMode === 'co-host' && (
+        <ChatHistory chatHistory={chatHistory} />
       )}
 
       {/* Main Controls */}
@@ -1172,7 +818,7 @@ export function BetaBotControlPanel() {
           className={`btn-control ${speechRecognition.isListening ? 'active' : ''}`}
           onClick={() => {
             if (speechRecognition.isListening) {
-              endSession();
+              sessionManager.endSession(0); // Producer AI now handles question generation
             } else {
               // Only start browser mic listening if browser source is selected
               // OBS audio is handled separately via the OBS connection
@@ -1186,21 +832,13 @@ export function BetaBotControlPanel() {
                 }
                 // Set internal state to "listening" to activate the session
                 speechRecognition.setAudioSource('obs');
-                createSession();
+                sessionManager.createSession();
               }
             }
           }}
           disabled={audioSource === 'obs' && (!obsAudio.connected || !obsAudio.selectedSource)}
         >
           {speechRecognition.isListening ? '⏹ End Session' : '▶️ Start Session'}
-        </button>
-
-        <button
-          className="btn-control btn-generate"
-          onClick={handleGenerateQuestions}
-          disabled={!speechRecognition.conversationBuffer || betaBotAI.isProcessing}
-        >
-          ⚡ Generate Now
         </button>
 
         <button
@@ -1220,1146 +858,41 @@ export function BetaBotControlPanel() {
         </button>
       </div>
 
-      {/* Auto-Generation Settings */}
-      <div className="auto-generate-section">
-        <div className="auto-header">
-          <label className="toggle-label">
-            <input
-              type="checkbox"
-              checked={autoGenerate}
-              onChange={(e) => setAutoGenerate(e.target.checked)}
-              disabled={!sessionId}
-            />
-            <span>Auto-Generate Questions</span>
-          </label>
-          <select
-            value={autoGenerateInterval}
-            onChange={(e) => setAutoGenerateInterval(Number(e.target.value))}
-            disabled={!autoGenerate}
-            className="interval-select"
-          >
-            <option value={120}>Every 2 min</option>
-            <option value={300}>Every 5 min</option>
-            <option value={600}>Every 10 min</option>
-          </select>
-        </div>
-      </div>
-
       {/* Session Info */}
-      {sessionId && (
-        <div className="session-info">
-          <div className="info-item">
-            <span className="label">Session Time</span>
-            <span className="value">{formatTime(sessionTimer)}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Questions</span>
-            <span className="value">{generatedQuestions.length}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Interactions</span>
-            <span className="value">{directInteractions}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Words</span>
-            <span className="value">{speechRecognition.conversationBuffer.split(/\s+/).filter(w => w.length > 0).length}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Auto-Generation Status */}
-      {sessionId && speechRecognition.isListening && (
-        <div className="auto-gen-status">
-          <div className="status-header">
-            <span className="status-icon">🤖</span>
-            <span className="status-text">Auto-Generation Active</span>
-            <span className={`status-indicator ${speechRecognition.conversationBuffer.split(' ').length >= 50 ? 'ready' : 'waiting'}`}>
-              {speechRecognition.conversationBuffer.split(' ').length >= 50 ? 'Ready' : 'Building Context'}
-            </span>
-          </div>
-          <div className="status-detail">
-            Next generation in: {autoQuestionGenInterval}s intervals
-            {speechRecognition.conversationBuffer.split(' ').length < 50 && (
-              <span className="words-needed"> • Need {50 - speechRecognition.conversationBuffer.split(' ').length} more words</span>
-            )}
-          </div>
-        </div>
+      {sessionManager.sessionId && (
+        <SessionInfo
+          sessionTimer={sessionManager.sessionTimer}
+          generatedQuestions={0} // Producer AI now handles question generation
+          directInteractions={directInteractions}
+          totalWords={speechRecognition.conversationBuffer.split(/\s+/).filter(w => w.length > 0).length}
+        />
       )}
 
       {/* API Health Status */}
-      <div className="api-health">
-        <h4>API Status</h4>
-        <div className="health-grid">
-          <div className={`health-item ${betaBotAI.apiHealth.gemini === 'healthy' ? 'healthy' : betaBotAI.apiHealth.gemini === 'degraded' ? 'warning' : 'error'}`}>
-            <span>Gemini</span>
-            <span className="health-dot" />
-          </div>
-          <div className={`health-item ${betaBotAI.apiHealth.openai === 'healthy' ? 'healthy' : betaBotAI.apiHealth.openai === 'degraded' ? 'warning' : 'error'}`}>
-            <span>OpenAI</span>
-            <span className="health-dot" />
-          </div>
-          <div className={`health-item ${speechRecognition.whisperAvailable ? 'healthy' : 'warning'}`}>
-            <span>Whisper</span>
-            <span className="health-dot" />
-          </div>
-        </div>
-      </div>
+      <APIHealthStatus
+        betaBotStatus={betaBotConversation.error ? 'error' : betaBotConversation.isResponding ? 'warning' : 'healthy'}
+        whisperAvailable={speechRecognition.whisperAvailable}
+      />
 
       {/* Live Transcript */}
       {speechRecognition.transcript && (
-        <div className="transcript-section">
-          <h4>Latest Transcript</h4>
-          <div className="transcript-box">
-            {speechRecognition.transcript}
-          </div>
-        </div>
+        <LiveTranscript transcript={speechRecognition.transcript} />
       )}
 
       {/* Session History */}
-      <div className="history-section">
-        <div className="history-header">
-          <h4>Session History</h4>
-          <button 
-            className="btn-toggle"
-            onClick={() => setShowHistory(!showHistory)}
-          >
-            {showHistory ? '▼' : '▶'}
-          </button>
-        </div>
-        {showHistory && (
-          <div className="history-list">
-            {sessionHistory.length === 0 ? (
-              <p className="no-history">No previous sessions</p>
-            ) : (
-              sessionHistory.map((session) => (
-                <div key={session.id} className="history-item">
-                  <div className="history-name">{session.session_name}</div>
-                  <div className="history-stats">
-                    <span>📝 {session.total_questions_generated || 0}</span>
-                    <span>💬 {session.total_direct_interactions || 0}</span>
-                    <span>📊 {session.total_transcript_words || 0} words</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-      </div>
+      <SessionHistory
+        sessionHistory={sessionManager.sessionHistory}
+        showHistory={sessionManager.showHistory}
+        onToggle={() => sessionManager.setShowHistory(!sessionManager.showHistory)}
+      />
 
       {/* BetaBot Suggestions - Questions Generated from Conversation */}
-      {betaBotSuggestions.length > 0 && (
-        <div className="betabot-suggestions">
-          <div className="suggestions-header">
-            <h4>🤖 BetaBot Suggestions</h4>
-            <span className="suggestion-count">{betaBotSuggestions.length} pending</span>
-          </div>
-          <div className="suggestions-list">
-            {betaBotSuggestions.map((suggestion) => (
-              <div key={suggestion.id} className="suggestion-item">
-                <div className="suggestion-content">
-                  <p className="suggestion-text">{suggestion.question_text}</p>
-                  {suggestion.context_metadata?.generated_from && (
-                    <p className="suggestion-context">
-                      Context: "{suggestion.context_metadata.generated_from.substring(0, 80)}..."
-                    </p>
-                  )}
-                  <p className="suggestion-meta">
-                    Generated {new Date(suggestion.created_at).toLocaleTimeString()} •
-                    {suggestion.context_metadata?.word_count || 0} words analyzed
-                  </p>
-                </div>
-                <div className="suggestion-actions">
-                  <button
-                    className="btn-add-queue"
-                    onClick={() => addSuggestionToPopupQueue(suggestion.id)}
-                    title="Add to Popup Queue"
-                  >
-                    ➕ Add to Queue
-                  </button>
-                  <button
-                    className="btn-dismiss"
-                    onClick={() => dismissSuggestion(suggestion.id)}
-                    title="Dismiss suggestion"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <BetaBotSuggestions
+        suggestions={betaBotSuggestionsManager.suggestions}
+        onAddToQueue={betaBotSuggestionsManager.addToPopupQueue}
+        onDismiss={betaBotSuggestionsManager.dismiss}
+      />
 
-      <style>{`
-        .betabot-control-panel {
-          background: rgba(17, 24, 39, 0.95);
-          border-radius: 12px;
-          padding: 20px;
-          border: 1px solid rgba(75, 85, 99, 0.3);
-        }
-
-        .panel-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-          padding-bottom: 15px;
-          border-bottom: 1px solid rgba(75, 85, 99, 0.3);
-        }
-
-        .panel-header h3 {
-          color: #f3f4f6;
-          font-size: 18px;
-          font-weight: 600;
-          margin: 0;
-        }
-
-        .status-indicator {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 6px 12px;
-          background: rgba(0, 0, 0, 0.3);
-          border-radius: 20px;
-          font-size: 12px;
-          color: #d1d5db;
-        }
-
-        .mode-badge {
-          background: rgba(250, 204, 21, 0.2);
-          padding: 2px 8px;
-          border-radius: 10px;
-          font-size: 10px;
-          color: #facc15;
-        }
-
-        .status-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        .status-dot.idle {
-          background: #9ca3af;
-        }
-
-        .status-dot.listening {
-          background: #facc15;
-        }
-
-        .status-dot.speaking {
-          background: #ef4444;
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-
-        /* Mode Selection Styles */
-        .mode-selection {
-          margin-bottom: 20px;
-          background: rgba(0, 0, 0, 0.2);
-          border-radius: 8px;
-          padding: 15px;
-          border: 1px solid rgba(75, 85, 99, 0.3);
-        }
-
-        .mode-header {
-          margin-bottom: 12px;
-        }
-
-        .mode-header label {
-          color: #f3f4f6;
-          font-size: 14px;
-          font-weight: 600;
-          display: block;
-          margin-bottom: 4px;
-        }
-
-        .mode-info {
-          color: #9ca3af;
-          font-size: 11px;
-          display: block;
-        }
-
-        .mode-buttons {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px;
-        }
-
-        .mode-btn {
-          background: rgba(17, 24, 39, 0.8);
-          border: 2px solid rgba(75, 85, 99, 0.5);
-          border-radius: 8px;
-          padding: 12px;
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          text-align: left;
-        }
-
-        .mode-btn:hover:not(:disabled) {
-          border-color: rgba(250, 204, 21, 0.5);
-          background: rgba(17, 24, 39, 0.95);
-          transform: translateY(-2px);
-        }
-
-        .mode-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .mode-btn.active {
-          border-color: #facc15;
-          background: rgba(250, 204, 21, 0.1);
-        }
-
-        .mode-icon {
-          font-size: 24px;
-          line-height: 1;
-        }
-
-        .mode-content {
-          flex: 1;
-        }
-
-        .mode-title {
-          color: #f3f4f6;
-          font-size: 13px;
-          font-weight: 600;
-          margin-bottom: 4px;
-        }
-
-        .mode-description {
-          color: #9ca3af;
-          font-size: 11px;
-          line-height: 1.4;
-        }
-
-        .mode-btn.active .mode-title {
-          color: #facc15;
-        }
-
-        .controls-section {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-          gap: 10px;
-          margin-bottom: 20px;
-        }
-
-        .btn-control {
-          padding: 10px 16px;
-          background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-          border: 2px solid #7f1d1d;
-          border-radius: 8px;
-          color: white;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .btn-control:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
-        }
-
-        .btn-control:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .btn-control.active {
-          background: linear-gradient(135deg, #facc15 0%, #f59e0b 100%);
-          border-color: #d97706;
-        }
-
-        .btn-generate {
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          border-color: #047857;
-        }
-
-        .btn-export {
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-          border-color: #1d4ed8;
-        }
-
-        .btn-test {
-          background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-          border-color: #6d28d9;
-        }
-
-        .auto-generate-section {
-          background: rgba(0, 0, 0, 0.2);
-          padding: 12px;
-          border-radius: 8px;
-          margin-bottom: 20px;
-        }
-
-        .auto-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .toggle-label {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: #d1d5db;
-          font-size: 13px;
-          cursor: pointer;
-        }
-
-        .toggle-label input[type="checkbox"] {
-          width: 18px;
-          height: 18px;
-          cursor: pointer;
-        }
-
-        .interval-select {
-          padding: 6px 10px;
-          background: rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(75, 85, 99, 0.5);
-          border-radius: 6px;
-          color: white;
-          font-size: 12px;
-          cursor: pointer;
-        }
-
-        .interval-select:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .session-info {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 10px;
-          margin-bottom: 20px;
-        }
-
-        .info-item {
-          background: rgba(0, 0, 0, 0.3);
-          padding: 10px;
-          border-radius: 6px;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .info-item .label {
-          font-size: 10px;
-          color: #9ca3af;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .info-item .value {
-          font-size: 18px;
-          color: #facc15;
-          font-weight: 600;
-        }
-
-        .api-health {
-          margin-bottom: 20px;
-        }
-
-        .api-health h4 {
-          color: #f3f4f6;
-          font-size: 14px;
-          margin: 0 0 10px 0;
-        }
-
-        .health-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 8px;
-        }
-
-        .health-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 8px;
-          background: rgba(0, 0, 0, 0.3);
-          border-radius: 6px;
-          font-size: 12px;
-        }
-
-        .health-item.healthy {
-          color: #10b981;
-        }
-
-        .health-item.warning {
-          color: #f59e0b;
-        }
-
-        .health-item.error {
-          color: #ef4444;
-        }
-
-        .health-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: currentColor;
-        }
-
-        .transcript-section {
-          margin-bottom: 20px;
-        }
-
-        .transcript-section h4 {
-          color: #f3f4f6;
-          font-size: 14px;
-          margin: 0 0 10px 0;
-        }
-
-        .transcript-box {
-          background: rgba(0, 0, 0, 0.4);
-          padding: 12px;
-          border-radius: 6px;
-          max-height: 100px;
-          overflow-y: auto;
-          color: #d1d5db;
-          font-size: 13px;
-          line-height: 1.5;
-        }
-
-        .history-section {
-          margin-bottom: 20px;
-        }
-
-        .history-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-        }
-
-        .history-header h4 {
-          color: #f3f4f6;
-          font-size: 14px;
-          margin: 0;
-        }
-
-        .btn-toggle {
-          background: none;
-          border: none;
-          color: #9ca3af;
-          cursor: pointer;
-          font-size: 16px;
-          padding: 0;
-          width: 24px;
-          height: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .btn-toggle:hover {
-          color: #facc15;
-        }
-
-        .history-list {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          max-height: 200px;
-          overflow-y: auto;
-        }
-
-        .no-history {
-          color: #6b7280;
-          font-size: 12px;
-          text-align: center;
-          padding: 20px;
-        }
-
-        .history-item {
-          background: rgba(0, 0, 0, 0.3);
-          padding: 10px;
-          border-radius: 6px;
-          border-left: 3px solid #6b7280;
-        }
-
-        .history-name {
-          color: #d1d5db;
-          font-size: 13px;
-          margin-bottom: 6px;
-          font-weight: 500;
-        }
-
-        .history-stats {
-          display: flex;
-          gap: 12px;
-          font-size: 11px;
-          color: #9ca3af;
-        }
-
-        .betabot-suggestions {
-          margin-top: 20px;
-          background: rgba(0, 0, 0, 0.2);
-          border-radius: 8px;
-          padding: 15px;
-          border: 1px solid rgba(250, 204, 21, 0.3);
-        }
-
-        .suggestions-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 15px;
-        }
-
-        .suggestions-header h4 {
-          color: #facc15;
-          font-size: 14px;
-          margin: 0;
-          font-weight: 600;
-        }
-
-        .suggestion-count {
-          background: rgba(250, 204, 21, 0.2);
-          color: #facc15;
-          padding: 4px 10px;
-          border-radius: 12px;
-          font-size: 11px;
-          font-weight: 600;
-        }
-
-        .suggestions-list {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          max-height: 400px;
-          overflow-y: auto;
-        }
-
-        .suggestion-item {
-          background: rgba(17, 24, 39, 0.8);
-          padding: 12px;
-          border-radius: 8px;
-          border: 1px solid rgba(75, 85, 99, 0.5);
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 12px;
-          transition: all 0.2s ease;
-        }
-
-        .suggestion-item:hover {
-          border-color: rgba(250, 204, 21, 0.5);
-          background: rgba(17, 24, 39, 0.95);
-        }
-
-        .suggestion-content {
-          flex: 1;
-        }
-
-        .suggestion-text {
-          color: #f3f4f6;
-          font-size: 13px;
-          margin: 0 0 8px 0;
-          line-height: 1.5;
-          font-weight: 500;
-        }
-
-        .suggestion-context {
-          color: #9ca3af;
-          font-size: 11px;
-          margin: 0 0 6px 0;
-          font-style: italic;
-          line-height: 1.4;
-        }
-
-        .suggestion-meta {
-          color: #6b7280;
-          font-size: 10px;
-          margin: 0;
-        }
-
-        .suggestion-actions {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-
-        .btn-add-queue {
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          color: white;
-          border: none;
-          padding: 8px 12px;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 11px;
-          font-weight: 600;
-          white-space: nowrap;
-          transition: all 0.2s ease;
-        }
-
-        .btn-add-queue:hover {
-          background: linear-gradient(135deg, #059669 0%, #047857 100%);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
-
-        .btn-dismiss {
-          background: rgba(239, 68, 68, 0.1);
-          color: #ef4444;
-          border: 1px solid rgba(239, 68, 68, 0.3);
-          padding: 6px 10px;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 600;
-          transition: all 0.2s ease;
-        }
-
-        .btn-dismiss:hover {
-          background: rgba(239, 68, 68, 0.2);
-          border-color: rgba(239, 68, 68, 0.5);
-        }
-
-        .question-item p {
-          margin: 0;
-          color: #d1d5db;
-          font-size: 13px;
-        }
-
-        /* TTS Provider Selection Styles */
-        .tts-provider-section {
-          background: rgba(34, 197, 94, 0.1);
-          border: 1px solid rgba(34, 197, 94, 0.3);
-          padding: 15px;
-          border-radius: 8px;
-          margin-bottom: 20px;
-        }
-
-        .provider-header {
-          margin-bottom: 10px;
-        }
-
-        .provider-header label {
-          color: #86efac;
-          font-size: 14px;
-          font-weight: 600;
-        }
-
-        .provider-select {
-          width: 100%;
-          padding: 10px;
-          background: rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(34, 197, 94, 0.5);
-          border-radius: 6px;
-          color: white;
-          font-size: 13px;
-          cursor: pointer;
-          margin-bottom: 10px;
-        }
-
-        .provider-select option {
-          background: #1f2937;
-          color: white;
-        }
-
-        .connection-status-box {
-          margin-top: 10px;
-        }
-
-        .status-indicator {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 10px;
-          border-radius: 6px;
-          font-size: 12px;
-          margin-bottom: 6px;
-        }
-
-        .status-indicator.connected {
-          background: rgba(34, 197, 94, 0.2);
-          color: #86efac;
-        }
-
-        .status-indicator.disconnected {
-          background: rgba(239, 68, 68, 0.2);
-          color: #fca5a5;
-        }
-
-        .status-indicator .status-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: currentColor;
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        .error-message {
-          background: rgba(239, 68, 68, 0.1);
-          border-left: 3px solid #ef4444;
-          padding: 6px 10px;
-          border-radius: 4px;
-          color: #fca5a5;
-          font-size: 11px;
-          margin-bottom: 6px;
-        }
-
-        .server-info {
-          background: rgba(59, 130, 246, 0.1);
-          border-left: 3px solid #3b82f6;
-          padding: 6px 10px;
-          border-radius: 4px;
-          color: #93c5fd;
-          font-size: 11px;
-        }
-
-        .fallback-warning {
-          background: rgba(251, 146, 60, 0.2);
-          border: 1px solid rgba(251, 146, 60, 0.3);
-          padding: 8px 10px;
-          border-radius: 6px;
-          color: #fdba74;
-          font-size: 12px;
-          margin-top: 10px;
-          animation: fadeIn 0.3s ease;
-        }
-
-        /* Voice Selection Styles */
-        .voice-section {
-          background: rgba(139, 92, 246, 0.1);
-          border: 1px solid rgba(139, 92, 246, 0.3);
-          padding: 15px;
-          border-radius: 8px;
-          margin-bottom: 20px;
-        }
-
-        .voice-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-        }
-
-        .voice-header label {
-          color: #e9d5ff;
-          font-size: 14px;
-          font-weight: 600;
-        }
-
-        .btn-preview {
-          padding: 6px 12px;
-          background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-          border: 1px solid #6d28d9;
-          border-radius: 6px;
-          color: white;
-          font-size: 12px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .btn-preview:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
-        }
-
-        .btn-preview:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .voice-select {
-          width: 100%;
-          padding: 10px;
-          background: rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(139, 92, 246, 0.5);
-          border-radius: 6px;
-          color: white;
-          font-size: 13px;
-          cursor: pointer;
-          margin-bottom: 10px;
-        }
-
-        .voice-select option {
-          background: #1f2937;
-          color: white;
-        }
-
-        .voice-tip {
-          background: rgba(250, 204, 21, 0.1);
-          border-left: 3px solid #facc15;
-          padding: 8px 10px;
-          border-radius: 4px;
-          color: #fef3c7;
-          font-size: 11px;
-          line-height: 1.4;
-        }
-
-        .voice-tip strong {
-          color: #facc15;
-        }
-
-        .voice-info-box {
-          background: rgba(59, 130, 246, 0.1);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          padding: 12px;
-          border-radius: 6px;
-          margin-top: 10px;
-        }
-
-        .voice-info-box .info-header {
-          color: #93c5fd;
-          font-size: 12px;
-          font-weight: 700;
-          margin-bottom: 8px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .voice-info-box .info-list {
-          margin: 0;
-          padding-left: 18px;
-          color: #d1d5db;
-          font-size: 11px;
-          line-height: 1.6;
-        }
-
-        .voice-info-box .info-list li {
-          margin-bottom: 4px;
-        }
-
-        .voice-info-box .info-list strong {
-          color: #60a5fa;
-        }
-
-        /* Text Chat Styles */
-        .text-chat-section {
-          background: rgba(59, 130, 246, 0.1);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          padding: 15px;
-          border-radius: 8px;
-          margin-bottom: 20px;
-        }
-
-        .text-chat-section h4 {
-          color: #bfdbfe;
-          font-size: 14px;
-          margin: 0 0 10px 0;
-          font-weight: 600;
-        }
-
-        .chat-input-group {
-          display: flex;
-          gap: 8px;
-          margin-bottom: 10px;
-        }
-
-        .chat-input {
-          flex: 1;
-          padding: 10px 12px;
-          background: rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(59, 130, 246, 0.5);
-          border-radius: 6px;
-          color: white;
-          font-size: 13px;
-        }
-
-        .chat-input::placeholder {
-          color: #9ca3af;
-        }
-
-        .chat-input:focus {
-          outline: none;
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-        }
-
-        .chat-input:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .btn-send {
-          padding: 10px 20px;
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-          border: 1px solid #1d4ed8;
-          border-radius: 6px;
-          color: white;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          white-space: nowrap;
-        }
-
-        .btn-send:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
-        }
-
-        .btn-send:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .ai-indicator {
-          padding: 6px 10px;
-          border-radius: 6px;
-          font-size: 11px;
-          font-weight: 600;
-          text-align: center;
-          animation: fadeIn 0.3s ease;
-        }
-
-        .ai-indicator.gpt4 {
-          background: rgba(16, 185, 129, 0.2);
-          color: #10b981;
-          border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .ai-indicator.perplexity {
-          background: rgba(239, 68, 68, 0.2);
-          color: #ef4444;
-          border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-5px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Chat History Styles */
-        .chat-history {
-          margin-bottom: 20px;
-        }
-
-        .chat-history h4 {
-          color: #f3f4f6;
-          font-size: 14px;
-          margin: 0 0 10px 0;
-        }
-
-        .chat-list {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          max-height: 300px;
-          overflow-y: auto;
-        }
-
-        .chat-item {
-          background: rgba(0, 0, 0, 0.3);
-          padding: 12px;
-          border-radius: 8px;
-          border-left: 3px solid #3b82f6;
-        }
-
-        .chat-question {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 8px;
-          color: #bfdbfe;
-          font-size: 13px;
-          font-weight: 500;
-        }
-
-        .chat-answer {
-          display: flex;
-          gap: 8px;
-          color: #d1d5db;
-          font-size: 12px;
-          line-height: 1.5;
-        }
-
-        .chat-label {
-          font-weight: 700;
-          color: #facc15;
-          min-width: 20px;
-        }
-
-        .chat-ai-badge {
-          margin-left: auto;
-          padding: 2px 8px;
-          border-radius: 10px;
-          font-size: 10px;
-          font-weight: 600;
-        }
-
-        .chat-ai-badge.gpt4 {
-          background: rgba(16, 185, 129, 0.2);
-          color: #10b981;
-        }
-
-        .chat-ai-badge.perplexity {
-          background: rgba(239, 68, 68, 0.2);
-          color: #ef4444;
-        }
-
-        /* Auto-Generation Status Styles */
-        .auto-gen-status {
-          background: rgba(16, 185, 129, 0.1);
-          border: 1px solid rgba(16, 185, 129, 0.3);
-          border-radius: 8px;
-          padding: 12px 15px;
-          margin-bottom: 20px;
-        }
-
-        .auto-gen-status .status-header {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 6px;
-        }
-
-        .auto-gen-status .status-icon {
-          font-size: 18px;
-        }
-
-        .auto-gen-status .status-text {
-          color: #10b981;
-          font-size: 14px;
-          font-weight: 600;
-          flex: 1;
-        }
-
-        .auto-gen-status .status-indicator {
-          padding: 3px 10px;
-          border-radius: 12px;
-          font-size: 11px;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .auto-gen-status .status-indicator.ready {
-          background: rgba(16, 185, 129, 0.2);
-          color: #10b981;
-        }
-
-        .auto-gen-status .status-indicator.waiting {
-          background: rgba(251, 146, 60, 0.2);
-          color: #fb923c;
-        }
-
-        .auto-gen-status .status-detail {
-          color: #9ca3af;
-          font-size: 12px;
-          padding-left: 28px;
-        }
-
-        .auto-gen-status .words-needed {
-          color: #fb923c;
-          font-weight: 600;
-        }
-      `}</style>
     </div>
   );
 }

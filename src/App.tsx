@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
+import { AuthProviderWithBoundary } from './contexts/AuthContext'
+import { ShowProviderWithBoundary } from './contexts/ShowContext'
 import { QuestionBannerControl } from './components/QuestionBannerControl'
 import { GraphicsGallery } from './components/GraphicsGallery'
 import { LowerThirdControl } from './components/LowerThirdControl'
-import { AIEngagementPanel } from './components/AIEngagementPanel'
+import { BetaBotDirectorPanel } from './components/BetaBotDirectorPanel'
 import { QuickActions } from './components/QuickActions'
 import { ShowPrepPanel } from './components/ShowPrepPanel'
-import { TTSQueuePanel } from './components/TTSQueuePanel'
 import { SoundboardPanel } from './components/SoundboardPanel'
 import { SegmentControlPanel } from './components/SegmentControlPanel'
 import { BroadcastSettingsPanel } from './components/BroadcastSettingsPanel'
@@ -15,13 +16,31 @@ import { ShowMetadataControl } from './components/ShowMetadataControl'
 import { OperatorNotesPanel } from './components/OperatorNotesPanel'
 import { BookmarkPanel } from './components/BookmarkPanel'
 import { BetaBotControlPanel } from './components/BetaBotControlPanel'
+import { ScarlettAudioPanel } from './components/scarlett/ScarlettAudioPanel'
+import { ProducerAIPanel } from './components/ProducerAIPanel'
+import { SystemHealthMonitor } from './components/SystemHealthMonitor'
+import { PresetManagerPanel } from './components/PresetManagerPanel'
+import { ShowManagerPanel } from './components/ShowManagerPanel'
+import { ShowSelector } from './components/ShowSelector'
+import { AutomationFeedPanel } from './components/AutomationFeedPanel'
+import { AutomationConfigPanel } from './components/AutomationConfigPanel'
+import { ManualTriggerPanel } from './components/ManualTriggerPanel'
+import { TriggerRulesPanel } from './components/TriggerRulesPanel'
+import { OBSConnectionPanel } from './components/OBSConnectionPanel'
+import { TranscriptionPanel } from './components/TranscriptionPanel'
+import { AIAnalysisPanel } from './components/AIAnalysisPanel'
+import { SuggestionApprovalPanel } from './components/SuggestionApprovalPanel'
+import { ExecutionHistoryPanel } from './components/ExecutionHistoryPanel'
+import { AnalyticsDashboard } from './components/AnalyticsDashboard'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { supabase } from './lib/supabase'
 import { Monitor, ExternalLink, Keyboard } from 'lucide-react'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 function App() {
   const broadcastUrl = window.location.origin + '/broadcast'
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false)
+  const [showManagement, setShowManagement] = useState(false)
   const soundboardRef = useRef<any>(null)
   const segmentRef = useRef<any>(null)
 
@@ -86,7 +105,9 @@ function App() {
   })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+    <AuthProviderWithBoundary>
+      <ShowProviderWithBoundary>
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Header */}
       <header className="border-b-2 border-gray-800 bg-black/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -101,6 +122,8 @@ function App() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <ShowSelector onManageShows={() => setShowManagement(true)} />
+              <SystemHealthMonitor />
               <button
                 onClick={() => setShowKeyboardHelp(!showKeyboardHelp)}
                 className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
@@ -171,104 +194,197 @@ function App() {
         </div>
       )}
 
+      {/* Show Management Modal */}
+      {showManagement && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6" onClick={() => setShowManagement(false)}>
+          <div className="bg-gray-900 border-2 border-purple-600/50 rounded-lg max-w-7xl w-full max-h-[90vh] overflow-auto" onClick={e => e.stopPropagation()}>
+            <ShowManagerPanel />
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Stream Overlay Controls */}
-        <div className="mb-8">
-          <h3 className="text-xl font-bold text-gray-400 mb-4 uppercase tracking-wide">Stream Overlay Controls</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {/* Question Banner - Spans 2 columns on xl */}
-            <div className="xl:col-span-2">
-              <QuestionBannerControl />
-            </div>
+        {/* 🎬 SHOW START - Start Show Controls */}
+        <ErrorBoundary sectionName="Show Start Controls">
+          <div className="mb-8">
+            <h3 className="text-xl font-bold text-green-400 mb-4 uppercase tracking-wide flex items-center gap-2">
+              ▶️ Show Start
+              <span className="text-xs px-2 py-1 bg-green-500 text-white rounded-full font-bold">START HERE</span>
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Show Metadata Control - START SHOW */}
+              <div>
+                <ShowMetadataControl />
+              </div>
 
-            {/* Quick Actions */}
-            <div>
-              <QuickActions />
-            </div>
+              {/* Episode Info Panel */}
+              <div>
+                <EpisodeInfoPanel />
+              </div>
 
-            {/* Graphics Gallery */}
-            <div>
-              <GraphicsGallery />
-            </div>
+              {/* Graphics Gallery */}
+              <div>
+                <GraphicsGallery />
+              </div>
 
-            {/* Lower Thirds */}
-            <div>
-              <LowerThirdControl />
-            </div>
+              {/* BetaBot Director - AI Suggestions */}
+              <div>
+                <BetaBotDirectorPanel />
+              </div>
 
-            {/* AI Engagement */}
-            <div>
-              <AIEngagementPanel />
+              {/* Segment Control - Spans 2 columns */}
+              <div className="lg:col-span-2">
+                <SegmentControlPanel />
+              </div>
+
+              {/* Popup Queue Manager - Spans 2 columns */}
+              <div className="lg:col-span-2">
+                <PopupQueuePanel />
+              </div>
             </div>
           </div>
-        </div>
+        </ErrorBoundary>
 
-        {/* Discussion Show Production Tools */}
-        <div className="mb-8">
-          <h3 className="text-xl font-bold text-purple-400 mb-4 uppercase tracking-wide">Discussion Show Production Tools</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Show Prep - Spans 2 columns */}
-            <div className="lg:col-span-2">
-              <ShowPrepPanel />
-            </div>
+        {/* 🔴 LIVE CONTROLS - Most frequently used during stream */}
+        <ErrorBoundary sectionName="Live Controls">
+          <div className="mb-8">
+            <h3 className="text-xl font-bold text-red-400 mb-4 uppercase tracking-wide flex items-center gap-2">
+              🔴 Live Controls
+              <span className="text-xs px-2 py-1 bg-red-500 text-white rounded-full font-bold animate-pulse">LIVE</span>
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {/* Quick Actions - Emergency controls */}
+              <div>
+                <QuickActions />
+              </div>
 
-            {/* Beta Bot AI Co-Host - Spans 2 columns (includes integrated audio capture) */}
-            <div className="lg:col-span-2">
-              <BetaBotControlPanel />
-            </div>
+              {/* BetaBot AI Co-Host - Spans 2 columns */}
+              <div className="lg:col-span-2">
+                <BetaBotControlPanel />
+              </div>
 
-            {/* TTS Queue */}
-            <div>
-              <TTSQueuePanel />
-            </div>
+              {/* Scarlett Solo Audio Control */}
+              <div>
+                <ScarlettAudioPanel />
+              </div>
 
-            {/* Soundboard */}
-            <div className="lg:col-span-2">
-              <SoundboardPanel />
-            </div>
+              {/* Question Banner - Spans 2 columns on xl */}
+              <div className="xl:col-span-2">
+                <QuestionBannerControl />
+              </div>
 
-            {/* Broadcast Settings - Spans 2 columns */}
-            <div className="lg:col-span-2">
-              <BroadcastSettingsPanel />
-            </div>
+              {/* Lower Thirds */}
+              <div>
+                <LowerThirdControl />
+              </div>
 
-            {/* Popup Queue Manager - Spans 2 columns */}
-            <div className="lg:col-span-2">
-              <PopupQueuePanel />
-            </div>
-
-            {/* Segment Control - Spans 2 columns */}
-            <div className="lg:col-span-2">
-              <SegmentControlPanel />
-            </div>
-
-            {/* Episode Info Panel */}
-            <div>
-              <EpisodeInfoPanel />
-            </div>
-
-            {/* Lower Third Control */}
-            <div>
-              <LowerThirdControl />
-            </div>
-
-            {/* Show Metadata Control - Spans 2 columns */}
-            <div className="lg:col-span-2">
-              <ShowMetadataControl />
-            </div>
-
-            {/* Operator Notes Panel - Spans 2 columns */}
-            <div className="lg:col-span-2">
-              <OperatorNotesPanel />
-            </div>
-
-            {/* Bookmark Panel */}
-            <div>
-              <BookmarkPanel />
+              {/* Soundboard - Spans 2 columns */}
+              <div className="lg:col-span-2">
+                <SoundboardPanel />
+              </div>
             </div>
           </div>
-        </div>
+        </ErrorBoundary>
+
+        {/* 🎬 SHOW MANAGEMENT - Setup once per segment */}
+        <ErrorBoundary sectionName="Show Management">
+          <div className="mb-8">
+            <h3 className="text-xl font-bold text-purple-400 mb-4 uppercase tracking-wide">🎬 Show Management</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Show Prep - Spans 2 columns */}
+              <div className="lg:col-span-2">
+                <ShowPrepPanel />
+              </div>
+
+              {/* Producer AI - Spans 2 columns */}
+              <div className="lg:col-span-2">
+                <ProducerAIPanel />
+              </div>
+
+              {/* Broadcast Settings - Spans 2 columns */}
+              <div className="lg:col-span-2">
+                <BroadcastSettingsPanel />
+              </div>
+
+              {/* Operator Notes Panel - Spans 2 columns */}
+              <div className="lg:col-span-2">
+                <OperatorNotesPanel />
+              </div>
+
+              {/* Bookmark Panel */}
+              <div>
+                <BookmarkPanel />
+              </div>
+            </div>
+          </div>
+        </ErrorBoundary>
+
+        {/* ⚡ AI AUTO-DIRECTOR & AUTOMATION - Background monitoring */}
+        <ErrorBoundary sectionName="AI Auto-Director System">
+          <div className="mb-8">
+            <h3 className="text-xl font-bold text-yellow-400 mb-4 uppercase tracking-wide flex items-center gap-2">
+              ⚡ AI Auto-Director & Automation
+              <span className="text-xs px-2 py-1 bg-yellow-500 text-black rounded-full font-bold">BETA</span>
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Automation Config - Control Panel */}
+              <div className="lg:col-span-2">
+                <AutomationConfigPanel />
+              </div>
+
+              {/* OBS Camera Control */}
+              <div className="lg:col-span-2">
+                <OBSConnectionPanel />
+              </div>
+
+              {/* Live Transcription & Keyword Detection */}
+              <div className="lg:col-span-2">
+                <TranscriptionPanel />
+              </div>
+
+              {/* AI Context Analysis */}
+              <div className="lg:col-span-2">
+                <AIAnalysisPanel />
+              </div>
+
+              {/* Pending Suggestions - Approval UI */}
+              <div className="lg:col-span-2">
+                <SuggestionApprovalPanel />
+              </div>
+
+              {/* Execution History */}
+              <div className="lg:col-span-2">
+                <ExecutionHistoryPanel />
+              </div>
+
+              {/* Analytics & Learning Dashboard */}
+              <div className="lg:col-span-2">
+                <AnalyticsDashboard />
+              </div>
+
+              {/* Manual Trigger Testing */}
+              <div className="lg:col-span-2">
+                <ManualTriggerPanel />
+              </div>
+
+              {/* Trigger Rules Manager */}
+              <div className="lg:col-span-2">
+                <TriggerRulesPanel />
+              </div>
+
+              {/* Automation Feed - Event Log */}
+              <div className="lg:col-span-2">
+                <AutomationFeedPanel />
+              </div>
+
+              {/* Scene Presets & Templates - Spans 2 columns */}
+              <div className="lg:col-span-2">
+                <PresetManagerPanel />
+              </div>
+            </div>
+          </div>
+        </ErrorBoundary>
 
         {/* Broadcast Preview */}
         <div className="mt-8 bg-black border-2 border-gray-700 rounded-lg p-6">
@@ -296,7 +412,9 @@ function App() {
           <p className="mt-2">Recommended Browser Source size: 1920x1080</p>
         </div>
       </main>
-    </div>
+        </div>
+      </ShowProviderWithBoundary>
+    </AuthProviderWithBoundary>
   )
 }
 

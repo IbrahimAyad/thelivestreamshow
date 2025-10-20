@@ -7,6 +7,7 @@ interface BroadcastGraphic {
   is_visible: boolean
   position: string
   config: any
+  html_file?: string | null
 }
 
 export function BroadcastGraphicsDisplay() {
@@ -56,7 +57,77 @@ export function BroadcastGraphicsDisplay() {
     }
   }, [])
 
+  const hideGraphic = async (graphicId: string) => {
+    await supabase
+      .from('broadcast_graphics')
+      .update({ is_visible: false })
+      .eq('id', graphicId)
+  }
+
   const renderGraphic = (graphic: BroadcastGraphic) => {
+    // If this graphic has an HTML file, display it as a full-screen iframe overlay
+    if (graphic.html_file) {
+      return (
+        <div
+          key={graphic.id}
+          className="fullscreen-html-overlay"
+          onClick={() => hideGraphic(graphic.id)}
+          style={{ cursor: 'pointer' }}
+        >
+          <iframe
+            src={graphic.html_file}
+            className="fullscreen-iframe"
+            title={graphic.graphic_type}
+          />
+          <div className="click-to-close-hint">Click anywhere to close</div>
+          <style>{`
+            .fullscreen-html-overlay {
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100vw;
+              height: 100vh;
+              z-index: 9999;
+              animation: fadeIn 300ms ease-out;
+            }
+
+            .fullscreen-iframe {
+              width: 100%;
+              height: 100%;
+              border: none;
+              display: block;
+            }
+
+            .click-to-close-hint {
+              position: fixed;
+              bottom: 30px;
+              right: 30px;
+              background: rgba(0, 0, 0, 0.8);
+              color: white;
+              padding: 12px 24px;
+              border-radius: 8px;
+              font-size: 14px;
+              font-weight: 600;
+              z-index: 10000;
+              animation: fadeIn 300ms ease-out 1s both, pulse 2s ease-in-out infinite 2s;
+              pointer-events: none;
+            }
+
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+
+            @keyframes pulse {
+              0%, 100% { opacity: 0.7; transform: scale(1); }
+              50% { opacity: 1; transform: scale(1.05); }
+            }
+          `}</style>
+        </div>
+      )
+    }
+
+    // Otherwise, render the default graphic types
     switch (graphic.graphic_type) {
       case 'live_indicator':
         return (
@@ -107,126 +178,6 @@ export function BroadcastGraphicsDisplay() {
           </div>
         )
 
-      case 'brb':
-        return (
-          <div key={graphic.id} className="brb-graphic">
-            <div className="brb-content">
-              <div className="brb-title">BRB</div>
-              <div className="brb-subtitle">We'll be right back!</div>
-            </div>
-            <style>{`
-              .brb-graphic {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(251, 191, 36, 0.95);
-                border: 3px solid #FBBF24;
-                border-radius: 12px;
-                padding: 60px 100px;
-                z-index: 200;
-                animation: fadeIn 300ms ease-out;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-              }
-
-              .brb-content {
-                text-align: center;
-              }
-
-              .brb-title {
-                font-size: 72px;
-                font-weight: 700;
-                color: #000000;
-                letter-spacing: 4px;
-                margin-bottom: 12px;
-              }
-
-              .brb-subtitle {
-                font-size: 28px;
-                font-weight: 500;
-                color: #1F2937;
-              }
-            `}</style>
-          </div>
-        )
-
-      case 'starting_soon':
-        return (
-          <div key={graphic.id} className="starting-soon-graphic">
-            <div className="starting-soon-content">
-              <div className="starting-soon-title">STARTING SOON</div>
-            </div>
-            <style>{`
-              .starting-soon-graphic {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(59, 130, 246, 0.95);
-                border: 3px solid #3B82F6;
-                border-radius: 12px;
-                padding: 60px 100px;
-                z-index: 200;
-                animation: fadeIn 300ms ease-out;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-              }
-
-              .starting-soon-content {
-                text-align: center;
-              }
-
-              .starting-soon-title {
-                font-size: 64px;
-                font-weight: 700;
-                color: #FFFFFF;
-                letter-spacing: 6px;
-              }
-            `}</style>
-          </div>
-        )
-
-      case 'tech_difficulties':
-        return (
-          <div key={graphic.id} className="tech-difficulties-graphic">
-            <div className="tech-difficulties-content">
-              <div className="tech-difficulties-title">⚠️ TECHNICAL DIFFICULTIES</div>
-              <div className="tech-difficulties-subtitle">Please stand by</div>
-            </div>
-            <style>{`
-              .tech-difficulties-graphic {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(249, 115, 22, 0.95);
-                border: 3px solid #F97316;
-                border-radius: 12px;
-                padding: 60px 100px;
-                z-index: 200;
-                animation: fadeIn 300ms ease-out;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-              }
-
-              .tech-difficulties-content {
-                text-align: center;
-              }
-
-              .tech-difficulties-title {
-                font-size: 56px;
-                font-weight: 700;
-                color: #FFFFFF;
-                letter-spacing: 2px;
-                margin-bottom: 12px;
-              }
-
-              .tech-difficulties-subtitle {
-                font-size: 28px;
-                font-weight: 500;
-                color: #FEF3C7;
-              }
-            `}</style>
-          </div>
-        )
 
       case 'logo':
         return (

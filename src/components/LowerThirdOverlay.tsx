@@ -80,22 +80,17 @@ export default function LowerThirdOverlay({ forceVisible }: LowerThirdOverlayPro
   return (
     <div className={`lower-third-overlay-container ${isVisible ? 'visible' : 'hidden'}`}>
       <div className="lower-third-minimal">
-        <div className="lower-third-content">
-          <span className="guest-name">{lowerThird.guest_name}</span>
-          <span className="separator">•</span>
-          <span className="guest-title">{lowerThird.guest_title}</span>
-          <span className="separator">•</span>
-          <span className="guest-social">{lowerThird.guest_social}</span>
-        </div>
+        <div className="show-host">{lowerThird.guest_name}</div>
+        <div className="show-title">{lowerThird.guest_title}</div>
+        <div className="show-social">{lowerThird.guest_social}</div>
       </div>
 
       <style>{`
         .lower-third-overlay-container {
           position: fixed;
-          bottom: 180px;
-          left: 24px;
+          bottom: 30px;
+          left: 30px;
           z-index: 98;
-          max-width: 600px;
           transition: transform 400ms ease-out, opacity 400ms ease-out;
         }
 
@@ -111,41 +106,35 @@ export default function LowerThirdOverlay({ forceVisible }: LowerThirdOverlayPro
 
         .lower-third-minimal {
           background: rgba(15, 15, 15, 0.92);
-          border-left: 3px solid #22D3EE;
+          border-left: 3px solid #FCD34D;
           border-radius: 2px;
           padding: 12px 20px;
           backdrop-filter: blur(8px);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
+          text-align: left;
+          min-width: 200px;
         }
 
-        .lower-third-content {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          font-size: 15px;
-          line-height: 1;
-        }
-
-        .guest-name {
+        .show-host {
+          font-size: 13px;
           font-weight: 600;
           color: #EF4444;
-          letter-spacing: 0.3px;
+          letter-spacing: 0.5px;
+          margin-bottom: 4px;
         }
 
-        .separator {
-          color: #6B7280;
-          font-weight: 300;
+        .show-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #FFFFFF;
+          line-height: 1.3;
+          margin-bottom: 6px;
         }
 
-        .guest-title {
+        .show-social {
+          font-size: 11px;
           font-weight: 400;
           color: #F87171;
-        }
-
-        .guest-social {
-          font-weight: 400;
-          color: #EF4444;
-          font-size: 14px;
         }
       `}</style>
     </div>

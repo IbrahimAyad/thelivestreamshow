@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Coordinator Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h1>AI Coordinator Verification</h1>
+  <div id="status"></div>
+  <button onclick="runTest()">Run Test</button>
+  <pre id="output"></pre>
+
+  <script>
+    const supabaseUrl = 'https://vcniezwtltraqramjlux.supabase.co'
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbmllend0bHRyYXFyYW1qbHV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzMjQ1MTgsImV4cCI6MjA3NTkwMDUxOH0.5PDpv3-DVZzjOVFLdsWibzOk5A3-4PI1OthU1EQNhTQ'
+
+    const { createClient } = supabase
+    const client = createClient(supabaseUrl, supabaseKey)
+
+    const output = document.getElementById('output')
+    const status = document.getElementById('status')
+
+    function log(msg) {
+      output.textContent += msg + '\n'
+      console.log(msg)
+    }
+
+    async function runTest() {
+      output.textContent = ''
+      log('🔍 AI Coordinator Verification Test\n')
+
+      // Test 1: Check table exists
+      log('Test 1: Checking if table exists...')
+      const { data: tableData, error: tableError } = await client
+        .from('ai_coordinator_logs')
+        .select('count')
+        .limit(1)
+
+      if (tableError) {
+        log('❌ Table error: ' + tableError.message)
+        status.innerHTML = '<span style="color: red">❌ Table not accessible</span>'
+        return
+      }
+      log('✅ Table exists and is accessible\n')
+
+      // Test 2: Check current user
+      log('Test 2: Checking authentication...')
+      const { data: { user } } = await client.auth.getUser()
+      if (user) {
+        log('✅ User authenticated: ' + user.email)
+        log('   User ID: ' + user.id)
+      } else {
+        log('⚠️ Not authenticated (using anon key)')
+      }
+      log('')
+
+      // Test 3: Try to insert a log
+      log('Test 3: Testing INSERT...')
+      const { data: insertData, error: insertError } = await client
+        .from('ai_coordinator_logs')
+        .insert({
+          event_type: 'test_verification',
+          event_data: {
+            test: true,
+            timestamp: new Date().toISOString(),
+            authenticated: !!user
+          }
+        })
+        .select()
+
+      if (insertError) {
+        log('❌ INSERT failed: ' + insertError.message)
+        log('   Code: ' + insertError.code)
+        log('   Hint: ' + insertError.hint)
+
+        if (insertError.code === '42501') {
+          log('\n⚠️ RLS POLICY ISSUE DETECTED')
+          log('   Need to add INSERT policy for authenticated users')
+          log('   Run this SQL in Supabase Dashboard:')
+          log('')
+          log('   CREATE POLICY "Allow authenticated inserts"')
+          log('     ON ai_coordinator_logs FOR INSERT')
+          log('     TO authenticated')
+          log('     WITH CHECK (true);')
+          log('')
+          log('   GRANT INSERT ON ai_coordinator_logs TO authenticated;')
+        }
+
+        status.innerHTML = '<span style="color: orange">⚠️ INSERT blocked by RLS</span>'
+      } else {
+        log('✅ INSERT successful!')
+        log('   Event ID: ' + insertData[0].id)
+        status.innerHTML = '<span style="color: green">✅ All systems working!</span>'
+      }
+      log('')
+
+      // Test 4: Query recent logs
+      log('Test 4: Querying recent logs...')
+      const { data: logs, error: logsError } = await client
+        .from('ai_coordinator_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+      if (logsError) {
+        log('❌ Query failed: ' + logsError.message)
+      } else {
+        log('✅ Found ' + logs.length + ' recent log entries')
+        logs.forEach((log, i) => {
+          output.textContent += `\n  ${i + 1}. ${log.event_type} (${log.created_at})\n`
+        })
+      }
+
+      log('\n📊 Test Complete')
+    }
+
+    // Auto-run on load
+    window.addEventListener('load', runTest)
+  </script>
+</body>
+</html>

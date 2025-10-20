@@ -23,6 +23,7 @@ export interface BroadcastGraphic {
   is_visible: boolean
   position: string
   config: any
+  html_file?: string | null
   show_id?: string
   created_at: string
   updated_at: string

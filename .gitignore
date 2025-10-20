@@ -18,8 +18,12 @@
 **/downloads/
 **/eggs/
 **/.eggs/
-**/lib/
+# Python lib directories only - NOT src/lib for TypeScript source code
 **/lib64/
+**/python*/lib/
+**/venv/lib/
+**/env/lib/
+**/virtualenv/lib/
 **/parts/
 **/sdist/
 **/var/
@@ -889,6 +893,24 @@
 # ==============================================================================
 # PROJECT SPECIFIC
 # ==============================================================================
+# Files that might contain sensitive API keys or credentials
+**/*-with-keys.*
+**/*-with-secrets.*
+**/api-keys.*
+**/api-secrets.*
+**/*-credentials.*
+
+# Configuration files that might contain secrets
+**/config.local.*
+**/config.private.*
+**/settings.local.*
+**/settings.private.*
+
+# OpenAI/Anthropic API key files
+**/openai-key.*
+**/anthropic-key.*
+**/gemini-key.*
+
 # Add your project-specific ignores here
 # workspace/
 # data/
