@@ -4,6 +4,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { BroadcastOverlayView } from './components/BroadcastOverlayView.tsx'
+import { initMonitoring } from './lib/monitoring/sentry'
+
+// Initialize error monitoring
+initMonitoring()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

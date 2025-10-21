@@ -16,12 +16,15 @@ import { ShowMetadataControl } from './components/ShowMetadataControl'
 import { OperatorNotesPanel } from './components/OperatorNotesPanel'
 import { BookmarkPanel } from './components/BookmarkPanel'
 import { BetaBotControlPanel } from './components/BetaBotControlPanel'
+import { AudioControlCenter } from './components/AudioControlCenter'
 import { ScarlettAudioPanel } from './components/scarlett/ScarlettAudioPanel'
 import { ProducerAIPanel } from './components/ProducerAIPanel'
 import { SystemHealthMonitor } from './components/SystemHealthMonitor'
-import { PresetManagerPanel } from './components/PresetManagerPanel'
 import { ShowManagerPanel } from './components/ShowManagerPanel'
 import { ShowSelector } from './components/ShowSelector'
+import { TemplateSelector } from './components/TemplateSelector'
+import { TemplateCreatorModal } from './components/TemplateCreatorModal'
+import { ShowHistoryPanel } from './components/ShowHistoryPanel'
 import { AutomationFeedPanel } from './components/AutomationFeedPanel'
 import { AutomationConfigPanel } from './components/AutomationConfigPanel'
 import { ManualTriggerPanel } from './components/ManualTriggerPanel'
@@ -41,6 +44,7 @@ function App() {
   const broadcastUrl = window.location.origin + '/broadcast'
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false)
   const [showManagement, setShowManagement] = useState(false)
+  const [showTemplateCreator, setShowTemplateCreator] = useState(false)
   const soundboardRef = useRef<any>(null)
   const segmentRef = useRef<any>(null)
 
@@ -253,6 +257,12 @@ function App() {
               🔴 Live Controls
               <span className="text-xs px-2 py-1 bg-red-500 text-white rounded-full font-bold animate-pulse">LIVE</span>
             </h3>
+
+            {/* Audio Control Center - Prominent setup wizard */}
+            <div className="mb-6">
+              <AudioControlCenter />
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {/* Quick Actions - Emergency controls */}
               <div>
@@ -316,9 +326,35 @@ function App() {
               <div>
                 <BookmarkPanel />
               </div>
+
+              {/* Template Selector - Spans 2 columns */}
+              <div className="lg:col-span-2">
+                <TemplateSelector
+                  onTemplateLoaded={() => {
+                    // Optionally refresh or notify user
+                    console.log('Template loaded successfully')
+                  }}
+                  onCreateTemplate={() => setShowTemplateCreator(true)}
+                />
+              </div>
+
+              {/* Show History Panel - Spans 2 columns */}
+              <div className="lg:col-span-2">
+                <ShowHistoryPanel />
+              </div>
             </div>
           </div>
         </ErrorBoundary>
+
+        {/* Template Creator Modal */}
+        <TemplateCreatorModal
+          isOpen={showTemplateCreator}
+          onClose={() => setShowTemplateCreator(false)}
+          onTemplateCreated={() => {
+            // Optionally refresh template list
+            console.log('Template created successfully')
+          }}
+        />
 
         {/* ⚡ AI AUTO-DIRECTOR & AUTOMATION - Background monitoring */}
         <ErrorBoundary sectionName="AI Auto-Director System">
@@ -376,11 +412,6 @@ function App() {
               {/* Automation Feed - Event Log */}
               <div className="lg:col-span-2">
                 <AutomationFeedPanel />
-              </div>
-
-              {/* Scene Presets & Templates - Spans 2 columns */}
-              <div className="lg:col-span-2">
-                <PresetManagerPanel />
               </div>
             </div>
           </div>

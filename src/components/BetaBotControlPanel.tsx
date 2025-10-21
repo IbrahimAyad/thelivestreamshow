@@ -644,7 +644,7 @@ export function BetaBotControlPanel() {
   };
 
   return (
-    <div className="betabot-control-panel">
+    <div className="betabot-control-panel" data-betabot-panel>
       <div className="panel-header">
         <h3>🤖 Beta Bot</h3>
         <div className="status-indicator">

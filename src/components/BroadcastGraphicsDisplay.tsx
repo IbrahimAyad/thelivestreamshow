@@ -14,15 +14,21 @@ export function BroadcastGraphicsDisplay() {
   const [activeGraphics, setActiveGraphics] = useState<BroadcastGraphic[]>([])
 
   useEffect(() => {
+    console.log('🔵 [BroadcastGraphicsDisplay] Component mounted')
+
     // Load initial graphics
     const loadGraphics = async () => {
+      console.log('🔵 [BroadcastGraphicsDisplay] Loading initial graphics...')
       const { data } = await supabase
         .from('broadcast_graphics')
         .select('*')
         .eq('is_visible', true)
-      
+
+      console.log('🔵 [BroadcastGraphicsDisplay] Loaded graphics:', data)
+
       if (data) {
         setActiveGraphics(data as BroadcastGraphic[])
+        console.log('✅ [BroadcastGraphicsDisplay] Set active graphics count:', data.length)
       }
     }
 
@@ -38,15 +44,19 @@ export function BroadcastGraphicsDisplay() {
           schema: 'public',
           table: 'broadcast_graphics',
         },
-        async () => {
+        async (payload) => {
+          console.log('🔵 [BroadcastGraphicsDisplay] Real-time change detected:', payload)
           // Reload all visible graphics on any change
           const { data } = await supabase
             .from('broadcast_graphics')
             .select('*')
             .eq('is_visible', true)
-          
+
+          console.log('🔵 [BroadcastGraphicsDisplay] Reloaded graphics after change:', data)
+
           if (data) {
             setActiveGraphics(data as BroadcastGraphic[])
+            console.log('✅ [BroadcastGraphicsDisplay] Updated active graphics count:', data.length)
           }
         }
       )

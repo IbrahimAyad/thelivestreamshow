@@ -8,7 +8,8 @@ import { PredictionDashboard } from './PredictionDashboard';
 import { ImportPlanModal } from './ImportPlanModal';
 import { ShowPlanSelector } from './ShowPlanSelector';
 import { ShowPlanViewer } from './ShowPlanViewer';
-import { Brain, Play, Pause, Zap, TrendingUp, Clock, CheckCircle, AlertCircle, Settings, Network, BarChart3, DollarSign, Database, Sparkles, History, Target, Upload, FolderOpen, FileText } from 'lucide-react';
+import { AICoordinatorMonitor } from './AICoordinatorMonitor';
+import { Brain, Play, Pause, Zap, TrendingUp, Clock, CheckCircle, AlertCircle, Settings, Network, BarChart3, DollarSign, Database, Sparkles, History, Target, Upload, FolderOpen, FileText, AlertTriangle, X } from 'lucide-react';
 import type { SavedShowPlan } from '../types/show-plan-import';
 
 export function ProducerAIPanel() {
@@ -340,6 +341,34 @@ export function ProducerAIPanel() {
           </div>
         </div>
       )}
+
+      {/* NEW Day 4: Rejected Questions Display */}
+      {producerAI.rejectedQuestions && producerAI.rejectedQuestions.length > 0 && (
+        <div className="mb-4 p-3 bg-orange-900/20 border border-orange-500/30 rounded-lg">
+          <h3 className="text-sm font-semibold text-orange-300 mb-2 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            Rejected Questions ({producerAI.rejectedQuestions.length})
+          </h3>
+          <div className="space-y-2">
+            {producerAI.rejectedQuestions.slice(-3).reverse().map((rejected, idx) => (
+              <div key={idx} className="p-2 bg-gray-900/50 rounded border border-orange-500/20">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-300 mb-1">{rejected.question}</p>
+                    <p className="text-xs text-orange-400">
+                      Reason: <span className="font-semibold">{rejected.reason}</span>
+                      {rejected.reason === 'duplicate' && ' (similar question already exists)'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* NEW Day 6: AI Coordinator Monitor */}
+      <AICoordinatorMonitor />
 
       {/* Last Analysis */}
       {producerAI.lastAnalysis && (

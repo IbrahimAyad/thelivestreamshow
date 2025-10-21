@@ -49,9 +49,9 @@ export function useAutomationEngine(): UseAutomationEngineReturn {
     const aiCoordinator = new AICoordinator({
       supabaseUrl: import.meta.env.VITE_SUPABASE_URL!,
       supabaseKey: import.meta.env.VITE_SUPABASE_ANON_KEY!,
-      enablePredictions: false, // Can be enabled later
-      enableHostProfile: false,
-      enableContextMemory: false
+      enablePredictions: true, // ✅ Day 7: Enabled predictive engagement scoring
+      enableHostProfile: true, // ✅ Day 9: Enabled host learning & preferences
+      enableContextMemory: true // ✅ Day 4: Enabled duplicate detection
     })
     aiCoordinatorRef.current = aiCoordinator
     console.log('[useAutomationEngine] AICoordinator created')

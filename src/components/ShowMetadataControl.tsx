@@ -2,12 +2,19 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { Radio, PlayCircle, StopCircle, RotateCcw, AlertTriangle } from 'lucide-react'
 import type { ShowMetadata } from '../lib/supabase'
+import { EndShowModal } from './EndShowModal'
 
 export function ShowMetadataControl() {
   const [metadata, setMetadata] = useState<ShowMetadata | null>(null)
   const [showStartConfirm, setShowStartConfirm] = useState(false)
-  const [showEndConfirm, setShowEndConfirm] = useState(false)
+  const [showEndModal, setShowEndModal] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined)
+  const [episodeInfo, setEpisodeInfo] = useState({
+    number: 1,
+    title: 'Episode 1',
+    topic: 'Today\'s Show'
+  })
 
   useEffect(() => {
     loadMetadata()
@@ -106,21 +113,60 @@ export function ShowMetadataControl() {
   const startShow = async () => {
     if (!metadata) return
 
-    const { error } = await supabase
-      .from('show_metadata')
-      .update({
-        show_start_time: new Date().toISOString(),
-        is_live: true,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', metadata.id)
+    try {
+      // 1. Get episode info from EpisodeInfoPanel
+      const { data: episodeData } = await supabase
+        .from('show_metadata')
+        .select('episode_number, episode_title, episode_topic')
+        .single()
 
-    if (error) {
-      console.error('Error starting show:', error)
-      alert('Failed to start show')
-    } else {
+      if (episodeData) {
+        setEpisodeInfo({
+          number: episodeData.episode_number || 1,
+          title: episodeData.episode_title || 'Episode',
+          topic: episodeData.episode_topic || 'Today\'s Show'
+        })
+      }
+
+      // 2. Create a new session
+      const { data: newSession, error: sessionError } = await supabase
+        .from('show_sessions')
+        .insert({
+          episode_number: episodeData?.episode_number || 1,
+          episode_title: episodeData?.episode_title || 'Episode',
+          episode_topic: episodeData?.episode_topic || 'Today\'s Show',
+          episode_date: new Date().toISOString().split('T')[0],
+          status: 'live',
+          show_notes: ''
+        })
+        .select()
+        .single()
+
+      if (sessionError) {
+        console.error('Error creating session:', sessionError)
+        // Continue anyway - session is optional
+      } else if (newSession) {
+        setSessionId(newSession.id)
+        console.log('✅ Session created:', newSession.id)
+      }
+
+      // 3. Update show metadata
+      const { error } = await supabase
+        .from('show_metadata')
+        .update({
+          show_start_time: new Date().toISOString(),
+          is_live: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', metadata.id)
+
+      if (error) throw error
+
       setShowStartConfirm(false)
-      loadMetadata() // Immediately reload to update UI
+      loadMetadata()
+    } catch (err) {
+      console.error('Error starting show:', err)
+      alert('Failed to start show')
     }
   }
 
@@ -331,38 +377,14 @@ export function ShowMetadataControl() {
         )}
 
         {/* End Show Button */}
-        {!showEndConfirm ? (
-          <button
-            onClick={() => setShowEndConfirm(true)}
-            disabled={!metadata.is_live}
-            className="w-full py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2"
-          >
-            <StopCircle className="w-5 h-5" />
-            End Show
-          </button>
-        ) : (
-          <div className="p-3 bg-orange-900/40 border-2 border-orange-500 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="w-5 h-5 text-yellow-400" />
-              <p className="text-sm font-semibold text-white">End the show?</p>
-            </div>
-            <p className="text-xs text-gray-300 mb-3">This will set live status to OFF</p>
-            <div className="flex gap-2">
-              <button
-                onClick={endShow}
-                className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg transition-all"
-              >
-                Confirm End
-              </button>
-              <button
-                onClick={() => setShowEndConfirm(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
+        <button
+          onClick={() => setShowEndModal(true)}
+          disabled={!metadata.is_live}
+          className="w-full py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+        >
+          <StopCircle className="w-5 h-5" />
+          End Show & Archive
+        </button>
 
         {/* Reset Show Button */}
         {!showResetConfirm ? (
@@ -402,6 +424,14 @@ export function ShowMetadataControl() {
         <p className="font-semibold">⚠️ Production Controls</p>
         <p className="text-xs mt-1">Use these controls carefully during live broadcasts</p>
       </div>
+
+      {/* End Show Modal */}
+      <EndShowModal
+        isOpen={showEndModal}
+        onClose={() => setShowEndModal(false)}
+        sessionId={sessionId}
+        episodeInfo={episodeInfo}
+      />
     </div>
   )
 }

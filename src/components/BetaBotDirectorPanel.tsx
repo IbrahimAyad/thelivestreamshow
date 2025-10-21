@@ -25,23 +25,35 @@ export function BetaBotDirectorPanel() {
   useEffect(() => {
     loadMoodState()
 
+    // Real-time subscription - updates immediately without polling
     const channel = supabase
       .channel('betabot_mood_changes')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'betabot_mood'
-      }, () => {
-        loadMoodState()
+      }, (payload) => {
+        console.log('🔄 Real-time mood update received:', payload.new)
+        // Update state directly from payload - no extra query needed
+        if (payload.new) {
+          setMoodState(payload.new as BetaBotMood)
+
+          // Also update override status if AI Coordinator available
+          if (aiCoordinator) {
+            const moodManager = aiCoordinator.getMoodManager()
+            setManualOverrideActive(moodManager.isManualOverrideActive())
+            setOverrideTimeRemaining(moodManager.getManualOverrideTimeRemaining())
+          }
+        }
       })
       .subscribe()
 
     return () => {
       channel.unsubscribe()
     }
-  }, [])
+  }, [aiCoordinator])
 
-  // Poll manual override status
+  // Poll manual override countdown (only when active)
   useEffect(() => {
     if (!aiCoordinator) return
 
@@ -57,11 +69,15 @@ export function BetaBotDirectorPanel() {
     // Check immediately
     checkOverrideStatus()
 
-    // Poll every second
-    const interval = setInterval(checkOverrideStatus, 1000)
+    // Only poll every second if override is active (for countdown timer)
+    // Otherwise check every 5 seconds to detect when override becomes active
+    const interval = setInterval(
+      checkOverrideStatus,
+      manualOverrideActive ? 1000 : 5000
+    )
 
     return () => clearInterval(interval)
-  }, [aiCoordinator])
+  }, [aiCoordinator, manualOverrideActive])
 
   const loadMoodState = async () => {
     setLoading(true)

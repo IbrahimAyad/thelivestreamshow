@@ -173,6 +173,14 @@ export function useProducerAI(): UseProducerAI {
     showId: string;
     cacheAge: number;
   } | null>(null);
+
+  // NEW Day 4: Rejected questions tracking
+  const [rejectedQuestions, setRejectedQuestions] = useState<Array<{
+    question: string;
+    reason: string;
+    timestamp: Date;
+  }>>([]);
+
   // NEW Phase 4: Host Profile State
   const [hostProfileStats, setHostProfileStats] = useState<{
     hostId: string;
@@ -599,6 +607,12 @@ Generate 2-4 questions maximum. Prioritize quality over quantity.`;
               console.log(`⚠️ Question flagged for review: ${result.reason}`);
             } else if (result.status === 'rejected') {
               console.log(`❌ Question rejected: ${result.reason}`);
+              // Track rejected questions for UI display
+              setRejectedQuestions(prev => [...prev, {
+                question: q.question_text,
+                reason: result.reason || 'unknown',
+                timestamp: new Date()
+              }]);
             }
           }
         } else {
@@ -1018,6 +1032,7 @@ Generate 2-4 questions maximum. Prioritize quality over quantity.`;
     multiModelResult, // NEW Phase 2: Raw multi-model results
     votedQuestions, // NEW Phase 2: Voted/ranked questions
     contextMemoryStats, // NEW Phase 3: Context memory statistics
-    hostProfileStats // NEW Phase 4: Host profile statistics
+    hostProfileStats, // NEW Phase 4: Host profile statistics
+    rejectedQuestions // NEW Day 4: Rejected/duplicate questions
   };
 }
