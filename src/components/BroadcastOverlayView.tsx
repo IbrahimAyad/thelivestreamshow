@@ -271,6 +271,70 @@ export function BroadcastOverlayView() {
     }
   }, [])
 
+  // Subscribe to StreamStudio audio state for graphics triggers
+  useEffect(() => {
+    console.log('🎵 [BROADCAST] Setting up audio state subscription for graphics triggers...')
+
+    const audioStateChannel = supabase
+      .channel('audio_playback_state_broadcast')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'audio_playback_state'
+      }, async (payload) => {
+        const audioState = payload.new as any
+        console.log('🎧 [BROADCAST] Audio state update:', audioState)
+
+        // When audio starts playing, check if it's an intro/outro sound
+        if (audioState.is_playing && audioState.current_track_id) {
+          console.log(`🎵 [BROADCAST] Audio now playing - Track ID: ${audioState.current_track_id}`)
+
+          // Fetch track details to determine if it's a sound effect or intro/outro
+          const { data: trackData } = await supabase
+            .from('music_library')
+            .select('title, artist, track_type, tags')
+            .eq('id', audioState.current_track_id)
+            .maybeSingle()
+
+          if (trackData) {
+            console.log('🎼 [BROADCAST] Track info:', trackData)
+
+            // Trigger graphics for intro/outro sounds
+            const trackTitle = trackData.title?.toLowerCase() || ''
+            const trackType = trackData.track_type?.toLowerCase() || ''
+            const trackTags = trackData.tags || []
+
+            if (
+              trackType === 'intro' ||
+              trackType === 'outro' ||
+              trackTitle.includes('intro') ||
+              trackTitle.includes('outro') ||
+              trackTags.includes('intro') ||
+              trackTags.includes('outro')
+            ) {
+              console.log(`🎬 [BROADCAST] ${trackType.toUpperCase()} sound detected! Triggering graphics...`)
+              // Graphics trigger logic will be added here
+              // For now, just log that we detected the trigger
+            }
+          }
+        }
+
+        // Handle emergency modes (PANIC, BRB)
+        if (audioState.emergency_mode) {
+          console.log(`🚨 [BROADCAST] Emergency mode: ${audioState.emergency_mode}`)
+          // Emergency mode graphics can be triggered here
+        }
+      })
+      .subscribe((status) => {
+        console.log('📡 [BROADCAST] Audio state channel status:', status)
+      })
+
+    return () => {
+      console.log('🔌 [BROADCAST] Unsubscribing from audio state channel')
+      audioStateChannel.unsubscribe()
+    }
+  }, [])
+
   // Track audio playback state
   useEffect(() => {
     const audio = audioRef.current
