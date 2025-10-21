@@ -183,3 +183,23 @@ export interface BetaBotTranscript {
   timestamp_seconds: number | null
   created_at: string
 }
+
+// StreamStudio Audio Sync Types
+export interface AudioPlaybackState {
+  id: string
+  is_playing: boolean | null
+  current_track_id: string | null
+  volume: number | null
+  is_muted: boolean | null
+  emergency_mode: string | null
+  emergency_previous_state: any | null
+  audio_bass: number | null
+  audio_mid: number | null
+  audio_high: number | null
+  is_ducking: boolean | null
+  is_looping: boolean | null
+  is_shuffling: boolean | null
+  playback_position: number | null
+  playlist_id: string | null
+  updated_at: string | null
+}
