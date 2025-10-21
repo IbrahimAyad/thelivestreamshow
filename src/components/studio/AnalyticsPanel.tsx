@@ -2,7 +2,7 @@
 // Session analytics, energy graphs, mix quality scoring
 
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import {
   calculateMixQuality,
   generateEnergyFlowGraph,
@@ -11,7 +11,7 @@ import {
   trackSessionData,
   type TrackStatistics,
   type MixQuality,
-} from '../utils/analyticsEngine';
+} from '@/utils/studio/analyticsEngine';
 import type { Database } from '../types/database';
 
 type DJAnalytics = Database['public']['Tables']['dj_analytics']['Row'];

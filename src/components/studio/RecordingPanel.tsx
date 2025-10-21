@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useRecorder } from '@/hooks/useRecorder'
+import { useRecorder } from '@/hooks/studio/useRecorder'
 
 interface RecordingPanelProps {
   audioContext: AudioContext | null

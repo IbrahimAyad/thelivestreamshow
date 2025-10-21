@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { SoundEffectsEngine, SoundEffect } from '../utils/soundEffectsEngine';
+import { SoundEffectsEngine, SoundEffect } from '@/utils/studio/soundEffectsEngine';
 
 export interface KeyboardShortcut {
   key: string;

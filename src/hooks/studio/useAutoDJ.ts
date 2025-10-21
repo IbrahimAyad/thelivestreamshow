@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { scoreAllTracks, findTrackByEnergy, type ScoredTrack, type AutoDJSettings as AutoDJSettingsType, type PlayHistoryEntry } from '@/utils/trackScorer'
+import { scoreAllTracks, findTrackByEnergy, type ScoredTrack, type AutoDJSettings as AutoDJSettingsType, type PlayHistoryEntry } from '@/utils/studio/trackScorer'
 import type { MusicTrack, AutoDJSettings } from '@/types/database'
 
 interface UseAutoDJOptions {

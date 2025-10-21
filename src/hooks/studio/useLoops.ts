@@ -12,8 +12,8 @@ import {
   moveLoop,
   handleLoopPlayback,
   LOOP_SHORTCUTS,
-} from '../utils/loopControls';
-import { BeatGrid } from '../utils/beatDetector';
+} from '@/utils/studio/loopControls';
+import { BeatGrid } from '@/utils/studio/beatDetector';
 
 interface UseLoopsOptions {
   beatGrid: BeatGrid | null;

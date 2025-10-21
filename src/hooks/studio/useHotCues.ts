@@ -11,7 +11,7 @@ import {
   deleteHotCue,
   clearAllCues,
   getCueIdFromKey,
-} from '../utils/hotCues';
+} from '@/utils/studio/hotCues';
 import { MusicTrack } from '../types/database';
 
 interface UseHotCuesOptions {

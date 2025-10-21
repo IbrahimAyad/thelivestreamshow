@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { HotCue } from '../utils/hotCues';
+import { HotCue } from '@/utils/studio/hotCues';
 
 interface HotCuesPanelProps {
   cues: HotCue[];

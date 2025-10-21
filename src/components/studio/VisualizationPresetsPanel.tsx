@@ -9,7 +9,7 @@ import {
   savePreset,
   loadPreset,
   type VisualizationPreset,
-} from '@/utils/visualizationPresets'
+} from '@/utils/studio/visualizationPresets'
 
 export function VisualizationPresetsPanel() {
   const [selectedPreset, setSelectedPreset] = useState<VisualizationPreset>(loadPreset())

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { AudioEffectsChain } from '@/utils/audioEffects'
+import { AudioEffectsChain } from '@/utils/studio/audioEffects'
 import type { MusicTrack, AudioPlaybackState, AudioSettings, AudioEffectsConfig } from '@/types/database'
 
 export function useAudioPlayer() {

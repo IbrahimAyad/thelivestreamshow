@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Sliders, RotateCcw, Save } from 'lucide-react'
 import type { AudioEffectsConfig, EffectPreset, MusicTrack } from '@/types/database'
-import { EFFECT_PRESETS, DEFAULT_EFFECTS } from '@/utils/audioEffects'
+import { EFFECT_PRESETS, DEFAULT_EFFECTS } from '@/utils/studio/audioEffects'
 import { supabase } from '@/lib/supabase'
 
 interface AudioEffectsPanelProps {

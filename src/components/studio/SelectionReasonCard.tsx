@@ -1,4 +1,4 @@
-import type { ScoredTrack } from '@/utils/trackScorer'
+import type { ScoredTrack } from '@/utils/studio/trackScorer'
 import { Music } from 'lucide-react'
 
 interface SelectionReasonCardProps {

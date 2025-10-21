@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Loop, LoopSize, getLoopProgress } from '../utils/loopControls';
+import { Loop, LoopSize, getLoopProgress } from '@/utils/studio/loopControls';
 
 interface LoopControlsPanelProps {
   loop: Loop | null;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CopyrightBadge } from './CopyrightBadge';
-import { useYouTubeDownloader } from '../hooks/useYouTubeDownloader';
+import { useYouTubeDownloader } from '@/hooks/studio/useYouTubeDownloader';
 
 interface DownloadAudioModalProps {
   isOpen: boolean;

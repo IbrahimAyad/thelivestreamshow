@@ -6,8 +6,8 @@
 
 import React, { useState } from 'react';
 import { Mic, MicOff, Volume2, Wand2 } from 'lucide-react';
-import { useMicInput } from '../hooks/useMicInput';
-import { defaultMicEffectsSettings, type MicEffectsSettings } from '../utils/micEffects';
+import { useMicInput } from '@/hooks/studio/useMicInput';
+import { defaultMicEffectsSettings, type MicEffectsSettings } from '@/utils/studio/micEffects';
 
 interface MicDuckingPanelProps {
   audioContext: AudioContext | null;

@@ -9,7 +9,7 @@ import {
   generateWaveformData,
   formatTime,
   type ClipSettings,
-} from '@/utils/audioClipping'
+} from '@/utils/studio/audioClipping'
 
 interface AudioClipperModalProps {
   track: MusicTrack

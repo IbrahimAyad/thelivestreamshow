@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { MicEffectsProcessor, type MicEffectsSettings } from '../utils/micEffects';
+import { MicEffectsProcessor, type MicEffectsSettings } from '@/utils/studio/micEffects';
 
 export interface MicDuckingSettings {
   enabled: boolean;

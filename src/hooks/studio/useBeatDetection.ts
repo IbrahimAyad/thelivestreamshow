@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { BeatGrid, detectBeats, BeatDetectionOptions } from '../utils/beatDetector';
+import { BeatGrid, detectBeats, BeatDetectionOptions } from '@/utils/studio/beatDetector';
 import { MusicTrack } from '../types/database';
 
 interface UseBeatDetectionResult {

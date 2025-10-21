@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { useEQSystem } from '../hooks/useEQSystem';
+import { useEQSystem } from '@/hooks/studio/useEQSystem';
 
 interface EQPanelProps {
   audioContext: AudioContext | null;

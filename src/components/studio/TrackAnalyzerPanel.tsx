@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Music, Loader, CheckCircle, XCircle, BarChart3 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { analyzeAudioFile } from '@/utils/trackAnalyzer'
+import { analyzeAudioFile } from '@/utils/studio/trackAnalyzer'
 import type { MusicTrack } from '@/types/database'
 
 interface TrackAnalyzerPanelProps {

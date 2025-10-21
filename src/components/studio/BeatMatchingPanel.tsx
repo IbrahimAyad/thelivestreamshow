@@ -5,10 +5,10 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MusicTrack } from '../types/database';
-import { useBeatDetection } from '../hooks/useBeatDetection';
-import { useWaveform } from '../hooks/useWaveform';
-import { useHotCues } from '../hooks/useHotCues';
-import { useLoops } from '../hooks/useLoops';
+import { useBeatDetection } from '@/hooks/studio/useBeatDetection';
+import { useWaveform } from '@/hooks/studio/useWaveform';
+import { useHotCues } from '@/hooks/studio/useHotCues';
+import { useLoops } from '@/hooks/studio/useLoops';
 import { WaveformDisplay } from './WaveformDisplay';
 import { HotCuesPanel } from './HotCuesPanel';
 import { LoopControlsPanel } from './LoopControlsPanel';

@@ -4,9 +4,9 @@
  */
 
 import React, { useRef, useEffect, useState } from 'react';
-import { WaveformData, WaveformRenderOptions } from '../utils/waveformRenderer';
-import { HotCue } from '../utils/hotCues';
-import { Loop } from '../utils/loopControls';
+import { WaveformData, WaveformRenderOptions } from '@/utils/studio/waveformRenderer';
+import { HotCue } from '@/utils/studio/hotCues';
+import { Loop } from '@/utils/studio/loopControls';
 
 interface WaveformDisplayProps {
   waveformData: WaveformData | null;

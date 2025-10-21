@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { scoreAllTracks, type ScoredTrack, type AutoDJSettings as AutoDJSettingsType } from '@/utils/trackScorer'
+import { scoreAllTracks, type ScoredTrack, type AutoDJSettings as AutoDJSettingsType } from '@/utils/studio/trackScorer'
 import { 
   generateTransitionPlan, 
   selectTransitionType, 

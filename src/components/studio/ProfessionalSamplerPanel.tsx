@@ -4,9 +4,9 @@
  */
 
 import React, { useRef, useState, useEffect } from 'react';
-import { useProfessionalSampler } from '../hooks/useProfessionalSampler';
-import { SamplePad } from '../utils/professionalSampler';
-import { MiniWaveformCache } from '../utils/miniWaveformGenerator';
+import { useProfessionalSampler } from '@/hooks/studio/useProfessionalSampler';
+import { SamplePad } from '@/utils/studio/professionalSampler';
+import { MiniWaveformCache } from '@/utils/studio/miniWaveformGenerator';
 
 interface ProfessionalSamplerPanelProps {
   className?: string;

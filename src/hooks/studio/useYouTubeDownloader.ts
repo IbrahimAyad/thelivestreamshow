@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 interface DownloadProgress {
   stage: 'idle' | 'fetching_metadata' | 'downloading_audio' | 'uploading' | 'saving' | 'complete' | 'error'

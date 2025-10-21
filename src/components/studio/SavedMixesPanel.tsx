@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useSavedMixes } from '../hooks/useSavedMixes';
-import { useMusicLibrary } from '../hooks/useMusicLibrary';
+import { useSavedMixes } from '@/hooks/studio/useSavedMixes';
+import { useMusicLibrary } from '@/hooks/studio/useMusicLibrary';
 
 export function SavedMixesPanel() {
   const { mixes, loading, createMix, deleteMix } = useSavedMixes();

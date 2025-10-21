@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { VinylEmulator, VinylControlState } from '@/utils/recording'
+import { VinylEmulator, VinylControlState } from '@/utils/studio/recording'
 
 interface VinylModeProps {
   audioElement: HTMLAudioElement | null

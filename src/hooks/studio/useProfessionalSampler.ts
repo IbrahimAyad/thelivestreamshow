@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ProfessionalSampler, SamplePad } from '../utils/professionalSampler';
+import { ProfessionalSampler, SamplePad } from '@/utils/studio/professionalSampler';
 
 interface UseProfessionalSamplerOptions {
   enableKeyboardShortcuts?: boolean;

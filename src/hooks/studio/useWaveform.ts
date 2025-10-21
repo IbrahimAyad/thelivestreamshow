@@ -9,7 +9,7 @@ import {
   WaveformRenderOptions,
   generateWaveformData,
   renderWaveform,
-} from '../utils/waveformRenderer';
+} from '@/utils/studio/waveformRenderer';
 import { MusicTrack } from '../types/database';
 
 interface UseWaveformResult {

@@ -1,6 +1,6 @@
 import { Bot } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { usePlaybackSync } from '@/hooks/usePlaybackSync'
+import { usePlaybackSync } from '@/hooks/studio/usePlaybackSync'
 
 export function AIPlaybackIndicator() {
   const { playbackState } = usePlaybackSync()

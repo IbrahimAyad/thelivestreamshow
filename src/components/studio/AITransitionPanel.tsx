@@ -4,7 +4,7 @@
  */
 
 import React from 'react'
-import type { TransitionState } from '@/hooks/useEnhancedAutoDJ'
+import type { TransitionState } from '@/hooks/studio/useEnhancedAutoDJ'
 
 interface AITransitionPanelProps {
   transition: TransitionState

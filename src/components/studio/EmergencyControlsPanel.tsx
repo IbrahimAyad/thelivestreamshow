@@ -17,8 +17,8 @@ import {
   recoverFromEmergency,
   getEmergencyState,
   type EmergencyMode,
-} from '../utils/emergencyControls';
-import { supabase } from '../lib/supabase';
+} from '@/utils/studio/emergencyControls';
+import { supabase } from '@/lib/supabase';
 
 interface EmergencyControlsPanelProps {
   isPlaying: boolean;

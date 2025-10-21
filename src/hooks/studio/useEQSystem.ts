@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ThreeBandEQ, EQSettings, FilterSettings } from '../utils/eqSystem';
+import { ThreeBandEQ, EQSettings, FilterSettings } from '@/utils/studio/eqSystem';
 
 interface UseEQSystemOptions {
   audioContext?: AudioContext;

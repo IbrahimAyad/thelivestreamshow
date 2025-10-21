@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { DJSetRecorder, RecordingMetadata } from '@/utils/recording'
+import { DJSetRecorder, RecordingMetadata } from '@/utils/studio/recording'
 
 export function useRecorder(audioContext: AudioContext | null, masterOutput: AudioNode | null) {
   const recorderRef = useRef<DJSetRecorder | null>(null)

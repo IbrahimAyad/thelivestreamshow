@@ -1,4 +1,4 @@
-import { useFXChain } from '@/hooks/useFXChain'
+import { useFXChain } from '@/hooks/studio/useFXChain'
 
 interface FXChainPanelProps {
   audioContext: AudioContext | null

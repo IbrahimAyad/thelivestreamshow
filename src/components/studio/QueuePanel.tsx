@@ -1,5 +1,5 @@
 import React from 'react';
-import type { QueuedTrack } from '../hooks/usePlayQueue';
+import type { QueuedTrack } from '@/hooks/studio/usePlayQueue';
 
 interface QueuePanelProps {
   queue: QueuedTrack[];

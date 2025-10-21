@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Zap, Lock, Unlock, Sliders } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { AutoDJSettings } from '@/types/database'
-import type { ScoredTrack } from '@/utils/trackScorer'
+import type { ScoredTrack } from '@/utils/studio/trackScorer'
 import type { EnergyStyle } from '@/utils/energyFlow'
 import { SelectionReasonCard } from './SelectionReasonCard'
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { useSoundEffects } from '../hooks/useSoundEffects';
-import { SoundEffect } from '../utils/soundEffectsEngine';
+import { useSoundEffects } from '@/hooks/studio/useSoundEffects';
+import { SoundEffect } from '@/utils/studio/soundEffectsEngine';
 
 const EFFECT_DISPLAY_NAMES: Record<SoundEffect, string> = {
   airHorn: 'Air Horn',
