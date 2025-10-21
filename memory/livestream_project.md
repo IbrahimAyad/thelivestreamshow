@@ -33,9 +33,11 @@
 
 ### Credentials
 - YouTube API Key: AIzaSyAx49jehLQgehTn7VKMvktzOMcuhqfOyTw
+- YouTube Channel ID: UC7sHcsiSYmx-aKal2hil_6A
 - Twitch Username: AbeNasty
 - Twitch Email: ibrahimayad13@gmail.com
 - Twitch Stream Key/Token: live_241301037_aeDXuA6ghSEfcQuRIymJhJTuNRxTRw
+- Twitch Client ID: 8skdoft3rdllawwlqur8h45926asbj
 - Twitch Client Secret: ex89rvth77qrowg4jrku2h4n46h8y5
 - Streaming Platforms: Both Twitch and YouTube
 
