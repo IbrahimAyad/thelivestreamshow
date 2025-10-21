@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Search, Settings, Music2, Mic2, Download, Filter, Plus, Bot, BarChart3, Clock, Waveform, Shield, Palette, Save, Music, FileAnalytics } from 'lucide-react'
+import { Search, Settings, Music2, Mic2, Download, Filter, Plus, Bot, BarChart3, Clock, Waveform, Shield, Palette, Save, Music, Activity } from 'lucide-react'
 import { useAudioPlayer } from '@/hooks/studio/useAudioPlayer'
 import { useMusicLibrary } from '@/hooks/studio/useMusicLibrary'
 import { usePlaylists } from '@/hooks/studio/usePlaylists'
@@ -996,7 +996,7 @@ export function ControlPanel() {
                     </CollapsibleSection>
 
                     {/* Track Analyzer */}
-                    <CollapsibleSection title="Track Analyzer" icon={<FileAnalytics className="w-5 h-5" />}>
+                    <CollapsibleSection title="Track Analyzer" icon={<Activity className="w-5 h-5" />}>
                       <TrackAnalyzerPanel onAnalysisComplete={refreshTracks} />
                     </CollapsibleSection>
                   </div>
