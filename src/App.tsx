@@ -35,13 +35,18 @@ import { AIAnalysisPanel } from './components/AIAnalysisPanel'
 import { SuggestionApprovalPanel } from './components/SuggestionApprovalPanel'
 import { ExecutionHistoryPanel } from './components/ExecutionHistoryPanel'
 import { AnalyticsDashboard } from './components/AnalyticsDashboard'
+import { ControlPanel as StudioControlPanel } from './pages/studio/StudioControlPanel'
+import { VideoPlayerControl } from './pages/media/VideoPlayerControl'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { supabase } from './lib/supabase'
-import { Monitor, ExternalLink, Keyboard } from 'lucide-react'
+import { Monitor, ExternalLink, Keyboard, Home, Music2, Image as ImageIcon } from 'lucide-react'
 import { ErrorBoundary } from './components/ErrorBoundary'
+
+type Tab = 'dashboard' | 'studio' | 'media'
 
 function App() {
   const broadcastUrl = window.location.origin + '/broadcast'
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard')
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false)
   const [showManagement, setShowManagement] = useState(false)
   const [showTemplateCreator, setShowTemplateCreator] = useState(false)
@@ -51,14 +56,12 @@ function App() {
   // Keyboard shortcuts
   useKeyboardShortcuts({
     onSoundboard: async (index: number) => {
-      // Trigger soundboard effect by index (F1-F6)
       const { data: effects } = await supabase
         .from('soundboard_effects')
         .select('*')
         .order('effect_name');
-      
+
       if (effects && effects[index]) {
-        // Trigger the effect
         await supabase
           .from('soundboard_effects')
           .update({ is_playing: true })
@@ -73,20 +76,17 @@ function App() {
       }
     },
     onSegment: async (index: number) => {
-      // Switch to segment by index (Ctrl+1-5)
       const { data: segments } = await supabase
         .from('show_segments')
         .select('*')
         .order('created_at');
-      
+
       if (segments && segments[index]) {
-        // Deactivate all
         await supabase
           .from('show_segments')
           .update({ is_active: false })
           .neq('id', '00000000-0000-0000-0000-000000000000');
-        
-        // Activate selected
+
         await supabase
           .from('show_segments')
           .update({ is_active: true })
@@ -94,7 +94,6 @@ function App() {
       }
     },
     onEmergencyClear: async () => {
-      // Escape: Clear all overlays
       if (confirm('Clear all active overlays?')) {
         await Promise.all([
           supabase.from('question_banners').update({ is_visible: false }).neq('id', '00000000-0000-0000-0000-000000000000'),
@@ -122,7 +121,7 @@ function App() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">Stream Enhancement Dashboard</h1>
-                <p className="text-sm text-gray-400">Easy overlay control for engaging streams</p>
+                <p className="text-sm text-gray-400">Unified control for live streaming</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -146,6 +145,43 @@ function App() {
                 Open Broadcast View
               </a>
             </div>
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="flex items-center gap-2 mt-4 border-b border-gray-700">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`flex items-center gap-2 px-6 py-3 font-semibold transition-all ${
+                activeTab === 'dashboard'
+                  ? 'bg-gradient-to-r from-red-600 to-yellow-600 text-white border-b-2 border-yellow-400'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              <Home className="w-5 h-5" />
+              Dashboard
+            </button>
+            <button
+              onClick={() => setActiveTab('studio')}
+              className={`flex items-center gap-2 px-6 py-3 font-semibold transition-all ${
+                activeTab === 'studio'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white border-b-2 border-pink-400'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              <Music2 className="w-5 h-5" />
+              Studio
+            </button>
+            <button
+              onClick={() => setActiveTab('media')}
+              className={`flex items-center gap-2 px-6 py-3 font-semibold transition-all ${
+                activeTab === 'media'
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-b-2 border-cyan-400'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              <ImageIcon className="w-5 h-5" />
+              Media
+            </button>
           </div>
         </div>
       </header>
@@ -183,7 +219,7 @@ function App() {
               <div>
                 <h3 className="text-lg font-semibold text-red-400 mb-2">Emergency Controls</h3>
                 <div className="flex items-center gap-2 text-sm">
-                  <kbd className="px-2 py-1 bg-gray-800 rounded font-mono">Esc</kbd> 
+                  <kbd className="px-2 py-1 bg-gray-800 rounded font-mono">Esc</kbd>
                   <span className="text-gray-300">Clear all active overlays</span>
                 </div>
               </div>
@@ -207,241 +243,146 @@ function App() {
         </div>
       )}
 
-      {/* Main Content */}
+      {/* Tab Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* 🎬 SHOW START - Start Show Controls */}
-        <ErrorBoundary sectionName="Show Start Controls">
-          <div className="mb-8">
-            <h3 className="text-xl font-bold text-green-400 mb-4 uppercase tracking-wide flex items-center gap-2">
-              ▶️ Show Start
-              <span className="text-xs px-2 py-1 bg-green-500 text-white rounded-full font-bold">START HERE</span>
-            </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Show Metadata Control - START SHOW */}
-              <div>
-                <ShowMetadataControl />
+        {activeTab === 'dashboard' && (
+          <>
+            {/* 🎬 SHOW START - Start Show Controls */}
+            <ErrorBoundary sectionName="Show Start Controls">
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-green-400 mb-4 uppercase tracking-wide flex items-center gap-2">
+                  ▶️ Show Start
+                  <span className="text-xs px-2 py-1 bg-green-500 text-white rounded-full font-bold">START HERE</span>
+                </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div><ShowMetadataControl /></div>
+                  <div><EpisodeInfoPanel /></div>
+                  <div><GraphicsGallery /></div>
+                  <div><BetaBotDirectorPanel /></div>
+                  <div className="lg:col-span-2"><SegmentControlPanel /></div>
+                  <div className="lg:col-span-2"><PopupQueuePanel /></div>
+                </div>
               </div>
+            </ErrorBoundary>
 
-              {/* Episode Info Panel */}
-              <div>
-                <EpisodeInfoPanel />
+            {/* 🔴 LIVE CONTROLS */}
+            <ErrorBoundary sectionName="Live Controls">
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-red-400 mb-4 uppercase tracking-wide flex items-center gap-2">
+                  🔴 Live Controls
+                  <span className="text-xs px-2 py-1 bg-red-500 text-white rounded-full font-bold animate-pulse">LIVE</span>
+                </h3>
+                <div className="mb-6"><AudioControlCenter /></div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                  <div><QuickActions /></div>
+                  <div className="lg:col-span-2"><BetaBotControlPanel /></div>
+                  <div><ScarlettAudioPanel /></div>
+                  <div className="xl:col-span-2"><QuestionBannerControl /></div>
+                  <div><LowerThirdControl /></div>
+                  <div className="lg:col-span-2"><SoundboardPanel /></div>
+                </div>
               </div>
+            </ErrorBoundary>
 
-              {/* Graphics Gallery */}
-              <div>
-                <GraphicsGallery />
+            {/* 🎬 SHOW MANAGEMENT */}
+            <ErrorBoundary sectionName="Show Management">
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-purple-400 mb-4 uppercase tracking-wide">🎬 Show Management</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="lg:col-span-2"><ShowPrepPanel /></div>
+                  <div className="lg:col-span-2"><ProducerAIPanel /></div>
+                  <div className="lg:col-span-2"><BroadcastSettingsPanel /></div>
+                  <div className="lg:col-span-2"><OperatorNotesPanel /></div>
+                  <div><BookmarkPanel /></div>
+                  <div className="lg:col-span-2">
+                    <TemplateSelector
+                      onTemplateLoaded={() => console.log('Template loaded')}
+                      onCreateTemplate={() => setShowTemplateCreator(true)}
+                    />
+                  </div>
+                  <div className="lg:col-span-2"><ShowHistoryPanel /></div>
+                </div>
               </div>
+            </ErrorBoundary>
 
-              {/* BetaBot Director - AI Suggestions */}
-              <div>
-                <BetaBotDirectorPanel />
+            <TemplateCreatorModal
+              isOpen={showTemplateCreator}
+              onClose={() => setShowTemplateCreator(false)}
+              onTemplateCreated={() => console.log('Template created')}
+            />
+
+            {/* ⚡ AI AUTO-DIRECTOR */}
+            <ErrorBoundary sectionName="AI Auto-Director System">
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-yellow-400 mb-4 uppercase tracking-wide flex items-center gap-2">
+                  ⚡ AI Auto-Director & Automation
+                  <span className="text-xs px-2 py-1 bg-yellow-500 text-black rounded-full font-bold">BETA</span>
+                </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="lg:col-span-2"><AutomationConfigPanel /></div>
+                  <div className="lg:col-span-2"><OBSConnectionPanel /></div>
+                  <div className="lg:col-span-2"><TranscriptionPanel /></div>
+                  <div className="lg:col-span-2"><AIAnalysisPanel /></div>
+                  <div className="lg:col-span-2"><SuggestionApprovalPanel /></div>
+                  <div className="lg:col-span-2"><ExecutionHistoryPanel /></div>
+                  <div className="lg:col-span-2"><AnalyticsDashboard /></div>
+                  <div className="lg:col-span-2"><ManualTriggerPanel /></div>
+                  <div className="lg:col-span-2"><TriggerRulesPanel /></div>
+                  <div className="lg:col-span-2"><AutomationFeedPanel /></div>
+                </div>
               </div>
+            </ErrorBoundary>
 
-              {/* Segment Control - Spans 2 columns */}
-              <div className="lg:col-span-2">
-                <SegmentControlPanel />
+            {/* Broadcast Preview */}
+            <div className="mt-8 bg-black border-2 border-gray-700 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Monitor className="w-6 h-6 text-yellow-400" />
+                  Broadcast Preview
+                </h2>
+                <p className="text-sm text-gray-400">Live preview of your overlays</p>
               </div>
-
-              {/* Popup Queue Manager - Spans 2 columns */}
-              <div className="lg:col-span-2">
-                <PopupQueuePanel />
-              </div>
-            </div>
-          </div>
-        </ErrorBoundary>
-
-        {/* 🔴 LIVE CONTROLS - Most frequently used during stream */}
-        <ErrorBoundary sectionName="Live Controls">
-          <div className="mb-8">
-            <h3 className="text-xl font-bold text-red-400 mb-4 uppercase tracking-wide flex items-center gap-2">
-              🔴 Live Controls
-              <span className="text-xs px-2 py-1 bg-red-500 text-white rounded-full font-bold animate-pulse">LIVE</span>
-            </h3>
-
-            {/* Audio Control Center - Prominent setup wizard */}
-            <div className="mb-6">
-              <AudioControlCenter />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {/* Quick Actions - Emergency controls */}
-              <div>
-                <QuickActions />
-              </div>
-
-              {/* BetaBot AI Co-Host - Spans 2 columns */}
-              <div className="lg:col-span-2">
-                <BetaBotControlPanel />
-              </div>
-
-              {/* Scarlett Solo Audio Control */}
-              <div>
-                <ScarlettAudioPanel />
-              </div>
-
-              {/* Question Banner - Spans 2 columns on xl */}
-              <div className="xl:col-span-2">
-                <QuestionBannerControl />
-              </div>
-
-              {/* Lower Thirds */}
-              <div>
-                <LowerThirdControl />
-              </div>
-
-              {/* Soundboard - Spans 2 columns */}
-              <div className="lg:col-span-2">
-                <SoundboardPanel />
-              </div>
-            </div>
-          </div>
-        </ErrorBoundary>
-
-        {/* 🎬 SHOW MANAGEMENT - Setup once per segment */}
-        <ErrorBoundary sectionName="Show Management">
-          <div className="mb-8">
-            <h3 className="text-xl font-bold text-purple-400 mb-4 uppercase tracking-wide">🎬 Show Management</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Show Prep - Spans 2 columns */}
-              <div className="lg:col-span-2">
-                <ShowPrepPanel />
-              </div>
-
-              {/* Producer AI - Spans 2 columns */}
-              <div className="lg:col-span-2">
-                <ProducerAIPanel />
-              </div>
-
-              {/* Broadcast Settings - Spans 2 columns */}
-              <div className="lg:col-span-2">
-                <BroadcastSettingsPanel />
-              </div>
-
-              {/* Operator Notes Panel - Spans 2 columns */}
-              <div className="lg:col-span-2">
-                <OperatorNotesPanel />
-              </div>
-
-              {/* Bookmark Panel */}
-              <div>
-                <BookmarkPanel />
-              </div>
-
-              {/* Template Selector - Spans 2 columns */}
-              <div className="lg:col-span-2">
-                <TemplateSelector
-                  onTemplateLoaded={() => {
-                    // Optionally refresh or notify user
-                    console.log('Template loaded successfully')
-                  }}
-                  onCreateTemplate={() => setShowTemplateCreator(true)}
-                />
-              </div>
-
-              {/* Show History Panel - Spans 2 columns */}
-              <div className="lg:col-span-2">
-                <ShowHistoryPanel />
+              <div className="bg-gray-900 rounded-lg overflow-hidden">
+                <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                  <iframe
+                    src={broadcastUrl}
+                    className="absolute inset-0 w-full h-full border-0"
+                    title="Broadcast Preview"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </ErrorBoundary>
 
-        {/* Template Creator Modal */}
-        <TemplateCreatorModal
-          isOpen={showTemplateCreator}
-          onClose={() => setShowTemplateCreator(false)}
-          onTemplateCreated={() => {
-            // Optionally refresh template list
-            console.log('Template created successfully')
-          }}
-        />
-
-        {/* ⚡ AI AUTO-DIRECTOR & AUTOMATION - Background monitoring */}
-        <ErrorBoundary sectionName="AI Auto-Director System">
-          <div className="mb-8">
-            <h3 className="text-xl font-bold text-yellow-400 mb-4 uppercase tracking-wide flex items-center gap-2">
-              ⚡ AI Auto-Director & Automation
-              <span className="text-xs px-2 py-1 bg-yellow-500 text-black rounded-full font-bold">BETA</span>
-            </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Automation Config - Control Panel */}
-              <div className="lg:col-span-2">
-                <AutomationConfigPanel />
-              </div>
-
-              {/* OBS Camera Control */}
-              <div className="lg:col-span-2">
-                <OBSConnectionPanel />
-              </div>
-
-              {/* Live Transcription & Keyword Detection */}
-              <div className="lg:col-span-2">
-                <TranscriptionPanel />
-              </div>
-
-              {/* AI Context Analysis */}
-              <div className="lg:col-span-2">
-                <AIAnalysisPanel />
-              </div>
-
-              {/* Pending Suggestions - Approval UI */}
-              <div className="lg:col-span-2">
-                <SuggestionApprovalPanel />
-              </div>
-
-              {/* Execution History */}
-              <div className="lg:col-span-2">
-                <ExecutionHistoryPanel />
-              </div>
-
-              {/* Analytics & Learning Dashboard */}
-              <div className="lg:col-span-2">
-                <AnalyticsDashboard />
-              </div>
-
-              {/* Manual Trigger Testing */}
-              <div className="lg:col-span-2">
-                <ManualTriggerPanel />
-              </div>
-
-              {/* Trigger Rules Manager */}
-              <div className="lg:col-span-2">
-                <TriggerRulesPanel />
-              </div>
-
-              {/* Automation Feed - Event Log */}
-              <div className="lg:col-span-2">
-                <AutomationFeedPanel />
-              </div>
+            <div className="mt-8 text-center text-gray-500 text-sm">
+              <p>Add the Broadcast View URL as a Browser Source in OBS: <code className="bg-gray-800 px-2 py-1 rounded text-yellow-400">{broadcastUrl}</code></p>
+              <p className="mt-2">Recommended Browser Source size: 1920x1080</p>
             </div>
-          </div>
-        </ErrorBoundary>
+          </>
+        )}
 
-        {/* Broadcast Preview */}
-        <div className="mt-8 bg-black border-2 border-gray-700 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Monitor className="w-6 h-6 text-yellow-400" />
-              Broadcast Preview
-            </h2>
-            <p className="text-sm text-gray-400">Live preview of your overlays (scaled down)</p>
-          </div>
-          <div className="bg-gray-900 rounded-lg overflow-hidden">
-            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-              <iframe
-                src={broadcastUrl}
-                className="absolute inset-0 w-full h-full border-0"
-                title="Broadcast Preview"
-              />
+        {activeTab === 'studio' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 border-2 border-purple-600/30 rounded-lg p-6">
+              <h2 className="text-2xl font-bold text-white mb-2">🎵 StreamStudio Live</h2>
+              <p className="text-gray-300">Professional DJ controls, music library, and audio effects for your stream</p>
             </div>
+            <ErrorBoundary sectionName="StreamStudio Live">
+              <StudioControlPanel />
+            </ErrorBoundary>
           </div>
-        </div>
+        )}
 
-        {/* Footer Info */}
-        <div className="mt-8 text-center text-gray-500 text-sm">
-          <p>Add the Broadcast View URL as a Browser Source in OBS: <code className="bg-gray-800 px-2 py-1 rounded text-yellow-400">{broadcastUrl}</code></p>
-          <p className="mt-2">Recommended Browser Source size: 1920x1080</p>
-        </div>
+        {activeTab === 'media' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-blue-900/50 to-cyan-900/50 border-2 border-blue-600/30 rounded-lg p-6">
+              <h2 className="text-2xl font-bold text-white mb-2">📺 Media Manager</h2>
+              <p className="text-gray-300">YouTube video queue, image gallery, and stream monitoring</p>
+            </div>
+            <ErrorBoundary sectionName="Media Manager">
+              <VideoPlayerControl />
+            </ErrorBoundary>
+          </div>
+        )}
       </main>
         </div>
       </ShowProviderWithBoundary>
