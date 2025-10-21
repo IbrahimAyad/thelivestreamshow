@@ -33,6 +33,10 @@
 
 ### Credentials
 - YouTube API Key: AIzaSyAx49jehLQgehTn7VKMvktzOMcuhqfOyTw
+- Twitch Username: AbeNasty
+- Twitch Email: ibrahimayad13@gmail.com
+- Twitch Stream Key/Token: live_241301037_aeDXuA6ghSEfcQuRIymJhJTuNRxTRw
+- Streaming Platforms: Both Twitch and YouTube
 
 ### Status
 - ✅ Design phase completed - design spec created
