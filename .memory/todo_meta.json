@@ -3,16 +3,23 @@
     "Coordinator": {
       "1": {
         "id": "1",
-        "content": "Design UI/UX for Smart YouTube Video Player feature",
-        "details": "Design comprehensive interface including:\n- Video Queue Manager (add, remove, reorder videos)\n- YouTube Search & Browse interface\n- Smart Recommendations panel\n- Scheduling interface (set play times)\n- OBS Player View (broadcast display)\n- Analytics dashboard (track engagement)\n- Control panel (play, pause, skip, volume)\n- Video preview with thumbnail and metadata",
+        "content": "YouTube Video Player - COMPLETED",
+        "details": "✅ Design completed\n✅ Full-stack development completed\n✅ Database errors fixed\n✅ Production ready at https://9ssymohko8u8.space.minimax.io",
         "status": "completed",
         "priority": "high"
       },
       "2": {
         "id": "2",
-        "content": "Build Smart YouTube Video Player feature",
-        "details": "Implement full-stack application:\n- YouTube API integration (search, metadata, embed)\n- Video queue management system\n- Supabase database (video queue, play history, preferences, engagement data)\n- Smart recommendation engine (category-based, history-based, engagement-based)\n- Scheduling system (auto-play at specified times)\n- OBS broadcast view integration\n- Control dashboard with real-time sync\n- Analytics and tracking\n- Start/end time markers for video clips",
-        "status": "in_progress",
+        "content": "Design Image Upload & Queue System UI/UX",
+        "details": "Design interface for:\n- Image Upload interface (drag-and-drop, file browser)\n- Image Queue Manager (drag-and-drop reordering, thumbnails)\n- Image Categories/Tags system\n- Image Display Controls (show, hide, transition effects)\n- Integration with existing YouTube Video Player dashboard\n- Add 'Images' tab to existing control dashboard\n- Update OBS broadcast view to support both videos and images\n- Image preview and metadata display",
+        "status": "pending",
+        "priority": "high"
+      },
+      "3": {
+        "id": "3",
+        "content": "Build Image Upload & Queue System",
+        "details": "Implement:\n- Supabase Storage bucket for image uploads\n- Image upload component (drag-and-drop + file browser)\n- Image queue management system\n- Database tables: image_queue, image_history\n- Image display in OBS broadcast view\n- Real-time sync between control panel and OBS view\n- Image transitions/animations\n- Support for various image formats (JPG, PNG, GIF, WEBP)\n- Image metadata tracking (filename, size, upload date, tags)\n- Queue operations: add, remove, reorder, clear\n- Integrate into existing /video-player route as new tab\n- Update /broadcast/video-player to handle image display",
+        "status": "pending",
         "priority": "high"
       }
     }
