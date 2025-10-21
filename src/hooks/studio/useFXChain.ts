@@ -9,7 +9,7 @@ import {
   FlangerEffect,
   PhaserEffect,
   BitCrusherEffect
-} from '@/utils/fxChain'
+} from '@/utils/studio/fxChain'
 
 export function useFXChain(audioContext: AudioContext | null) {
   const fxChainRef = useRef<ProfessionalFXChain | null>(null)

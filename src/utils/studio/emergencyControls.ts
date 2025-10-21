@@ -8,7 +8,7 @@
  * - RECOVERY: Restore previous audio state
  */
 
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export type EmergencyMode = 'normal' | 'panic' | 'brb' | 'fade_out';
 

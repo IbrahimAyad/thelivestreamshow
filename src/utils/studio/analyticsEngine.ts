@@ -1,7 +1,7 @@
 // Phase 6C: Analytics Engine
 // Utilities for DJ session analytics and reporting
 
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import type { Database } from '../types/database';
 
 type MusicLibrary = Database['public']['Tables']['music_library']['Row'];
