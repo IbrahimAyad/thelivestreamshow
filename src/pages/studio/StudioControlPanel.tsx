@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Search, Settings, Music2, Mic2, Download, Filter, Plus } from 'lucide-react'
+import { Search, Settings, Music2, Mic2, Download, Filter, Plus, Bot, BarChart3, Clock, Waveform, Shield, Palette, Save, Music, FileAnalytics } from 'lucide-react'
 import { useAudioPlayer } from '@/hooks/studio/useAudioPlayer'
 import { useMusicLibrary } from '@/hooks/studio/useMusicLibrary'
 import { usePlaylists } from '@/hooks/studio/usePlaylists'
@@ -46,6 +46,7 @@ import { SchedulerPanel } from '@/components/studio/SchedulerPanel'
 import { EmergencyControlsPanel } from '@/components/studio/EmergencyControlsPanel'
 import { MicDuckingPanel } from '@/components/studio/MicDuckingPanel'
 import { StreamSafetyPanel } from '@/components/studio/StreamSafetyPanel'
+import { CollapsibleSection } from '@/components/studio/CollapsibleSection'
 import { useAutoDJ } from '@/hooks/studio/useAutoDJ'
 import { usePlayQueue } from '@/hooks/studio/usePlayQueue'
 import type { MusicTrack, AudioEffectsConfig, AutoDJSettings } from '@/types/database'
@@ -929,55 +930,75 @@ export function ControlPanel() {
 
                 {/* Tools Tab */}
                 {activeDJTab === 'tools' && (
-                  <div className="space-y-4">
-                    {/* AI Chat Control */}
-                    <AIChatPanel />
+                  <div className="space-y-3">
+                    {/* AI Chat Control - Default Open (most used) */}
+                    <CollapsibleSection title="AI DJ Chat" defaultOpen={true} icon={<Bot className="w-5 h-5" />}>
+                      <AIChatPanel />
+                    </CollapsibleSection>
 
                     {/* Analytics Dashboard */}
-                    <AnalyticsPanel />
+                    <CollapsibleSection title="Analytics Dashboard" icon={<BarChart3 className="w-5 h-5" />}>
+                      <AnalyticsPanel />
+                    </CollapsibleSection>
 
                     {/* Scheduled Automation */}
-                    <SchedulerPanel />
+                    <CollapsibleSection title="Scheduled Automation" icon={<Clock className="w-5 h-5" />}>
+                      <SchedulerPanel />
+                    </CollapsibleSection>
 
                     {/* Phase 7B - Live Mic Ducking + Effects */}
-                    <MicDuckingPanel
-                      audioContext={audioPlayer.audioContext}
-                      onDuckingChange={(isDucking, duckAmount) => {
-                        if (isDucking) {
-                          // Lower music volume when mic is active
-                          const currentVolume = audioPlayer.volume;
-                          const targetVolume = currentVolume * (1 - duckAmount / 100);
-                          audioPlayer.changeVolume(targetVolume);
-                        }
-                      }}
-                    />
+                    <CollapsibleSection title="Mic Ducking & Effects" icon={<Waveform className="w-5 h-5" />}>
+                      <MicDuckingPanel
+                        audioContext={audioPlayer.audioContext}
+                        onDuckingChange={(isDucking, duckAmount) => {
+                          if (isDucking) {
+                            // Lower music volume when mic is active
+                            const currentVolume = audioPlayer.volume;
+                            const targetVolume = currentVolume * (1 - duckAmount / 100);
+                            audioPlayer.changeVolume(targetVolume);
+                          }
+                        }}
+                      />
+                    </CollapsibleSection>
 
                     {/* Phase 7C - Stream-Safe Music System */}
-                    <StreamSafetyPanel />
+                    <CollapsibleSection title="Stream Safety Monitor" icon={<Shield className="w-5 h-5" />}>
+                      <StreamSafetyPanel />
+                    </CollapsibleSection>
 
                     {/* Broadcast Visualization Presets */}
-                    <VisualizationPresetsPanel />
+                    <CollapsibleSection title="Visualization Presets" icon={<Palette className="w-5 h-5" />}>
+                      <VisualizationPresetsPanel />
+                    </CollapsibleSection>
 
                     {/* AI Director - Saved Mixes */}
-                    <SavedMixesPanel />
+                    <CollapsibleSection title="Saved Mixes" icon={<Save className="w-5 h-5" />}>
+                      <SavedMixesPanel />
+                    </CollapsibleSection>
 
                     {/* Smart Playlists */}
-                    <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold">Smart Playlists</h3>
-                        <button
-                          onClick={() => setShowSmartPlaylistBuilder(true)}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 rounded text-sm font-medium transition-colors"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Create
-                        </button>
+                    <CollapsibleSection
+                      title="Smart Playlists"
+                      icon={<Music className="w-5 h-5" />}
+                    >
+                      <div>
+                        <div className="flex justify-end mb-4">
+                          <button
+                            onClick={() => setShowSmartPlaylistBuilder(true)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 rounded text-sm font-medium transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Create
+                          </button>
+                        </div>
+                        <SmartPlaylistsPanel onLoadPlaylist={handleLoadSmartPlaylist} />
                       </div>
-                      <SmartPlaylistsPanel onLoadPlaylist={handleLoadSmartPlaylist} />
-                    </div>
+                    </CollapsibleSection>
 
                     {/* Track Analyzer */}
-                    <TrackAnalyzerPanel onAnalysisComplete={refreshTracks} />
+                    <CollapsibleSection title="Track Analyzer" icon={<FileAnalytics className="w-5 h-5" />}>
+                      <TrackAnalyzerPanel onAnalysisComplete={refreshTracks} />
+                    </CollapsibleSection>
                   </div>
                 )}
               </div>
