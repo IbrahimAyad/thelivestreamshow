@@ -125,12 +125,13 @@
 - [x] BroadcastView updated to handle emergency hide all feature
 - [x] Documentation updated in docs/monitor-tab-setup-guide.md
 
-**Credentials Needed** (to be set by user in Supabase):
-- TWITCH_CLIENT_ID
-- TWITCH_OAUTH_TOKEN
-- TWITCH_USERNAME (defaults to 'AbeNasty' if not set)
-- YOUTUBE_CHANNEL_ID
-- YOUTUBE_API_KEY (already set: AIzaSyAx49jehLQgehTn7VKMvktzOMcuhqfOyTw)
+**Credentials**:
+- TWITCH_CLIENT_ID: 8skdoft3rdllawwlqur8h45926asbj
+- TWITCH_CLIENT_SECRET: ex89rvth77qrowg4jrku2h4n46h8y5
+- TWITCH_OAUTH_TOKEN: (needed - to be obtained)
+- TWITCH_USERNAME: AbeNasty
+- YOUTUBE_CHANNEL_ID: (needed - to be obtained)
+- YOUTUBE_API_KEY: AIzaSyAx49jehLQgehTn7VKMvktzOMcuhqfOyTw
 
 **Improvements Made**:
 - Quick Preview Skip button now properly removes items from queue
