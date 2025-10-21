@@ -37,8 +37,8 @@
 - Twitch Username: AbeNasty
 - Twitch Email: ibrahimayad13@gmail.com
 - Twitch Stream Key/Token: live_241301037_aeDXuA6ghSEfcQuRIymJhJTuNRxTRw
-- Twitch Client ID: 8skdoft3rdllawwlqur8h45926asbj
-- Twitch Client Secret: ex89rvth77qrowg4jrku2h4n46h8y5
+- Twitch Client ID: ex89rvth77qrowg4jrku2h4n46h8y5
+- Twitch Client Secret: 8skdoft3rdllawwlqur8h45926asbj
 - Streaming Platforms: Both Twitch and YouTube
 
 ### Status
