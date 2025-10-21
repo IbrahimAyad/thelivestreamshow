@@ -1,5 +1,5 @@
 import { Users, MessageCircle, UserPlus, Radio, TrendingUp, TrendingDown } from 'lucide-react';
-import { StreamStats } from '@/hooks/useStreamStats';
+import { StreamStats } from '@/hooks/media/useStreamStats';
 
 interface StatCardProps {
   label: string;

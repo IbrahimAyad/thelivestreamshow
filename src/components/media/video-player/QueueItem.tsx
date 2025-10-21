@@ -1,7 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from 'lucide-react';
-import { formatDuration } from '@/lib/youtube';
+import { formatDuration } from '@/lib/media/youtube';
 import { QueueVideo } from '@/types/video';
 
 interface QueueItemProps {

@@ -1,4 +1,4 @@
-import { formatDuration } from '@/lib/youtube';
+import { formatDuration } from '@/lib/media/youtube';
 import { Plus } from 'lucide-react';
 
 interface VideoCardProps {

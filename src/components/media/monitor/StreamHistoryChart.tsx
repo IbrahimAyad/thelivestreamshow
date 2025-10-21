@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { StreamStatsHistory } from '@/hooks/useStreamStats';
+import { StreamStatsHistory } from '@/hooks/media/useStreamStats';
 
 // Type assertions for recharts components to fix TypeScript JSX issues
 const LineChartComponent = LineChart as any;

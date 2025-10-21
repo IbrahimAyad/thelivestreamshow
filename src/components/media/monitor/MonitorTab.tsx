@@ -1,10 +1,10 @@
 import { Monitor as MonitorIcon } from 'lucide-react';
-import { useStreamStats } from '@/hooks/useStreamStats';
-import { useBroadcastState } from '@/hooks/useBroadcastState';
-import { useQueue } from '@/hooks/useQueue';
-import { useImageQueue } from '@/hooks/useImageQueue';
-import { usePlaybackState } from '@/hooks/usePlaybackState';
-import { useImageDisplayState } from '@/hooks/useImageDisplayState';
+import { useStreamStats } from '@/hooks/media/useStreamStats';
+import { useBroadcastState } from '@/hooks/media/useBroadcastState';
+import { useQueue } from '@/hooks/media/useQueue';
+import { useImageQueue } from '@/hooks/media/useImageQueue';
+import { usePlaybackState } from '@/hooks/media/usePlaybackState';
+import { useImageDisplayState } from '@/hooks/media/useImageDisplayState';
 import { PiPBroadcastMonitor } from './PiPBroadcastMonitor';
 import { DualPlatformStats } from './DualPlatformStats';
 import { QuickPreview } from './QuickPreview';
