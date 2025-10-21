@@ -63,9 +63,22 @@
 - video_recommendations: AI-generated recommendations
 
 ### Deployment
-- URL: https://zdge6oho31le.space.minimax.io
-- Control Dashboard: https://zdge6oho31le.space.minimax.io/video-player
-- Broadcast View: https://zdge6oho31le.space.minimax.io/broadcast/video-player
+- URL: https://gy77m7pjul0f.space.minimax.io
+- Control Dashboard: https://gy77m7pjul0f.space.minimax.io/video-player
+- Broadcast View: https://gy77m7pjul0f.space.minimax.io/broadcast/video-player
+
+### Multi-View Dashboard / Monitor Tab (Added 2025-10-21)
+**Features:**
+- ✅ New "Monitor" tab added to dashboard
+- ✅ Picture-in-Picture broadcast monitor (draggable, resizable)
+- ✅ Dual-platform stats panel (Twitch + YouTube)
+- ✅ Real-time stats auto-refresh (30-second intervals)
+- ✅ Quick preview panel for next queued item
+- ✅ Stream history chart with time range selector
+- ✅ Emergency "Hide All Overlays" button
+- ✅ Edge functions: fetch-twitch-stats, fetch-youtube-stats
+- ✅ Database tables: stream_stats, broadcast_state (with RLS)
+- ✅ Setup documentation: docs/monitor-tab-setup-guide.md
 
 ### Image Upload & Queue System (Added 2025-10-21)
 **Infrastructure:**
@@ -92,15 +105,33 @@
 - Tabbed interface for Queue/Analytics/Scheduled views
 - Scheduling modal for individual videos
 
-### Monitor Tab Feature (In Progress - 2025-10-21)
+### Monitor Tab Feature (COMPLETED - 2025-10-21)
 **Goal**: Add multi-view dashboard for real-time broadcast monitoring
+**Status**: FULLY IMPLEMENTED AND DEPLOYED
+**URL**: https://gy77m7pjul0f.space.minimax.io
 **Components**:
-- [ ] Monitor tab in VideoPlayerControl
-- [ ] PiP broadcast monitor (draggable/resizable iframe)
-- [ ] Twitch stats integration
-- [ ] YouTube stats integration  
-- [ ] Quick preview panel
-- [ ] Stream history chart
-- [ ] Emergency controls (Hide All button)
-- [ ] Database tables: stream_stats, broadcast_state
-- [ ] Edge functions: fetch-twitch-stats, fetch-youtube-stats
+- [x] Monitor tab in VideoPlayerControl
+- [x] PiP broadcast monitor (draggable/resizable iframe using react-draggable)
+- [x] Twitch stats integration (via edge function with configurable username)
+- [x] YouTube stats integration (via edge function)
+- [x] Quick preview panel with working Skip and Edit functionality
+- [x] Stream history chart (using Recharts)
+- [x] Emergency controls (Hide All/Restore buttons)
+- [x] Database tables: stream_stats, broadcast_state (with RLS policies)
+- [x] Edge functions: fetch-twitch-stats (v2), fetch-youtube-stats (deployed)
+- [x] Real-time sync via Supabase Realtime
+- [x] Auto-refresh stats every 30 seconds
+- [x] BroadcastView updated to handle emergency hide all feature
+- [x] Documentation updated in docs/monitor-tab-setup-guide.md
+
+**Credentials Needed** (to be set by user in Supabase):
+- TWITCH_CLIENT_ID
+- TWITCH_OAUTH_TOKEN
+- TWITCH_USERNAME (defaults to 'AbeNasty' if not set)
+- YOUTUBE_CHANNEL_ID
+- YOUTUBE_API_KEY (already set: AIzaSyAx49jehLQgehTn7VKMvktzOMcuhqfOyTw)
+
+**Improvements Made**:
+- Quick Preview Skip button now properly removes items from queue
+- Quick Preview Edit button provides user guidance
+- Twitch username is now configurable via environment variable

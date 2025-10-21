@@ -12,7 +12,7 @@
         "id": "2",
         "content": "Build Multi-View Dashboard Feature",
         "details": "Implement the following:\n1. PiP iframe for /broadcast view monitoring\n2. Twitch API integration (viewer count, chat activity, follower count)\n3. YouTube API integration (concurrent viewers, chat rate)\n4. Real-time stats display with auto-refresh\n5. Quick preview panel for queued videos/images\n6. Draggable/resizable PiP window\n7. Stats history tracking in Supabase\n8. New database tables: stream_stats, platform_metrics",
-        "status": "in_progress",
+        "status": "completed",
         "priority": "high"
       },
       "3": {

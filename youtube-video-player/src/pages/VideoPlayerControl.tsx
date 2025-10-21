@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Play, Pause, SkipForward, Volume2, Trash2, Sparkles, Calendar, BarChart3, Clock, Image as ImageIcon } from 'lucide-react';
+import { Search, Play, Pause, SkipForward, Volume2, Trash2, Sparkles, Calendar, BarChart3, Clock, Image as ImageIcon, Monitor as MonitorIcon } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { searchYouTubeVideos, YouTubeVideo } from '@/lib/youtube';
@@ -20,9 +20,11 @@ import { supabase } from '@/lib/supabase';
 import { VideoRecommendation, VideoCategory } from '@/types/video';
 import { generateRecommendations } from '@/lib/recommendations';
 
+import { MonitorTab } from '@/components/monitor/MonitorTab';
+
 const CATEGORIES: VideoCategory[] = ['Funny', 'Fails', 'Gaming', 'Tech', 'Wholesome', 'Trending'];
 
-type Tab = 'queue' | 'analytics' | 'scheduled' | 'images';
+type Tab = 'queue' | 'analytics' | 'scheduled' | 'images' | 'monitor';
 
 export function VideoPlayerControl() {
   const [activeTab, setActiveTab] = useState<Tab>('queue');
@@ -188,6 +190,11 @@ export function VideoPlayerControl() {
     ? recommendations 
     : recommendations.filter(r => r.category === selectedCategory);
 
+  // If Monitor tab is active, render it fullscreen
+  if (activeTab === 'monitor') {
+    return <MonitorTab />;
+  }
+
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="max-w-7xl mx-auto p-6">
@@ -290,6 +297,17 @@ export function VideoPlayerControl() {
                 >
                   <ImageIcon className="w-4 h-4 inline mr-1" />
                   Images ({images.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('monitor' as Tab)}
+                  className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+                    activeTab === ('monitor' as Tab)
+                      ? 'text-primary-600 border-primary-600'
+                      : 'text-neutral-600 border-transparent hover:text-neutral-900'
+                  }`}
+                >
+                  <MonitorIcon className="w-4 h-4 inline mr-1" />
+                  Monitor
                 </button>
               </div>
 

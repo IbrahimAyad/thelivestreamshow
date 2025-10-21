@@ -3,6 +3,7 @@ import YouTubeComponent from 'react-youtube';
 import { useQueue } from '@/hooks/useQueue';
 import { usePlaybackState } from '@/hooks/usePlaybackState';
 import { useImageDisplayState } from '@/hooks/useImageDisplayState';
+import { useBroadcastState } from '@/hooks/useBroadcastState';
 import { trackPlayHistory } from '@/lib/recommendations';
 import { categorizeVideo } from '@/lib/recommendations';
 import { getVideoDetails } from '@/lib/youtube';
@@ -27,12 +28,16 @@ export function BroadcastView() {
   const { queue, removeFromQueue } = useQueue();
   const { state: playbackState, updateState } = usePlaybackState();
   const { state: imageDisplayState } = useImageDisplayState();
+  const { state: broadcastState } = useBroadcastState();
   const [currentTitle, setCurrentTitle] = useState('');
   const [currentChannel, setCurrentChannel] = useState('');
   const playerRef = useRef<any>(null);
   const watchStartTime = useRef(0);
 
   const currentVideo = queue.find(v => v.video_id === playbackState.currentVideoId) || queue[0];
+
+  // Check if emergency hide all is active
+  const hideAll = broadcastState?.hide_all || false;
 
   // Determine what to display: image or video
   const displayMode = imageDisplayState.isDisplayed ? 'image' : (currentVideo ? 'video' : 'none');
@@ -169,7 +174,7 @@ export function BroadcastView() {
   };
 
   // Display image when image mode is active
-  if (displayMode === 'image' && imageDisplayState.currentImageUrl) {
+  if (displayMode === 'image' && imageDisplayState.currentImageUrl && !hideAll) {
     return (
       <div className="w-screen h-screen bg-black flex items-center justify-center relative overflow-hidden">
         <div className={`max-w-[90vw] max-h-[90vh] ${getTransitionClass()}`}>
@@ -192,11 +197,15 @@ export function BroadcastView() {
     );
   }
 
-  // Display nothing when no content
-  if (displayMode === 'none') {
+  // Display nothing when no content or hide all is active
+  if (displayMode === 'none' || hideAll) {
     return (
       <div className="w-screen h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-2xl">No content to display</div>
+        {hideAll ? (
+          <div className="text-white text-2xl">All overlays hidden</div>
+        ) : (
+          <div className="text-white text-2xl">No content to display</div>
+        )}
       </div>
     );
   }

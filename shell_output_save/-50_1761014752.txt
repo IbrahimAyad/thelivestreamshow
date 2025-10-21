@@ -1,0 +1,45 @@
+
+> react_repo@0.0.0 build /workspace/youtube-video-player
+> pnpm install --prefer-offline && rm -rf node_modules/.vite-temp && tsc -b && vite build
+
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 1.1s using pnpm v10.12.4
+src/components/monitor/PiPBroadcastMonitor.tsx(26,5): error TS2607: JSX element class does not support attributes because it does not have a 'props' property.
+src/components/monitor/PiPBroadcastMonitor.tsx(26,6): error TS2786: 'Draggable' cannot be used as a JSX component.
+  Its type 'typeof Draggable' is not a valid JSX element type.
+    Type 'typeof Draggable' is not assignable to type 'new (props: any, deprecatedLegacyContext?: any) => Component<any, any, any>'.
+      Type 'Draggable' is missing the following properties from type 'Component<any, any, any>': context, setState, forceUpdate, render, and 3 more.
+src/components/monitor/StreamHistoryChart.tsx(113,13): error TS2607: JSX element class does not support attributes because it does not have a 'props' property.
+src/components/monitor/StreamHistoryChart.tsx(113,14): error TS2786: 'XAxis' cannot be used as a JSX component.
+  Its type 'typeof XAxis' is not a valid JSX element type.
+    Type 'typeof XAxis' is not assignable to type 'new (props: any, deprecatedLegacyContext?: any) => Component<any, any, any>'.
+      Type 'XAxis' is missing the following properties from type 'Component<any, any, any>': context, setState, forceUpdate, props, and 2 more.
+src/components/monitor/StreamHistoryChart.tsx(118,13): error TS2607: JSX element class does not support attributes because it does not have a 'props' property.
+src/components/monitor/StreamHistoryChart.tsx(118,14): error TS2786: 'YAxis' cannot be used as a JSX component.
+  Its type 'typeof YAxis' is not a valid JSX element type.
+    Type 'typeof YAxis' is not assignable to type 'new (props: any, deprecatedLegacyContext?: any) => Component<any, any, any>'.
+      Type 'YAxis' is missing the following properties from type 'Component<any, any, any>': context, setState, forceUpdate, props, and 2 more.
+src/components/monitor/StreamHistoryChart.tsx(122,13): error TS2607: JSX element class does not support attributes because it does not have a 'props' property.
+src/components/monitor/StreamHistoryChart.tsx(122,14): error TS2786: 'Tooltip' cannot be used as a JSX component.
+  Its type 'typeof Tooltip' is not a valid JSX element type.
+    Type 'typeof Tooltip' is not assignable to type 'new (props: any, deprecatedLegacyContext?: any) => Component<any, any, any>'.
+      Type 'Tooltip<ValueType, NameType>' is missing the following properties from type 'Component<any, any, any>': context, setState, forceUpdate, props, and 2 more.
+src/components/monitor/StreamHistoryChart.tsx(130,13): error TS2607: JSX element class does not support attributes because it does not have a 'props' property.
+src/components/monitor/StreamHistoryChart.tsx(130,14): error TS2786: 'Legend' cannot be used as a JSX component.
+  Its type 'typeof Legend' is not a valid JSX element type.
+    Type 'typeof Legend' is not assignable to type 'new (props: any, deprecatedLegacyContext?: any) => Component<any, any, any>'.
+      Type 'Legend' is missing the following properties from type 'Component<any, any, any>': context, setState, forceUpdate, props, and 2 more.
+src/components/monitor/StreamHistoryChart.tsx(134,15): error TS2607: JSX element class does not support attributes because it does not have a 'props' property.
+src/components/monitor/StreamHistoryChart.tsx(134,16): error TS2786: 'Line' cannot be used as a JSX component.
+  Its type 'typeof Line' is not a valid JSX element type.
+    Type 'typeof Line' is not assignable to type 'new (props: any, deprecatedLegacyContext?: any) => Component<any, any, any>'.
+      Type 'Line' is missing the following properties from type 'Component<any, any, any>': context, setState, forceUpdate, props, refs
+src/components/monitor/StreamHistoryChart.tsx(144,15): error TS2607: JSX element class does not support attributes because it does not have a 'props' property.
+src/components/monitor/StreamHistoryChart.tsx(144,16): error TS2786: 'Line' cannot be used as a JSX component.
+  Its type 'typeof Line' is not a valid JSX element type.
+    Type 'typeof Line' is not assignable to type 'new (props: any, deprecatedLegacyContext?: any) => Component<any, any, any>'.
+      Type 'Line' is missing the following properties from type 'Component<any, any, any>': context, setState, forceUpdate, props, refs
+src/pages/VideoPlayerControl.tsx(304,21): error TS2367: This comparison appears to be unintentional because the types '"queue" | "images" | "analytics" | "scheduled"' and '"monitor"' have no overlap.
+ ELIFECYCLE  Command failed with exit code 2.
