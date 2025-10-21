@@ -5,14 +5,14 @@
         "id": "1",
         "content": "Design Multi-View Dashboard UI/UX",
         "details": "Create design specification for:\n1. Picture-in-Picture broadcast monitor layout\n2. Real-time stats panel (Twitch + YouTube)\n3. Quick scene preview component\n4. Responsive layout that fits with existing dashboard\n5. Brand consistency with existing red/black/yellow theme",
-        "status": "pending",
+        "status": "completed",
         "priority": "high"
       },
       "2": {
         "id": "2",
         "content": "Build Multi-View Dashboard Feature",
         "details": "Implement the following:\n1. PiP iframe for /broadcast view monitoring\n2. Twitch API integration (viewer count, chat activity, follower count)\n3. YouTube API integration (concurrent viewers, chat rate)\n4. Real-time stats display with auto-refresh\n5. Quick preview panel for queued videos/images\n6. Draggable/resizable PiP window\n7. Stats history tracking in Supabase\n8. New database tables: stream_stats, platform_metrics",
-        "status": "pending",
+        "status": "in_progress",
         "priority": "high"
       },
       "3": {

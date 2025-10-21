@@ -91,3 +91,16 @@
 - Dead air filler mode
 - Tabbed interface for Queue/Analytics/Scheduled views
 - Scheduling modal for individual videos
+
+### Monitor Tab Feature (In Progress - 2025-10-21)
+**Goal**: Add multi-view dashboard for real-time broadcast monitoring
+**Components**:
+- [ ] Monitor tab in VideoPlayerControl
+- [ ] PiP broadcast monitor (draggable/resizable iframe)
+- [ ] Twitch stats integration
+- [ ] YouTube stats integration  
+- [ ] Quick preview panel
+- [ ] Stream history chart
+- [ ] Emergency controls (Hide All button)
+- [ ] Database tables: stream_stats, broadcast_state
+- [ ] Edge functions: fetch-twitch-stats, fetch-youtube-stats
