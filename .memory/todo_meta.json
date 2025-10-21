@@ -19,7 +19,7 @@
         "id": "3",
         "content": "Prepare merge with main dashboard",
         "details": "1. Test all features in isolation\n2. Ensure compatibility with existing video/image queue features\n3. Create deployment package ready for main repo integration\n4. Document API setup and configuration steps",
-        "status": "pending",
+        "status": "completed",
         "priority": "medium"
       }
     }
