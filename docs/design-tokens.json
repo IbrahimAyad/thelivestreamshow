@@ -1,58 +1,50 @@
 {
   "color": {
     "primary": {
-      "500": "#EF4444",
-      "600": "#DC2626",
-      "700": "#B91C1C"
-    },
-    "accent": {
-      "400": "#FBBF24",
-      "500": "#EAB308"
+      "red": "#EF4444"
     },
     "neutral": {
-      "50": "#FAFAFA",
-      "100": "#F5F5F5",
-      "300": "#D4D4D4",
-      "600": "#6B7280",
-      "800": "#1F2937",
-      "900": "#000000",
-      "950": "#0A0A0A"
+      "black": "#000000",
+      "grey-dark": "#6B7280",
+      "grey-medium": "#9CA3AF",
+      "grey-light": "#E5E7EB",
+      "white": "#FFFFFF"
+    },
+    "accent": {
+      "yellow": "#EAB308"
     },
     "semantic": {
       "success": "#10B981",
-      "warning": "#F59E0B",
-      "error": "#EF4444",
-      "info": "#3B82F6"
+      "error": "#DC2626"
     },
     "background": {
-      "page": "#FAFAFA",
-      "surface": "#FFFFFF",
-      "broadcast": "#0A0A0A"
+      "page": "#000000",
+      "surface": "#1A1A1A"
     }
   },
   "typography": {
     "fontFamily": {
-      "display": "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+      "system": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif"
     },
     "fontSize": {
-      "xs": "12px",
-      "sm": "14px",
-      "base": "16px",
+      "xxl": "32px",
+      "xl": "24px",
       "lg": "18px",
-      "xl": "20px",
-      "2xl": "24px",
-      "3xl": "30px"
+      "base": "16px",
+      "sm": "14px",
+      "xs": "12px"
     },
     "fontWeight": {
-      "regular": "400",
-      "medium": "500",
-      "semibold": "600",
-      "bold": "700"
+      "bold": 700,
+      "semibold": 600,
+      "regular": 400
     },
     "lineHeight": {
-      "tight": "1.2",
-      "normal": "1.5",
-      "relaxed": "1.6"
+      "tight": 1.25,
+      "normal": 1.5
+    },
+    "letterSpacing": {
+      "normal": "0em"
     }
   },
   "spacing": {
@@ -61,22 +53,19 @@
     "md": "12px",
     "lg": "16px",
     "xl": "24px",
-    "2xl": "32px",
-    "3xl": "48px",
-    "4xl": "64px"
+    "xxl": "32px"
   },
   "borderRadius": {
-    "sm": "6px",
+    "sm": "4px",
     "md": "8px",
     "lg": "12px",
-    "xl": "16px",
     "full": "9999px"
   },
   "boxShadow": {
-    "sm": "0 1px 2px rgba(0, 0, 0, 0.05)",
-    "card": "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)",
-    "cardHover": "0 4px 6px rgba(239, 68, 68, 0.08), 0 2px 4px rgba(0, 0, 0, 0.08)",
-    "modal": "0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.08)"
+    "sm": "0 1px 2px rgba(0, 0, 0, 0.3)",
+    "card": "0 2px 8px rgba(0, 0, 0, 0.4)",
+    "card-hover": "0 4px 16px rgba(239, 68, 68, 0.2)",
+    "modal": "0 8px 32px rgba(0, 0, 0, 0.6)"
   },
   "animation": {
     "duration": {
@@ -85,11 +74,10 @@
       "slow": "300ms"
     },
     "easing": {
-      "default": "cubic-bezier(0.4, 0, 0.2, 1)",
-      "bounce": "cubic-bezier(0.68, -0.55, 0.27, 1.55)"
+      "default": "ease-out"
     }
   },
-  "breakpoint": {
+  "breakpoints": {
     "sm": "640px",
     "md": "768px",
     "lg": "1024px",
@@ -97,25 +85,35 @@
     "2xl": "1536px"
   },
   "component": {
+    "tab": {
+      "height": "56px",
+      "borderWidth": "3px"
+    },
     "button": {
-      "height": "40px",
-      "heightMobile": "48px",
-      "iconSize": "20px",
-      "iconButtonSize": "36px"
+      "height": {
+        "default": "44px",
+        "large": "48px",
+        "small": "40px"
+      }
     },
-    "input": {
-      "height": "44px",
-      "searchHeight": "48px"
+    "card": {
+      "image-queue": {
+        "width": "240px",
+        "height": "280px",
+        "thumbnailWidth": "208px",
+        "thumbnailHeight": "160px"
+      },
+      "padding": "16px"
     },
-    "touchTarget": {
-      "minimum": "44px"
+    "uploadZone": {
+      "height": "200px",
+      "borderWidth": "2px"
     },
-    "broadcast": {
-      "resolution": "1920x1080",
-      "videoWidth": "1760px",
-      "videoHeight": "990px",
-      "overlayHeight": "60px",
-      "margin": "80px"
+    "controlPanel": {
+      "width": "320px"
+    },
+    "toolbar": {
+      "height": "48px"
     }
   }
 }

@@ -59,9 +59,27 @@
 - video_recommendations: AI-generated recommendations
 
 ### Deployment
-- URL: https://9ssymohko8u8.space.minimax.io
-- Control Dashboard: https://9ssymohko8u8.space.minimax.io/video-player
-- Broadcast View: https://9ssymohko8u8.space.minimax.io/broadcast/video-player
+- URL: https://zdge6oho31le.space.minimax.io
+- Control Dashboard: https://zdge6oho31le.space.minimax.io/video-player
+- Broadcast View: https://zdge6oho31le.space.minimax.io/broadcast/video-player
+
+### Image Upload & Queue System (Added 2025-10-21)
+**Infrastructure:**
+- ✅ Storage bucket created: stream-images (10MB limit, supports JPG, PNG, GIF, WEBP)
+- ✅ Database tables: image_queue, image_display_history (with RLS policies)
+- ✅ Edge function deployed: upload-image (secure server-side uploads)
+
+**Features:**
+- ✅ Images tab added to control dashboard
+- ✅ Drag-and-drop image upload with progress tracking
+- ✅ Image queue management with drag-and-drop reordering
+- ✅ Caption editing for images
+- ✅ Display controls panel (Previous/Next, Auto-advance, Transition effects)
+- ✅ Image display history with CSV export
+- ✅ Broadcast view updated for video/image dual mode
+- ✅ Transition effects: Instant, Fade, Slide Left, Slide Right, Zoom In
+- ✅ Emergency "Hide All" button
+- ✅ Real-time sync via localStorage and Supabase
 
 ### New Features Implemented
 - Analytics export (CSV and JSON)

@@ -1,22 +1,28 @@
 import { useState, useEffect } from 'react';
-import { Search, Play, Pause, SkipForward, Volume2, Trash2, Sparkles, Calendar, BarChart3, Clock } from 'lucide-react';
+import { Search, Play, Pause, SkipForward, Volume2, Trash2, Sparkles, Calendar, BarChart3, Clock, Image as ImageIcon } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { searchYouTubeVideos, YouTubeVideo } from '@/lib/youtube';
 import { useQueue } from '@/hooks/useQueue';
 import { usePlaybackState } from '@/hooks/usePlaybackState';
+import { useImageQueue } from '@/hooks/useImageQueue';
+import { useImageDisplayState } from '@/hooks/useImageDisplayState';
 import { VideoCard } from '@/components/video-player/VideoCard';
 import { QueueItem } from '@/components/video-player/QueueItem';
 import { RecommendationCard } from '@/components/video-player/RecommendationCard';
 import { AnalyticsPanel } from '@/components/video-player/AnalyticsPanel';
 import { SchedulingModal } from '@/components/video-player/SchedulingModal';
+import { ImageUploadZone } from '@/components/image-player/ImageUploadZone';
+import { ImageQueueCard } from '@/components/image-player/ImageQueueCard';
+import { ImageDisplayControls } from '@/components/image-player/ImageDisplayControls';
+import { ImageHistory } from '@/components/image-player/ImageHistory';
 import { supabase } from '@/lib/supabase';
 import { VideoRecommendation, VideoCategory } from '@/types/video';
 import { generateRecommendations } from '@/lib/recommendations';
 
 const CATEGORIES: VideoCategory[] = ['Funny', 'Fails', 'Gaming', 'Tech', 'Wholesome', 'Trending'];
 
-type Tab = 'queue' | 'analytics' | 'scheduled';
+type Tab = 'queue' | 'analytics' | 'scheduled' | 'images';
 
 export function VideoPlayerControl() {
   const [activeTab, setActiveTab] = useState<Tab>('queue');
@@ -30,6 +36,8 @@ export function VideoPlayerControl() {
   const [deadAirFiller, setDeadAirFiller] = useState(false);
   const { queue, addToQueue, removeFromQueue, updateQueue, clearQueue } = useQueue();
   const { state: playbackState, updateState: updatePlaybackState } = usePlaybackState();
+  const { images, addToQueue: addImageToQueue, removeFromQueue: removeImageFromQueue, updateQueue: updateImageQueue, updateCaption, clearQueue: clearImageQueue } = useImageQueue();
+  const { state: imageDisplayState, updateState: updateImageDisplayState, showImage, hideImage, hideAll } = useImageDisplayState();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -272,6 +280,17 @@ export function VideoPlayerControl() {
                   <Clock className="w-4 h-4 inline mr-1" />
                   Scheduled ({scheduledVideos.length})
                 </button>
+                <button
+                  onClick={() => setActiveTab('images')}
+                  className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+                    activeTab === 'images'
+                      ? 'text-primary-600 border-primary-600'
+                      : 'text-neutral-600 border-transparent hover:text-neutral-900'
+                  }`}
+                >
+                  <ImageIcon className="w-4 h-4 inline mr-1" />
+                  Images ({images.length})
+                </button>
               </div>
 
               {activeTab === 'queue' && (
@@ -340,6 +359,57 @@ export function VideoPlayerControl() {
                   )}
                 </div>
               )}
+
+              {activeTab === 'images' && (
+                <div className="space-y-6">
+                  <ImageUploadZone onUpload={addImageToQueue} />
+
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-neutral-900">Image Queue ({images.length})</h3>
+                    <button
+                      onClick={clearImageQueue}
+                      className="px-4 py-2 text-sm bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-md border border-neutral-300 transition-colors flex items-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Clear All
+                    </button>
+                  </div>
+
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={(event) => {
+                      const { active, over } = event;
+                      if (over && active.id !== over.id) {
+                        const oldIndex = images.findIndex(img => img.id === active.id);
+                        const newIndex = images.findIndex(img => img.id === over.id);
+                        const newImages = arrayMove(images, oldIndex, newIndex);
+                        updateImageQueue(newImages);
+                      }
+                    }}
+                  >
+                    <SortableContext items={images.map(img => img.id)} strategy={verticalListSortingStrategy}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {images.map(image => (
+                          <ImageQueueCard
+                            key={image.id}
+                            image={image}
+                            onRemove={() => removeImageFromQueue(image.id)}
+                            onShow={() => showImage(image.id, image.file_path, image.caption)}
+                            onUpdateCaption={(caption) => updateCaption(image.id, caption)}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+
+                  {images.length === 0 && (
+                    <p className="text-center text-neutral-600 py-8">No images in queue. Upload images to get started!</p>
+                  )}
+
+                  <ImageHistory />
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-lg shadow-card p-6">
@@ -392,6 +462,36 @@ export function VideoPlayerControl() {
           </div>
 
           <div className="space-y-6">
+            {/* Image Display Controls - Only show when Images tab is active */}
+            {activeTab === 'images' && (
+              <ImageDisplayControls
+                currentImage={images.find(img => img.id === imageDisplayState.currentImageId) || null}
+                isDisplayed={imageDisplayState.isDisplayed}
+                transition={imageDisplayState.transition}
+                autoAdvance={imageDisplayState.autoAdvance}
+                autoAdvanceInterval={imageDisplayState.autoAdvanceInterval}
+                onPrevious={() => {
+                  const currentIndex = images.findIndex(img => img.id === imageDisplayState.currentImageId);
+                  const prevIndex = currentIndex > 0 ? currentIndex - 1 : images.length - 1;
+                  if (images[prevIndex]) {
+                    showImage(images[prevIndex].id, images[prevIndex].file_path, images[prevIndex].caption);
+                  }
+                }}
+                onNext={() => {
+                  const currentIndex = images.findIndex(img => img.id === imageDisplayState.currentImageId);
+                  const nextIndex = currentIndex < images.length - 1 ? currentIndex + 1 : 0;
+                  if (images[nextIndex]) {
+                    showImage(images[nextIndex].id, images[nextIndex].file_path, images[nextIndex].caption);
+                  }
+                }}
+                onHide={hideImage}
+                onHideAll={hideAll}
+                onTransitionChange={(transition) => updateImageDisplayState({ transition })}
+                onAutoAdvanceChange={(autoAdvance) => updateImageDisplayState({ autoAdvance })}
+                onIntervalChange={(autoAdvanceInterval) => updateImageDisplayState({ autoAdvanceInterval })}
+              />
+            )}
+
             <div className="bg-white rounded-lg shadow-card p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-neutral-900">Recommendations</h2>

@@ -54,5 +54,28 @@ export interface VideoRecommendation {
   created_at: string;
 }
 
+export interface ImageQueueItem {
+  id: string;
+  file_path: string;
+  filename: string;
+  caption: string | null;
+  file_size: number;
+  position: number;
+  uploaded_at: string;
+  created_at: string;
+}
+
+export interface ImageDisplayHistory {
+  id: string;
+  image_id: string | null;
+  filename: string;
+  displayed_at: string;
+  duration_seconds: number | null;
+  created_at: string;
+}
+
+export type TransitionEffect = 'instant' | 'fade' | 'slide-left' | 'slide-right' | 'zoom-in';
+
 export type VideoCategory = 'Funny' | 'Fails' | 'Gaming' | 'Tech' | 'Wholesome' | 'Trending';
 export type EnergyLevel = 'Hype' | 'Chill' | 'Funny';
+

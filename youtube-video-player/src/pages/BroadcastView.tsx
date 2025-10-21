@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import YouTubeComponent from 'react-youtube';
 import { useQueue } from '@/hooks/useQueue';
 import { usePlaybackState } from '@/hooks/usePlaybackState';
+import { useImageDisplayState } from '@/hooks/useImageDisplayState';
 import { trackPlayHistory } from '@/lib/recommendations';
 import { categorizeVideo } from '@/lib/recommendations';
 import { getVideoDetails } from '@/lib/youtube';
@@ -25,12 +26,16 @@ interface YouTubeEvent {
 export function BroadcastView() {
   const { queue, removeFromQueue } = useQueue();
   const { state: playbackState, updateState } = usePlaybackState();
+  const { state: imageDisplayState } = useImageDisplayState();
   const [currentTitle, setCurrentTitle] = useState('');
   const [currentChannel, setCurrentChannel] = useState('');
   const playerRef = useRef<any>(null);
   const watchStartTime = useRef(0);
 
   const currentVideo = queue.find(v => v.video_id === playbackState.currentVideoId) || queue[0];
+
+  // Determine what to display: image or video
+  const displayMode = imageDisplayState.isDisplayed ? 'image' : (currentVideo ? 'video' : 'none');
 
   useEffect(() => {
     if (!playbackState.currentVideoId && queue.length > 0) {
@@ -145,14 +150,58 @@ export function BroadcastView() {
     },
   };
 
-  if (!currentVideo) {
+  // Transition CSS classes
+  const getTransitionClass = () => {
+    if (!imageDisplayState.isDisplayed) return '';
+    
+    switch (imageDisplayState.transition) {
+      case 'fade':
+        return 'animate-fadeIn';
+      case 'slide-left':
+        return 'animate-slideInLeft';
+      case 'slide-right':
+        return 'animate-slideInRight';
+      case 'zoom-in':
+        return 'animate-zoomIn';
+      default:
+        return '';
+    }
+  };
+
+  // Display image when image mode is active
+  if (displayMode === 'image' && imageDisplayState.currentImageUrl) {
     return (
-      <div className="w-screen h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-2xl">No video in queue</div>
+      <div className="w-screen h-screen bg-black flex items-center justify-center relative overflow-hidden">
+        <div className={`max-w-[90vw] max-h-[90vh] ${getTransitionClass()}`}>
+          <img
+            src={imageDisplayState.currentImageUrl}
+            alt="Stream Display"
+            className="max-w-full max-h-full object-contain"
+          />
+        </div>
+
+        {/* Caption Overlay */}
+        {imageDisplayState.currentCaption && (
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-8">
+            <p className="text-white text-2xl font-semibold text-center max-w-4xl mx-auto">
+              {imageDisplayState.currentCaption}
+            </p>
+          </div>
+        )}
       </div>
     );
   }
 
+  // Display nothing when no content
+  if (displayMode === 'none') {
+    return (
+      <div className="w-screen h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-2xl">No content to display</div>
+      </div>
+    );
+  }
+
+  // Display video (default mode)
   return (
     <div className="w-screen h-screen bg-black relative overflow-hidden">
       <div className="absolute inset-0 flex items-center justify-center">
