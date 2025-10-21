@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Search, Settings, Music2, Mic2, Download, Filter, Plus, Bot, BarChart3, Clock, Waveform, Shield, Palette, Save, Music, Activity } from 'lucide-react'
+import { Search, Settings, Music2, Mic2, Download, Filter, Plus, Bot, BarChart3, Clock, Radio, Shield, Palette, Save, Music, Activity } from 'lucide-react'
 import { useAudioPlayer } from '@/hooks/studio/useAudioPlayer'
 import { useMusicLibrary } from '@/hooks/studio/useMusicLibrary'
 import { usePlaylists } from '@/hooks/studio/usePlaylists'
@@ -947,7 +947,7 @@ export function ControlPanel() {
                     </CollapsibleSection>
 
                     {/* Phase 7B - Live Mic Ducking + Effects */}
-                    <CollapsibleSection title="Mic Ducking & Effects" icon={<Waveform className="w-5 h-5" />}>
+                    <CollapsibleSection title="Mic Ducking & Effects" icon={<Radio className="w-5 h-5" />}>
                       <MicDuckingPanel
                         audioContext={audioPlayer.audioContext}
                         onDuckingChange={(isDucking, duckAmount) => {
