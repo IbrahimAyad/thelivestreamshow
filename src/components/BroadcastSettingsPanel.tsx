@@ -9,11 +9,12 @@ export function BroadcastSettingsPanel() {
   const [obsConnected, setObsConnected] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
 
-  // OBS Connection Info (from your OBS WebSocket settings)
+  // OBS Connection Info (from environment variables)
+  // Configure in .env.local using VITE_OBS_WEBSOCKET_* variables
   const obsInfo = {
-    ip: '192.168.1.199',
-    port: '4455',
-    password: 'ZiALI1lrx90P03rf'
+    ip: import.meta.env.VITE_OBS_WEBSOCKET_IP || '192.168.1.199',
+    port: import.meta.env.VITE_OBS_WEBSOCKET_PORT || '4455',
+    password: import.meta.env.VITE_OBS_WEBSOCKET_PASSWORD || ''
   }
 
   useEffect(() => {
