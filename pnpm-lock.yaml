@@ -128,6 +128,9 @@ importers:
       date-fns:
         specifier: ^3.0.0
         version: 3.6.0
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       embla-carousel-react:
         specifier: ^8.5.2
         version: 8.6.0(react@18.3.1)
@@ -154,7 +157,7 @@ importers:
         version: 13.1.2
       pnpm-store:
         specifier: link:/tmp/pnpm-store
-        version: link:../../../tmp/pnpm-store
+        version: link:../../../../tmp/pnpm-store
       react:
         specifier: ^18.3.1
         version: 18.3.1

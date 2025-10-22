@@ -4,9 +4,11 @@ import { useTTS } from '../hooks/useTTS';
 import { useF5TTS } from '../hooks/useF5TTS';
 import { useOBSAudio } from '../hooks/useOBSAudio';
 import { useDiscordAudio } from '../hooks/useDiscordAudio';
-import { useBetaBotConversation } from '../hooks/useBetaBotConversation';
+import { useBetaBotConversationWithMemory } from '../hooks/useBetaBotConversationWithMemory';
 import { useBetaBotSuggestionsManager } from '../hooks/useBetaBotSuggestionsManager';
 import { useSessionManager } from '../hooks/useSessionManager';
+import { useConversationTiming } from '../hooks/useConversationTiming';
+import { useEmotionDetection } from '../hooks/useEmotionDetection';
 import { calculateIntentScores, needsRealTimeData } from '../lib/intentDetection';
 import { supabase } from '../lib/supabase';
 import { SessionInfo } from './betabot/SessionInfo';
@@ -15,6 +17,9 @@ import { LiveTranscript } from './betabot/LiveTranscript';
 import { ChatHistory } from './betabot/ChatHistory';
 import { SessionHistory } from './betabot/SessionHistory';
 import { BetaBotSuggestions } from './betabot/BetaBotSuggestions';
+import { LearningDashboard } from './betabot/LearningDashboard';
+import { TimingIndicator } from './betabot/TimingIndicator';
+import { EmotionIndicator } from './betabot/EmotionIndicator';
 import { ModeSelection } from './betabot/ModeSelection';
 import { TTSProviderSelector } from './betabot/TTSProviderSelector';
 import { AudioSourceSelector } from './betabot/AudioSourceSelector';
@@ -29,7 +34,14 @@ export function BetaBotControlPanel() {
   const [betaBotMode, setBetaBotMode] = useState<'question-generator' | 'co-host'>('co-host');
 
   const [directInteractions, setDirectInteractions] = useState(0);
-  const [chatHistory, setChatHistory] = useState<Array<{question: string; answer: string; aiSource: string}>>([]);
+  const [chatHistory, setChatHistory] = useState<Array<{
+    question: string;
+    answer: string;
+    aiSource: 'gpt4' | 'perplexity';
+    interactionId?: string;
+    hasMemoryRecall?: boolean;
+    memoryCount?: number;
+  }>>([]);
   const [textInput, setTextInput] = useState('');
   const [currentAISource, setCurrentAISource] = useState<'gpt4' | 'perplexity' | null>(null);
   const [ttsProvider, setTtsProvider] = useState<'browser' | 'f5tts'>(() => {
@@ -55,7 +67,7 @@ export function BetaBotControlPanel() {
   const [discordExpanded, setDiscordExpanded] = useState(false);
 
   // Initialize hooks first (without callbacks)
-  const betaBotConversation = useBetaBotConversation();
+  const betaBotConversation = useBetaBotConversationWithMemory();
   const browserTTS = useTTS();
   const f5TTS = useF5TTS();
   const obsAudio = useOBSAudio({
@@ -67,6 +79,16 @@ export function BetaBotControlPanel() {
 
   // BetaBot suggestions management
   const betaBotSuggestionsManager = useBetaBotSuggestionsManager();
+
+  // Smart timing detection
+  const conversationTiming = useConversationTiming({
+    silenceThreshold: 3000, // 3 seconds of silence
+    topicShiftThreshold: 0.6, // 60% similarity for topic shifts
+    minInterruptionScore: 0.7 // 70% confidence to recommend
+  });
+
+  // Emotion detection
+  const emotionDetection = useEmotionDetection();
 
   // Select TTS provider based on user preference
   const tts = ttsProvider === 'f5tts' ? f5TTS : browserTTS;
@@ -217,16 +239,28 @@ export function BetaBotControlPanel() {
       if (intentResult.type === 'follow_up' || intentResult.type === 'conversation') {
         console.log(`💬 Routing to CONVERSATION mode (${intentResult.type})...`);
 
-        // Use BetaBot conversation hook
-        const mode = intentResult.metadata?.mode || 'creative';
-        console.log(`🎭 BetaBot Mode: ${mode}`);
+        // Use BetaBot conversation hook with emotion-aware mode selection
+        let mode = intentResult.metadata?.mode || 'creative';
+
+        // Override with emotion-detected mode if available and confident
+        if (emotionDetection.recommendedMode && emotionDetection.recommendedMode.confidence > 0.7) {
+          mode = emotionDetection.recommendedMode.recommendedMode;
+          console.log(`🎭 Emotion-adjusted Mode: ${mode} (${emotionDetection.recommendedMode.reasoning})`);
+        } else {
+          console.log(`🎭 BetaBot Mode: ${mode}`);
+        }
+
+        // Generate unique interaction ID for feedback tracking
+        const interactionId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
         let conversationResponse = '';
+        let memoryRecallCount = 0;
 
         // Stream the response to TTS
         const streamedChunks: string[] = [];
 
-        await betaBotConversation.chat(
+        // Use memory-enhanced conversation
+        const result = await betaBotConversation.chatWithMemory(
           question,
           mode,
           (chunk) => {
@@ -248,7 +282,10 @@ export function BetaBotControlPanel() {
           }
         );
 
-        console.log('✅ BetaBot conversation complete');
+        conversationResponse = result.response;
+        memoryRecallCount = result.memoryRecallCount;
+
+        console.log(`✅ BetaBot conversation complete (recalled ${memoryRecallCount} memories)`);
 
         // Speak the full response if it wasn't already spoken
         if (streamedChunks.length < 5 && conversationResponse) {
@@ -276,11 +313,14 @@ export function BetaBotControlPanel() {
           setDirectInteractions(prev => prev + 1);
         }
 
-        // Add to chat history
+        // Add to chat history with memory metadata
         setChatHistory(prev => [{
           question,
           answer: conversationResponse,
-          aiSource: 'gpt4' // Show as GPT-4 in UI
+          aiSource: 'gpt4', // Show as GPT-4 in UI
+          interactionId,
+          hasMemoryRecall: memoryRecallCount > 0,
+          memoryCount: memoryRecallCount
         }, ...prev].slice(0, 5));
 
         return; // Exit early
@@ -289,9 +329,13 @@ export function BetaBotControlPanel() {
       // Get conversation buffer from ref
       const conversationBuffer = speechRecognitionRef.current?.conversationBuffer || '';
 
+      // Generate unique interaction ID for feedback tracking
+      const interactionId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
       // Determine which AI to use
       let response: string;
       let aiSource: 'gpt4' | 'perplexity';
+      let memoryRecallCount = 0;
 
       if (needsRealTimeData(question)) {
         // Use Perplexity for real-time questions
@@ -300,11 +344,14 @@ export function BetaBotControlPanel() {
         aiSource = 'perplexity';
         response = await getPerplexityAnswer(question);
       } else {
-        // Use GPT-4o with context awareness
-        console.log('🟢 Routing to BetaBot Conversation (GPT-4o with context)');
+        // Use GPT-4o with context awareness and memory
+        console.log('🟢 Routing to BetaBot Conversation (GPT-4o with memory)');
         setCurrentAISource('gpt4');
         aiSource = 'gpt4';
-        response = await betaBotConversation.chat(question, 'creative');
+        const result = await betaBotConversation.chatWithMemory(question, 'creative');
+        response = result.response;
+        memoryRecallCount = result.memoryRecallCount;
+        console.log(`🧠 Recalled ${memoryRecallCount} past memories`);
       }
 
       const responseTime = Date.now() - startTime;
@@ -312,8 +359,15 @@ export function BetaBotControlPanel() {
       if (response) {
         console.log(`✅ Got response in ${responseTime}ms: "${response.substring(0, 50)}..."`);
 
-        // Add to chat history
-        setChatHistory(prev => [{question, answer: response, aiSource}, ...prev].slice(0, 5));
+        // Add to chat history with memory metadata
+        setChatHistory(prev => [{
+          question,
+          answer: response,
+          aiSource,
+          interactionId,
+          hasMemoryRecall: memoryRecallCount > 0,
+          memoryCount: memoryRecallCount
+        }, ...prev].slice(0, 5));
 
         // Log interaction to database first (before speaking)
         if (sessionManager.sessionId) {
@@ -499,7 +553,29 @@ export function BetaBotControlPanel() {
     conversationBuffer: speechRecognition.conversationBuffer,
     onStopListening: () => speechRecognition.stopListening(),
     onClearBuffer: () => speechRecognition.clearBuffer(),
-    onResetChatState: () => {
+    onResetChatState: async () => {
+      // Store conversation as memory before resetting
+      if (sessionManager.sessionId && speechRecognition.conversationBuffer.length > 100) {
+        console.log('💾 Storing session conversation as memory...');
+        try {
+          await betaBotConversation.storeConversationMemory(
+            sessionManager.sessionId,
+            speechRecognition.conversationBuffer,
+            {
+              topic: 'Live Stream Session',
+              contextMetadata: {
+                duration: sessionManager.sessionTimer,
+                interactions: directInteractions
+              }
+            }
+          );
+          console.log('✅ Session memory stored successfully');
+        } catch (error) {
+          console.error('❌ Failed to store session memory:', error);
+        }
+      }
+
+      // Reset UI state
       setChatHistory([]);
       setCurrentAISource(null);
       setDirectInteractions(0);
@@ -510,6 +586,38 @@ export function BetaBotControlPanel() {
   useEffect(() => {
     speechRecognitionRef.current = speechRecognition;
   }, [speechRecognition]);
+
+  // Analyze transcript timing whenever new transcript arrives
+  useEffect(() => {
+    if (speechRecognition.transcript && speechRecognition.isListening) {
+      const analyzeAsync = async () => {
+        await conversationTiming.analyzeTranscript(
+          speechRecognition.transcript,
+          Date.now()
+        );
+
+        // Log timing opportunities for debugging
+        if (conversationTiming.timingOpportunity) {
+          console.log('⏱️ Timing Opportunity:', {
+            score: conversationTiming.timingOpportunity.score,
+            recommendation: conversationTiming.timingOpportunity.recommendation,
+            reasoning: conversationTiming.timingOpportunity.reasoning,
+            energy: conversationTiming.currentEnergy
+          });
+        }
+      };
+
+      analyzeAsync();
+    }
+  }, [speechRecognition.transcript, speechRecognition.isListening]);
+
+  // Analyze transcript for emotions (text-based fallback)
+  useEffect(() => {
+    if (speechRecognition.transcript && speechRecognition.isListening) {
+      // Use text-based emotion detection as a lightweight fallback
+      emotionDetection.analyzeText(speechRecognition.transcript);
+    }
+  }, [speechRecognition.transcript, speechRecognition.isListening]);
 
   // Create session when listening starts
   useEffect(() => {
@@ -810,6 +918,29 @@ export function BetaBotControlPanel() {
       {/* Chat History - Only show in Co-Host mode */}
       {betaBotMode === 'co-host' && (
         <ChatHistory chatHistory={chatHistory} />
+      )}
+
+      {/* Learning Dashboard - Only show in Co-Host mode */}
+      {betaBotMode === 'co-host' && (
+        <LearningDashboard />
+      )}
+
+      {/* Timing Indicator - Only show when listening in Co-Host mode */}
+      {betaBotMode === 'co-host' && speechRecognition.isListening && (
+        <TimingIndicator
+          timingOpportunity={conversationTiming.timingOpportunity}
+          currentEnergy={conversationTiming.currentEnergy}
+          totalSignals={conversationTiming.totalSignalsDetected}
+        />
+      )}
+
+      {/* Emotion Indicator - Only show when listening in Co-Host mode */}
+      {betaBotMode === 'co-host' && speechRecognition.isListening && (
+        <EmotionIndicator
+          currentEmotion={emotionDetection.currentEmotion}
+          recommendedMode={emotionDetection.recommendedMode}
+          isAnalyzing={emotionDetection.isAnalyzing}
+        />
       )}
 
       {/* Main Controls */}

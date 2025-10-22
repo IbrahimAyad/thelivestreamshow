@@ -3,13 +3,14 @@ import { supabase, BroadcastGraphic } from '../lib/supabase'
 import {
   Radio, Coffee, Clock, AlertTriangle, Image,
   BarChart3, Trophy, MessageSquare, Sparkles,
-  Award, Zap, UserPlus, Gauge, Swords
+  Award, Zap, UserPlus, Gauge, Swords, Target
 } from 'lucide-react'
 
 const GRAPHIC_CONFIGS = [
   // Core Graphics
   { type: 'starting_soon', label: 'Starting Soon', icon: Clock, color: 'blue', htmlFile: '/stream-starting-soon.html' },
   { type: 'brb', label: 'BRB', icon: Coffee, color: 'yellow', htmlFile: '/stream-brb-screen.html' },
+  { type: 'brb_tomato_game', label: 'Tomato', icon: Target, color: 'red', htmlFile: '/brb-tomato-game.html' },
   { type: 'tech_difficulties', label: 'Tech Issues', icon: AlertTriangle, color: 'orange', htmlFile: '/stream-technical-issues.html' },
   { type: 'outro', label: 'OUTRO', icon: Radio, color: 'red', htmlFile: '/stream-outro-screen.html' },
 
