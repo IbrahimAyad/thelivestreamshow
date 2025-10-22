@@ -271,13 +271,17 @@ export function BetaBotControlPanel() {
             // Start speaking after we have a few words (more natural)
             if (streamedChunks.length === 5) {
               const firstSentence = streamedChunks.join('');
-              tts.speak(firstSentence, async (state) => {
-                if (sessionManager.sessionId) {
-                  await supabase.from('betabot_sessions').update({
-                    current_state: state === 'speaking' ? 'speaking' : 'listening'
-                  }).eq('id', sessionManager.sessionId);
-                }
-              }).catch(err => console.error('TTS error:', err));
+              try {
+                await tts.speak(firstSentence, async (state) => {
+                  if (sessionManager.sessionId) {
+                    await supabase.from('betabot_sessions').update({
+                      current_state: state === 'speaking' ? 'speaking' : 'listening'
+                    }).eq('id', sessionManager.sessionId);
+                  }
+                });
+              } catch (err) {
+                console.error('TTS error:', err);
+              }
             }
           }
         );
@@ -317,7 +321,7 @@ export function BetaBotControlPanel() {
         setChatHistory(prev => [{
           question,
           answer: conversationResponse,
-          aiSource: 'gpt4', // Show as GPT-4 in UI
+          aiSource: 'gpt4' as const, // Show as GPT-4 in UI
           interactionId,
           hasMemoryRecall: memoryRecallCount > 0,
           memoryCount: memoryRecallCount
