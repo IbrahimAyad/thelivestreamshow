@@ -51,10 +51,12 @@ export interface ProducerAIConfig {
 }
 
 export interface GeneratedQuestion {
+  id?: string;
   question_text: string;
+  text?: string; // Alias for question_text
   confidence: number;
   reasoning: string;
-  context_summary: string;
+  context_summary?: string;
   expected_direction?: string; // NEW: What type of discussion this might spark
   quality_score?: { // NEW: Breakdown of question quality
     depth: number;
@@ -63,6 +65,16 @@ export interface GeneratedQuestion {
     practicality: number;
   };
   source_model?: AIModel; // NEW Phase 2: Which AI model generated this question
+  follow_ups?: string[]; // Follow-up questions
+  topic?: string; // Main topic
+  topics?: string[]; // Multiple topics
+  complexity?: number; // Question complexity 0-1
+  source?: string; // Source of the question
+  alternatives?: any[]; // Alternative questions
+  created_at?: Date; // Creation timestamp
+  question?: string; // Alias for question_text
+  reason?: string; // Alias for reasoning
+  metadata?: any; // Add missing property
 }
 
 export interface TranscriptAnalysis {
@@ -129,6 +141,8 @@ export interface UseProducerAI {
       currentUsageRate: number;
     };
   } | null;
+  // Rejected questions tracking
+  rejectedQuestions: GeneratedQuestion[];
 }
 
 const DEFAULT_CONFIG: ProducerAIConfig = {
@@ -175,11 +189,7 @@ export function useProducerAI(): UseProducerAI {
   } | null>(null);
 
   // NEW Day 4: Rejected questions tracking
-  const [rejectedQuestions, setRejectedQuestions] = useState<Array<{
-    question: string;
-    reason: string;
-    timestamp: Date;
-  }>>([]);
+  const [rejectedQuestions, setRejectedQuestions] = useState<GeneratedQuestion[]>([]);
 
   // NEW Phase 4: Host Profile State
   const [hostProfileStats, setHostProfileStats] = useState<{
@@ -609,9 +619,9 @@ Generate 2-4 questions maximum. Prioritize quality over quantity.`;
               console.log(`❌ Question rejected: ${result.reason}`);
               // Track rejected questions for UI display
               setRejectedQuestions(prev => [...prev, {
-                question: q.question_text,
-                reason: result.reason || 'unknown',
-                timestamp: new Date()
+                ...q,
+                reasoning: result.reason || 'unknown',
+                created_at: new Date()
               }]);
             }
           }
@@ -735,12 +745,12 @@ Generate 2-4 questions maximum. Prioritize quality over quantity.`;
       }
 
       // NEW Phase 4: Record questions in host profile
-      if (hostProfileRef.current && ranked.length > 0 && data?.id) {
+      if (hostProfileRef.current && ranked.length > 0 && contextMemoryStats?.showId) {
         for (const votedQuestion of ranked) {
           await hostProfileRef.current.recordQuestionGenerated(
             votedQuestion.question,
             votedQuestion.sourceModel,
-            data.id,
+            contextMemoryStats.showId,
             [] // Embedding will be calculated later if needed
           );
         }

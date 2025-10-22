@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Tag as TagIcon, Hash } from 'lucide-react'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 import { supabase } from '@/lib/supabase'
 
 interface TrackMetadataEditorProps {

@@ -38,9 +38,9 @@ export function AnalyticsDashboard() {
 
     // Generate recommendations
     const newRecommendations = learningEngine.generateRecommendations({
-      autoExecuteThreshold: config?.autoExecuteThreshold || 0.85,
-      requireApprovalThreshold: config?.requireApprovalThreshold || 0.60,
-      autoExecutionEnabled: config?.autoExecutionEnabled || false
+      autoExecuteThreshold: config?.confidence_auto_execute || 0.85,
+      requireApprovalThreshold: config?.confidence_suggest || 0.60,
+      autoExecutionEnabled: config?.auto_execute_enabled || false
     })
     setRecommendations(newRecommendations)
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 
 interface PlaybackState {
   currentTrack: MusicTrack | null

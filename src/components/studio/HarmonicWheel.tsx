@@ -19,7 +19,7 @@
  */
 
 import { useState } from 'react'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 
 // Camelot Wheel key mappings
 export const CAMELOT_KEYS = [

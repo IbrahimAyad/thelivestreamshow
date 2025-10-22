@@ -13,7 +13,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useDeckAudioPlayer, type DeckId, type DeckState } from './useDeckAudioPlayer'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 
 export type CrossfaderCurve = 'linear' | 'smooth' | 'fast-cut'
 

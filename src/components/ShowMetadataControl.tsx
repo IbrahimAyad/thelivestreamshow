@@ -185,7 +185,7 @@ export function ShowMetadataControl() {
       console.error('Error ending show:', error)
       alert('Failed to end show')
     } else {
-      setShowEndConfirm(false)
+      setShowEndModal(false)
       loadMetadata() // Immediately reload to update UI
     }
   }

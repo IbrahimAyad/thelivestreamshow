@@ -1,5 +1,5 @@
 import { Music, Activity } from 'lucide-react'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 
 interface SoundDropButtonProps {
   soundDrop: MusicTrack

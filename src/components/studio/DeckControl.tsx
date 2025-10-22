@@ -14,7 +14,7 @@
 import { useState } from 'react'
 import { Play, Pause, Square, RotateCcw, Lock, Unlock, RefreshCw } from 'lucide-react'
 import type { DeckId, DeckState } from '@/hooks/studio/useDeckAudioPlayer'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 
 interface DeckControlProps {
   deckId: DeckId

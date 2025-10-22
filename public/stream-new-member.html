@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A New Challenger Approaches!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            background: #000;
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Dramatic background burst */
+        .burst-bg {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, 
+                transparent 0%, 
+                rgba(255, 0, 0, 0.1) 30%, 
+                rgba(0, 0, 0, 0.9) 70%);
+            animation: burstExpand 0.5s ease-out forwards;
+        }
+
+        @keyframes burstExpand {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Speed lines background */
+        .speed-lines {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(90deg, transparent 0%, rgba(255, 215, 0, 0.1) 45%, rgba(255, 215, 0, 0.3) 50%, rgba(255, 215, 0, 0.1) 55%, transparent 100%);
+            background-size: 50px 100%;
+            animation: speedLineMove 0.5s linear infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes speedLineMove {
+            0% { transform: translateX(-50px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Warning stripes */
+        .warning-frame {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .warning-stripe {
+            position: absolute;
+            width: 100%;
+            height: 60px;
+            background: repeating-linear-gradient(
+                -45deg,
+                #FFD700,
+                #FFD700 30px,
+                #000 30px,
+                #000 60px
+            );
+            opacity: 0.8;
+            animation: stripeSlide 1s linear infinite;
+        }
+
+        .warning-stripe.top {
+            top: 0;
+        }
+
+        .warning-stripe.bottom {
+            bottom: 0;
+            animation-direction: reverse;
+        }
+
+        @keyframes stripeSlide {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(60px); }
+        }
+
+        /* Main container */
+        .challenger-container {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+            animation: containerSlam 0.5s ease-out;
+        }
+
+        @keyframes containerSlam {
+            0% { 
+                transform: scale(3) rotate(10deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1) rotate(-2deg);
+            }
+            100% { 
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        /* Main alert text */
+        .alert-text {
+            font-size: 2em;
+            color: #FF0000;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 20px;
+            text-shadow: 
+                0 0 10px rgba(255, 0, 0, 0.8),
+                0 0 20px rgba(255, 0, 0, 0.6),
+                0 0 30px rgba(255, 0, 0, 0.4);
+            animation: alertPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes alertPulse {
+            0%, 100% { 
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% { 
+                transform: scale(1.05);
+                filter: brightness(1.3);
+            }
+        }
+
+        /* Challenger text */
+        .challenger-text {
+            font-size: 6em;
+            font-weight: 900;
+            color: #FFD700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            line-height: 0.9;
+            margin: 20px 0;
+            text-shadow: 
+                3px 3px 0px #FF0000,
+                6px 6px 0px #8B0000,
+                9px 9px 0px #4B0000,
+                12px 12px 20px rgba(0, 0, 0, 0.9);
+            animation: challengerSlam 0.5s ease-out 0.3s both;
+        }
+
+        @keyframes challengerSlam {
+            0% {
+                transform: translateY(-100px) scale(2);
+                opacity: 0;
+            }
+            50% {
+                transform: translateY(10px) scale(1.1);
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Approaching text */
+        .approaching-text {
+            font-size: 4em;
+            font-weight: 900;
+            color: #FFFFFF;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 20px 0;
+            text-shadow: 
+                2px 2px 0px #FFD700,
+                4px 4px 0px #FF0000,
+                6px 6px 15px rgba(0, 0, 0, 0.9);
+            animation: approachSlide 0.5s ease-out 0.5s both;
+        }
+
+        @keyframes approachSlide {
+            0% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Silhouette box */
+        .silhouette-box {
+            width: 300px;
+            height: 300px;
+            margin: 30px auto;
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            border: 5px solid #FFD700;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 0 50px rgba(255, 215, 0, 0.5),
+                inset 0 0 50px rgba(0, 0, 0, 0.5);
+            animation: boxFlash 2s ease-in-out infinite;
+        }
+
+        @keyframes boxFlash {
+            0%, 100% {
+                box-shadow: 
+                    0 0 50px rgba(255, 215, 0, 0.5),
+                    inset 0 0 50px rgba(0, 0, 0, 0.5);
+            }
+            50% {
+                box-shadow: 
+                    0 0 80px rgba(255, 0, 0, 0.8),
+                    inset 0 0 30px rgba(255, 215, 0, 0.2);
+            }
+        }
+
+        /* Mystery silhouette (question mark) */
+        .silhouette {
+            font-size: 150px;
+            color: #000;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: 900;
+            animation: silhouettePulse 1s ease-in-out infinite;
+            text-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+        }
+
+        @keyframes silhouettePulse {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.8;
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.1);
+                opacity: 1;
+            }
+        }
+
+        /* Username display */
+        .username-reveal {
+            font-size: 3em;
+            color: #FFD700;
+            text-transform: uppercase;
+            margin: 20px 0;
+            font-weight: 900;
+            text-shadow: 
+                2px 2px 0 #FF0000,
+                4px 4px 10px rgba(0, 0, 0, 0.8);
+            animation: usernameGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes usernameGlow {
+            0%, 100% {
+                text-shadow: 
+                    2px 2px 0 #FF0000,
+                    4px 4px 10px rgba(0, 0, 0, 0.8),
+                    0 0 20px rgba(255, 215, 0, 0.5);
+            }
+            50% {
+                text-shadow: 
+                    2px 2px 0 #FF0000,
+                    4px 4px 10px rgba(0, 0, 0, 0.8),
+                    0 0 40px rgba(255, 215, 0, 1);
+            }
+        }
+
+        /* Versus-style balls */
+        .versus-balls {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .battle-ball {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+        }
+
+        .ball-left {
+            left: 10%;
+            top: 50%;
+            background: radial-gradient(circle at 30% 30%, #FFD700, #FF0000);
+            animation: ballChargeLeft 2s ease-in-out infinite;
+        }
+
+        .ball-right {
+            right: 10%;
+            top: 50%;
+            background: radial-gradient(circle at 30% 30%, #999, #666);
+            animation: ballChargeRight 2s ease-in-out infinite;
+        }
+
+        @keyframes ballChargeLeft {
+            0%, 100% {
+                transform: translateY(-50%) translateX(0) scale(1);
+            }
+            50% {
+                transform: translateY(-50%) translateX(50px) scale(1.3);
+            }
+        }
+
+        @keyframes ballChargeRight {
+            0%, 100% {
+                transform: translateY(-50%) translateX(0) scale(1);
+            }
+            50% {
+                transform: translateY(-50%) translateX(-50px) scale(1.3);
+            }
+        }
+
+        /* VS text */
+        .vs-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5em;
+            font-weight: 900;
+            color: #FFFFFF;
+            text-shadow: 
+                3px 3px 0 #FF0000,
+                6px 6px 0 #FFD700,
+                9px 9px 20px rgba(0, 0, 0, 0.9);
+            animation: vsSlam 0.5s ease-out 0.8s both, vsPulse 1s ease-in-out 1.3s infinite;
+        }
+
+        @keyframes vsSlam {
+            0% {
+                transform: translate(-50%, -50%) scale(5) rotate(180deg);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes vsPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        /* Lightning effects */
+        .lightning {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(transparent, #FFD700, transparent);
+            opacity: 0;
+            animation: lightning 2s infinite;
+        }
+
+        .lightning1 { left: 20%; animation-delay: 0s; }
+        .lightning2 { left: 50%; animation-delay: 0.5s; }
+        .lightning3 { left: 80%; animation-delay: 1s; }
+
+        @keyframes lightning {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        /* Ready text */
+        .ready-text {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2em;
+            color: #FF0000;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-weight: bold;
+            animation: readyBlink 0.5s ease-in-out infinite;
+        }
+
+        @keyframes readyBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .challenger-text { font-size: 3.5em; }
+            .approaching-text { font-size: 2.5em; }
+            .silhouette-box { 
+                width: 200px; 
+                height: 200px;
+            }
+            .silhouette { font-size: 100px; }
+            .username-reveal { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="burst-bg"></div>
+    <div class="speed-lines"></div>
+    
+    <!-- Warning stripes -->
+    <div class="warning-frame">
+        <div class="warning-stripe top"></div>
+        <div class="warning-stripe bottom"></div>
+    </div>
+    
+    <!-- Lightning effects -->
+    <div class="lightning lightning1"></div>
+    <div class="lightning lightning2"></div>
+    <div class="lightning lightning3"></div>
+    
+    <!-- Versus balls -->
+    <div class="versus-balls">
+        <div class="battle-ball ball-left"></div>
+        <div class="battle-ball ball-right"></div>
+        <div class="vs-text">VS</div>
+    </div>
+    
+    <div class="challenger-container">
+        <div class="alert-text">⚠ WARNING ⚠</div>
+        
+        <div class="challenger-text">A NEW MEMBER</div>
+        <div class="approaching-text">APPROACHES!</div>
+        
+        <div class="silhouette-box">
+            <div class="silhouette">?</div>
+        </div>
+        
+        <div class="username-reveal" id="username">Rattlesnake has joined</div>
+    </div>
+    
+    <div class="ready-text">GET READY!</div>
+
+    <script>
+        // Dramatic entrance sequence
+        setTimeout(() => {
+            // Screen shake effect
+            document.body.style.animation = 'shake 0.5s';
+        }, 500);
+        
+        // Add shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translate(0, 0); }
+                10% { transform: translate(-10px, -10px); }
+                20% { transform: translate(10px, 10px); }
+                30% { transform: translate(-10px, 10px); }
+                40% { transform: translate(10px, -10px); }
+                50% { transform: translate(-5px, -5px); }
+                60% { transform: translate(5px, 5px); }
+                70% { transform: translate(-5px, 5px); }
+                80% { transform: translate(5px, -5px); }
+                90% { transform: translate(-2px, -2px); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Flash effect
+        function createFlash() {
+            const flash = document.createElement('div');
+            flash.style.position = 'fixed';
+            flash.style.top = '0';
+            flash.style.left = '0';
+            flash.style.width = '100%';
+            flash.style.height = '100%';
+            flash.style.background = 'rgba(255, 215, 0, 0.3)';
+            flash.style.pointerEvents = 'none';
+            flash.style.zIndex = '100';
+            
+            document.body.appendChild(flash);
+            
+            flash.animate([
+                { opacity: 0 },
+                { opacity: 1 },
+                { opacity: 0 }
+            ], {
+                duration: 200,
+                easing: 'ease-out'
+            }).onfinish = () => flash.remove();
+        }
+        
+        // Trigger flashes
+        setTimeout(createFlash, 800);
+        setTimeout(createFlash, 1600);
+        
+        // Create impact particles
+        function createImpactParticles() {
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.width = '10px';
+                particle.style.height = '10px';
+                particle.style.background = Math.random() > 0.5 ? '#FFD700' : '#FF0000';
+                particle.style.borderRadius = '50%';
+                particle.style.left = '50%';
+                particle.style.top = '50%';
+                particle.style.pointerEvents = 'none';
+                particle.style.zIndex = '50';
+                
+                const angle = (Math.PI * 2 * i) / 20;
+                const velocity = 300 + Math.random() * 200;
+                const endX = Math.cos(angle) * velocity;
+                const endY = Math.sin(angle) * velocity;
+                
+                particle.animate([
+                    { 
+                        transform: 'translate(-50%, -50%) scale(1)',
+                        opacity: 1
+                    },
+                    { 
+                        transform: `translate(calc(-50% + ${endX}px), calc(-50% + ${endY}px)) scale(0)`,
+                        opacity: 0
+                    }
+                ], {
+                    duration: 1000,
+                    easing: 'ease-out'
+                }).onfinish = () => particle.remove();
+                
+                document.body.appendChild(particle);
+            }
+        }
+        
+        setTimeout(createImpactParticles, 300);
+        
+        // Rotating usernames
+        const usernames = [
+            "Rattlesnake",
+            "Jags",
+            "Babs",
+            "El Garza",
+            "Howard Hughes",
+            "Dr.MindEye",
+            "Animal",
+            "HerbDullah",
+            "Austin"
+        ];
+        
+        let currentIndex = 0;
+        
+        function rotateUsername() {
+            const usernameElement = document.getElementById('username');
+            currentIndex = (currentIndex + 1) % usernames.length;
+            
+            usernameElement.style.opacity = '0';
+            setTimeout(() => {
+                usernameElement.textContent = usernames[currentIndex] + " has joined";
+                usernameElement.style.opacity = '1';
+            }, 300);
+        }
+        
+        // Change username every 3 seconds for demo
+        setInterval(rotateUsername, 3000);
+        
+        // Add transition for username
+        document.getElementById('username').style.transition = 'opacity 0.3s ease';
+        
+        // Initial username
+        document.getElementById('username').textContent = usernames[0] + " has joined";
+        
+        // Add alarm sound effect visualization (visual only)
+        function createAlarmPulse() {
+            const pulse = document.createElement('div');
+            pulse.style.position = 'fixed';
+            pulse.style.top = '0';
+            pulse.style.left = '0';
+            pulse.style.width = '100%';
+            pulse.style.height = '100%';
+            pulse.style.border = '10px solid #FF0000';
+            pulse.style.pointerEvents = 'none';
+            pulse.style.zIndex = '90';
+            pulse.style.opacity = '0.5';
+            
+            document.body.appendChild(pulse);
+            
+            pulse.animate([
+                { transform: 'scale(1)', opacity: 0.5 },
+                { transform: 'scale(1.05)', opacity: 0 }
+            ], {
+                duration: 500,
+                easing: 'ease-out'
+            }).onfinish = () => pulse.remove();
+        }
+        
+        // Create alarm pulses
+        setInterval(createAlarmPulse, 1000);
+    </script>
+</body>
+</html>

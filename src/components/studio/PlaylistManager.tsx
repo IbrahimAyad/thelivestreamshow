@@ -17,7 +17,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { Playlist, MusicTrack } from '@/types/database'
+import type { Playlist, MusicTrack } from "@/types/database"
 
 interface PlaylistManagerProps {
   playlists: Playlist[]

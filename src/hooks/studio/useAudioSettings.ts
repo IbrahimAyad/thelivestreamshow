@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { AudioSettings } from '@/types/database'
+import type { AudioSettings } from "@/types/database"
 
 export function useAudioSettings() {
   const [settings, setSettings] = useState<AudioSettings | null>(null)

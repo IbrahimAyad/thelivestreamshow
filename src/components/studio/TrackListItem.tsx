@@ -1,5 +1,5 @@
 import { Play, Pause, Trash2, Music, Scissors, Edit, Loader, Shield, AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 import { CopyrightBadge } from './CopyrightBadge'
 
 interface TrackListItemProps {

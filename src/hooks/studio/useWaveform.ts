@@ -10,7 +10,7 @@ import {
   generateWaveformData,
   renderWaveform,
 } from '@/utils/studio/waveformRenderer';
-import { MusicTrack } from '../types/database';
+import { MusicTrack } from "@/types/database";
 
 interface UseWaveformResult {
   waveformData: WaveformData | null;

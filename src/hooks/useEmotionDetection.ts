@@ -19,6 +19,7 @@ export interface UseEmotionDetection {
   recommendedMode: MoodMapping | null;
   isAnalyzing: boolean;
   error: string | null;
+  emotionAnalysis: EmotionAnalysisResult | null; // Alias for currentEmotion
 
   // Methods
   analyzeAudio: (audioBlob: Blob) => Promise<void>;
@@ -112,6 +113,7 @@ export function useEmotionDetection(): UseEmotionDetection {
     recommendedMode,
     isAnalyzing,
     error,
+    emotionAnalysis: currentEmotion, // Alias for currentEmotion
     analyzeAudio,
     analyzeText,
     reset,

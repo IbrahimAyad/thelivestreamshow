@@ -47,8 +47,8 @@ export function VoiceSelector({
         }}
         className="voice-select"
       >
-        {voices.map((voice) => (
-          <option key={voice.name} value={voice.name}>
+        {voices.map((voice, index) => (
+          <option key={`${voice.name}-${voice.lang || voice.gender}-${index}`} value={voice.name}>
             {isBrowser
               ? `${voice.name} (${voice.lang})`
               : `${voice.name} (${voice.gender}, ${voice.quality} quality)`

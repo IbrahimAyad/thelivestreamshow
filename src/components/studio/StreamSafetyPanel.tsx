@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import type { Database } from '../types/database';
+import type { Database } from "@/types/database";
 
 type MusicTrack = Database['public']['Tables']['music_library']['Row'];
 

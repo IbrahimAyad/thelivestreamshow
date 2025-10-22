@@ -12,7 +12,7 @@ import {
   type TrackStatistics,
   type MixQuality,
 } from '@/utils/studio/analyticsEngine';
-import type { Database } from '../types/database';
+import type { Database } from "@/types/database";
 
 type DJAnalytics = Database['public']['Tables']['dj_analytics']['Row'];
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Playlist } from '@/types/database'
+import type { Playlist } from "@/types/database"
 
 export function usePlaylists() {
   const [playlists, setPlaylists] = useState<Playlist[]>([])

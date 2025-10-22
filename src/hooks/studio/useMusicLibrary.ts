@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { analyzeAudioFile } from '@/utils/studio/trackAnalyzer'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 
 export function useMusicLibrary() {
   const [tracks, setTracks] = useState<MusicTrack[]>([])

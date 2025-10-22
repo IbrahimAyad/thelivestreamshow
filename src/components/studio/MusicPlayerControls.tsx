@@ -8,7 +8,7 @@ import {
   Square,
 } from 'lucide-react'
 import { VolumeSlider } from './VolumeSlider'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 
 interface MusicPlayerControlsProps {
   currentTrack: MusicTrack | null

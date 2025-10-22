@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Database } from '../types/database';
+import type { Database } from "@/types/database";
 
 type ScheduledEvent = Database['public']['Tables']['scheduled_events']['Row'];
 type ScheduledEventInsert = Database['public']['Tables']['scheduled_events']['Insert'];

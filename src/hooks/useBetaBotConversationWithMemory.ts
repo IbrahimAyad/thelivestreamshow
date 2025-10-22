@@ -94,7 +94,7 @@ Instructions: Reference relevant past conversations naturally if they help answe
       episodeTitle?: string;
       episodeTopic?: string;
       topic?: string;
-      contextMetadata?: Record<string, any>;
+      contextMetadata?: Record<string, any> & { type?: string };
       hostId?: string;
       showId?: string;
     }

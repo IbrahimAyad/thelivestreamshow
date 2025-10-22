@@ -186,9 +186,7 @@ export function extractEntities(text: string): string[] {
 export function calculateImportanceScore(
   snippet: string,
   context: {
-    hasControv
-
-ersialKeywords?: boolean;
+    hasControversialKeywords?: boolean;
     mentionsHost?: boolean;
     emotionalIntensity?: number; // 0-1
     hasQuestions?: boolean;

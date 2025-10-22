@@ -272,7 +272,7 @@ export function BetaBotControlPanel() {
             if (streamedChunks.length === 5) {
               const firstSentence = streamedChunks.join('');
               try {
-                await tts.speak(firstSentence, async (state) => {
+                tts.speak(firstSentence, async (state) => {
                   if (sessionManager.sessionId) {
                     await supabase.from('betabot_sessions').update({
                       current_state: state === 'speaking' ? 'speaking' : 'listening'

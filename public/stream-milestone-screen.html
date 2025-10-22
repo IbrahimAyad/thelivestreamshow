@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milestone Celebration!</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes confetti {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            animation: confetti 3s linear infinite;
+        }
+
+        .container { text-align: center; z-index: 10; position: relative; }
+
+        .milestone-title {
+            font-size: 4em;
+            font-weight: 900;
+            color: #FFD700;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            text-shadow: 4px 4px 0px #FF0000, 8px 8px 20px rgba(0, 0, 0, 0.8);
+            animation: titleBounce 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleBounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+
+        .milestone-number {
+            font-size: 10em;
+            font-weight: 900;
+            color: #FFFFFF;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 1), 0 0 60px rgba(255, 215, 0, 0.8);
+            animation: numberPulse 2s ease-in-out infinite;
+            margin: 30px 0;
+        }
+
+        @keyframes numberPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .thank-you {
+            font-size: 3em;
+            color: #CCCCCC;
+            font-weight: bold;
+            margin-top: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            animation: explode 1.5s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% { opacity: 1; transform: translate(0, 0) scale(1); }
+            100% { opacity: 0; transform: translate(var(--x), var(--y)) scale(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="milestone-title">🎉 MILESTONE ACHIEVED! 🎉</h1>
+        <div class="milestone-number" id="number">1,000</div>
+        <p class="thank-you">Thank You for Your Support!</p>
+    </div>
+
+    <!-- Piper TTS Audio Controller -->
+    <script src="/stream-audio-controller.js"></script>
+
+    <script>
+
+        function createConfetti() {
+            const confetti = document.createElement('div')
+            confetti.className = 'confetti'
+            confetti.style.left = Math.random() * 100 + '%'
+            confetti.style.background = ['#FFD700', '#FF0000', '#00FF00', '#0000FF', '#FF00FF'][Math.floor(Math.random() * 5)]
+            confetti.style.animationDelay = Math.random() * 3 + 's'
+            confetti.style.animationDuration = 3 + Math.random() * 2 + 's'
+            document.body.appendChild(confetti)
+            setTimeout(() => confetti.remove(), 5000)
+        }
+
+        function createFirework(x, y) {
+            const colors = ['#FFD700', '#FF0000', '#00FF00', '#0000FF', '#FF00FF']
+            for (let i = 0; i < 30; i++) {
+                const firework = document.createElement('div')
+                firework.className = 'firework'
+                firework.style.left = x + 'px'
+                firework.style.top = y + 'px'
+                firework.style.background = colors[Math.floor(Math.random() * colors.length)]
+
+                const angle = (Math.PI * 2 * i) / 30
+                const distance = 100 + Math.random() * 100
+                firework.style.setProperty('--x', Math.cos(angle) * distance + 'px')
+                firework.style.setProperty('--y', Math.sin(angle) * distance + 'px')
+
+                document.body.appendChild(firework)
+                setTimeout(() => firework.remove(), 1500)
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const audioConfig = {
+                voice: 'danny-low', // Piper TTS male voice (BetaBot)
+                ttsMessage: 'We just hit a major milestone! One thousand followers! You are all amazing! Thank you so much for your support!',
+                ttsDelay: 500
+            }
+            new StreamAudioController(audioConfig).init()
+
+            // Create confetti
+            setInterval(createConfetti, 100)
+
+            // Random fireworks
+            setInterval(() => {
+                createFirework(Math.random() * window.innerWidth, Math.random() * window.innerHeight)
+            }, 1500)
+        })
+    </script>
+</body>
+</html>

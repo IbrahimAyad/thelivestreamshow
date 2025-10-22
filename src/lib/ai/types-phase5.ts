@@ -326,8 +326,11 @@ export interface EngagementCurve {
 export interface QuestionPrediction {
   question: GeneratedQuestion;
   predictedEngagement: number;
+  predictedHostSatisfaction?: number; // Add missing property
   riskLevel: 'low' | 'medium' | 'high';
+  riskFactors?: any[]; // Add missing property
   optimalTiming: 'now' | 'soon' | 'later';
+  optimalTimingMinute?: number; // Add missing property
   reasoning: string;
   confidenceLevel: number;
 }
@@ -337,11 +340,17 @@ export interface ShowHealth {
   engagementTrend: 'rising' | 'falling' | 'stable';
   pacingScore: number;
   audienceRetention: number;
+  engagementCurve?: number; // Alias for engagementTrend
+  effectivenessScore?: number; // Additional effectiveness metric
+  currentEngagement?: number; // Current engagement level
+  riskFactors?: any[]; // Risk factors array
+  recommendations?: any[]; // Recommendations array
 }
 
 export interface Recommendation {
   suggestedQuestion: GeneratedQuestion;
   reasoning: string;
+  type?: string; // Add missing property
   urgency: 'immediate' | 'next' | 'consider';
   expectedImpact: number;
 }

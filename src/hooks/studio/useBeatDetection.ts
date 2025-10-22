@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { BeatGrid, detectBeats, BeatDetectionOptions } from '@/utils/studio/beatDetector';
-import { MusicTrack } from '../types/database';
+import { MusicTrack } from "@/types/database";
 
 interface UseBeatDetectionResult {
   beatGrid: BeatGrid | null;

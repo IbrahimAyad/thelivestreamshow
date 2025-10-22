@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { ListFilter, Trash2, Play } from 'lucide-react'
-import type { SmartPlaylist, MusicTrack } from '@/types/database'
+import type { SmartPlaylist, MusicTrack } from "@/types/database"
 import { supabase } from '@/lib/supabase'
 
 interface SmartPlaylistsPanelProps {

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Reaction Frame - The Live Stream Show</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #000000 50%, #1a1a1a 100%);
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Theater atmosphere */
+        .theater-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at center top, rgba(255, 215, 0, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.8) 100%);
+        }
+
+        /* Main container */
+        .video-theater {
+            width: 90%;
+            max-width: 1400px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Header section */
+        .header-section {
+            text-align: center;
+            margin-bottom: 20px;
+            animation: headerGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes headerGlow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        .show-title {
+            font-size: 2em;
+            color: #FFD700;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            text-shadow: 
+                2px 2px 0 #FF0000,
+                4px 4px 10px rgba(0, 0, 0, 0.8),
+                0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .react-subtitle {
+            font-size: 3em;
+            color: #FF0000;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-weight: 900;
+            text-shadow: 
+                3px 3px 0 #8B0000,
+                6px 6px 20px rgba(0, 0, 0, 0.8);
+            margin-top: 10px;
+        }
+
+        /* Video frame container */
+        .video-frame-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Decorative frame */
+        .frame-border {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* Corner brackets */
+        .corner-bracket {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 4px solid #FFD700;
+            z-index: 25;
+        }
+
+        .corner-bracket.top-left {
+            top: -2px;
+            left: -2px;
+            border-right: none;
+            border-bottom: none;
+            box-shadow: -5px -5px 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .corner-bracket.top-right {
+            top: -2px;
+            right: -2px;
+            border-left: none;
+            border-bottom: none;
+            box-shadow: 5px -5px 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .corner-bracket.bottom-left {
+            bottom: -2px;
+            left: -2px;
+            border-right: none;
+            border-top: none;
+            box-shadow: -5px 5px 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .corner-bracket.bottom-right {
+            bottom: -2px;
+            right: -2px;
+            border-left: none;
+            border-top: none;
+            box-shadow: 5px 5px 20px rgba(255, 215, 0, 0.5);
+        }
+
+        /* Animated border */
+        .animated-border {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid transparent;
+            background: linear-gradient(90deg, #FF0000, #FFD700, #FF0000) border-box;
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) padding-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask-composite: exclude;
+            z-index: 15;
+            animation: borderRotate 10s linear infinite;
+        }
+
+        @keyframes borderRotate {
+            0% { 
+                background-position: 0% 50%;
+                filter: hue-rotate(0deg);
+            }
+            100% { 
+                background-position: 100% 50%;
+                filter: hue-rotate(360deg);
+            }
+        }
+
+        /* Video area (green screen) */
+        .video-screen {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #00FF00;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            color: #000;
+            text-transform: uppercase;
+            font-weight: bold;
+            overflow: hidden;
+        }
+
+        /* Scanline effect overlay */
+        .scanlines {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 255, 255, 0.03) 2px,
+                rgba(255, 255, 255, 0.03) 4px
+            );
+            z-index: 22;
+            animation: scanlineMove 10s linear infinite;
+        }
+
+        @keyframes scanlineMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(10px); }
+        }
+
+        /* Control panel */
+        .control-panel {
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+            border: 2px solid #FFD700;
+            border-top: none;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.5),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Status indicators */
+        .status-group {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-label {
+            color: #999;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 0.1em;
+        }
+
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00FF00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        .status-indicator.recording {
+            background: #FF0000;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+            animation: recordBlink 1s ease-in-out infinite;
+        }
+
+        @keyframes recordBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Live indicator */
+        .live-badge {
+            background: #FF0000;
+            color: #FFFFFF;
+            padding: 8px 20px;
+            border-radius: 5px;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+            animation: livePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(255, 0, 0, 0.9);
+            }
+        }
+
+        /* Bouncing balls */
+        .theater-ball {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #FFD700, #FF0000);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+            z-index: 5;
+        }
+
+        .ball-left {
+            left: 5%;
+            bottom: 20%;
+            animation: ballFloat1 5s ease-in-out infinite;
+        }
+
+        .ball-right {
+            right: 5%;
+            bottom: 25%;
+            animation: ballFloat2 5s ease-in-out infinite 2.5s;
+        }
+
+        @keyframes ballFloat1 {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-100px) rotate(180deg); }
+        }
+
+        @keyframes ballFloat2 {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-80px) rotate(-180deg); }
+        }
+
+        /* Side decorations */
+        .side-lights {
+            position: absolute;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                transparent 0%, 
+                #FFD700 20%, 
+                #FF0000 50%, 
+                #FFD700 80%, 
+                transparent 100%);
+            opacity: 0.5;
+            animation: lightFlow 3s linear infinite;
+        }
+
+        .side-lights.left {
+            left: 0;
+        }
+
+        .side-lights.right {
+            right: 0;
+            animation-delay: 1.5s;
+        }
+
+        @keyframes lightFlow {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* Now watching text */
+        .now-watching {
+            position: absolute;
+            top: -40px;
+            left: 20px;
+            background: linear-gradient(135deg, #FF0000, #8B0000);
+            color: #FFD700;
+            padding: 8px 20px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: bold;
+            clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%);
+            box-shadow: 0 5px 20px rgba(255, 0, 0, 0.5);
+        }
+
+        /* Path watermark */
+        .path-watermark {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 1.5em;
+            color: rgba(255, 215, 0, 0.3);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            z-index: 21;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .show-title { font-size: 1.5em; }
+            .react-subtitle { font-size: 2em; }
+            .video-screen { font-size: 2em; }
+            .control-panel {
+                flex-direction: column;
+                gap: 20px;
+            }
+            .corner-bracket {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="theater-bg"></div>
+    
+    <!-- Floating balls -->
+    <div class="theater-ball ball-left"></div>
+    <div class="theater-ball ball-right"></div>
+    
+    <div class="video-theater">
+        <!-- Header -->
+        <div class="header-section">
+            <div class="show-title">The Live Stream Show</div>
+            <div class="react-subtitle">REACTION THEATER</div>
+        </div>
+        
+        <!-- Main video frame -->
+        <div class="video-frame-container">
+            <!-- Now watching label -->
+            <div class="now-watching">NOW REACTING TO:</div>
+            
+            <!-- Decorative frame elements -->
+            <div class="frame-border">
+                <div class="corner-bracket top-left"></div>
+                <div class="corner-bracket top-right"></div>
+                <div class="corner-bracket bottom-left"></div>
+                <div class="corner-bracket bottom-right"></div>
+                <div class="side-lights left"></div>
+                <div class="side-lights right"></div>
+            </div>
+            
+            <!-- Animated border -->
+            <div class="animated-border"></div>
+            
+            <!-- Scanlines overlay -->
+            <div class="scanlines"></div>
+            
+            <!-- Video screen area (green screen) -->
+            <div class="video-screen">
+                VIDEO GOES HERE
+                <br>
+                <span style="font-size: 0.5em;">(GREEN SCREEN AREA)</span>
+            </div>
+            
+            <!-- Path watermark -->
+            <div class="path-watermark">PATH</div>
+            
+            <!-- Control panel -->
+            <div class="control-panel">
+                <div class="status-group">
+                    <div class="status-item">
+                        <span class="status-label">Reaction Mode:</span>
+                        <div class="status-indicator"></div>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Recording:</span>
+                        <div class="status-indicator recording"></div>
+                    </div>
+                </div>
+                
+                <div class="live-badge">🔴 LIVE REACTION</div>
+                
+                <div class="status-group">
+                    <span class="status-label" style="color: #FFD700;">VIEWERS: 1,337</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Random flicker effect on corners
+        function flickerCorners() {
+            const corners = document.querySelectorAll('.corner-bracket');
+            corners.forEach(corner => {
+                if (Math.random() > 0.8) {
+                    corner.style.opacity = '0.5';
+                    setTimeout(() => {
+                        corner.style.opacity = '1';
+                    }, 100);
+                }
+            });
+        }
+        
+        setInterval(flickerCorners, 3000);
+        
+        // Animate viewer count
+        let viewerCount = 1337;
+        function updateViewers() {
+            viewerCount += Math.floor(Math.random() * 10 - 3);
+            viewerCount = Math.max(1000, viewerCount);
+            document.querySelector('.status-group:last-child .status-label').textContent = 
+                `VIEWERS: ${viewerCount.toLocaleString()}`;
+        }
+        
+        setInterval(updateViewers, 5000);
+        
+        // Pulse effect on video area
+        function pulseVideo() {
+            const videoScreen = document.querySelector('.video-screen');
+            videoScreen.style.boxShadow = '0 0 50px rgba(255, 215, 0, 0.5)';
+            setTimeout(() => {
+                videoScreen.style.boxShadow = 'none';
+            }, 500);
+        }
+        
+        setInterval(pulseVideo, 10000);
+    </script>
+</body>
+</html>

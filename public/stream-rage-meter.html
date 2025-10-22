@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAGE METER - Tilt Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            background: linear-gradient(to bottom, #1a1a1a, #2d2d2d);
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: filter 0.3s ease;
+        }
+
+        /* Background that changes with rage */
+        .rage-atmosphere {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.5) 100%);
+            transition: all 0.5s ease;
+            z-index: 1;
+        }
+
+        .rage-atmosphere.danger {
+            background: radial-gradient(circle at center, rgba(255, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.7) 100%);
+        }
+
+        .rage-atmosphere.critical {
+            background: radial-gradient(circle at center, rgba(255, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.9) 100%);
+            animation: criticalPulse 0.5s ease-in-out infinite;
+        }
+
+        @keyframes criticalPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Main container */
+        .rage-container {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+        }
+
+        /* Title */
+        .rage-title {
+            font-size: 4em;
+            font-weight: 900;
+            color: #FFD700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 30px;
+            text-shadow: 
+                2px 2px 0 #FF0000,
+                4px 4px 10px rgba(0, 0, 0, 0.8);
+            animation: titleGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { 
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% { 
+                transform: scale(1.02);
+                filter: brightness(1.2);
+            }
+        }
+
+        /* Meter container */
+        .meter-frame {
+            width: 600px;
+            height: 100px;
+            background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+            border: 5px solid #666;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 0 30px rgba(0, 0, 0, 0.8),
+                0 0 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .meter-frame.warning {
+            border-color: #FFD700;
+            box-shadow: 
+                inset 0 0 30px rgba(255, 215, 0, 0.2),
+                0 0 40px rgba(255, 215, 0, 0.5);
+        }
+
+        .meter-frame.danger {
+            border-color: #FF4500;
+            box-shadow: 
+                inset 0 0 30px rgba(255, 69, 0, 0.3),
+                0 0 50px rgba(255, 69, 0, 0.7);
+            animation: meterShake 0.1s ease-in-out infinite;
+        }
+
+        .meter-frame.critical {
+            border-color: #FF0000;
+            box-shadow: 
+                inset 0 0 40px rgba(255, 0, 0, 0.5),
+                0 0 60px rgba(255, 0, 0, 1);
+            animation: meterShake 0.05s ease-in-out infinite;
+        }
+
+        @keyframes meterShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+
+        /* Rage meter fill */
+        .rage-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, 
+                #00FF00 0%, 
+                #7FFF00 25%, 
+                #FFD700 50%, 
+                #FF4500 75%, 
+                #FF0000 100%
+            );
+            background-size: 600px 100%;
+            transition: width 0.5s ease;
+            position: relative;
+            animation: fillPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes fillPulse {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        /* Meter segments */
+        .meter-segments {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            pointer-events: none;
+        }
+
+        .segment-line {
+            width: 2px;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            position: absolute;
+        }
+
+        /* Rage level text */
+        .rage-level {
+            margin-top: 30px;
+            font-size: 2.5em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+        }
+
+        .rage-level.calm {
+            color: #00FF00;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        .rage-level.annoyed {
+            color: #7FFF00;
+            text-shadow: 0 0 15px rgba(127, 255, 0, 0.5);
+        }
+
+        .rage-level.angry {
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
+            animation: angryPulse 1s ease-in-out infinite;
+        }
+
+        .rage-level.furious {
+            color: #FF4500;
+            text-shadow: 0 0 25px rgba(255, 69, 0, 0.9);
+            animation: furiousShake 0.2s ease-in-out infinite;
+        }
+
+        .rage-level.meltdown {
+            color: #FF0000;
+            font-size: 3em;
+            text-shadow: 
+                0 0 30px rgba(255, 0, 0, 1),
+                0 0 50px rgba(255, 0, 0, 0.8);
+            animation: meltdownCrazy 0.1s ease-in-out infinite;
+        }
+
+        @keyframes angryPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes furiousShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-2deg); }
+            75% { transform: translateX(5px) rotate(2deg); }
+        }
+
+        @keyframes meltdownCrazy {
+            0%, 100% { transform: translateX(0) scale(1); }
+            25% { transform: translateX(-10px) scale(1.1) rotate(-5deg); }
+            75% { transform: translateX(10px) scale(1.1) rotate(5deg); }
+        }
+
+        /* Warning messages */
+        .warning-message {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5em;
+            color: #FF0000;
+            text-transform: uppercase;
+            font-weight: bold;
+            opacity: 0;
+            pointer-events: none;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+        }
+
+        .warning-message.active {
+            animation: warningFlash 0.5s ease-in-out infinite;
+            opacity: 1;
+        }
+
+        @keyframes warningFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Rage percentage */
+        .rage-percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            font-weight: 900;
+            color: #FFFFFF;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        /* Bouncing rage balls */
+        .rage-ball {
+            position: absolute;
+            border-radius: 50%;
+            transition: all 0.5s ease;
+        }
+
+        .ball-calm {
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle at 30% 30%, #999, #666);
+            animation: calmBounce 3s ease-in-out infinite;
+        }
+
+        .ball-angry {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 30% 30%, #FFD700, #FF4500);
+            animation: angryBounce 1.5s ease-in-out infinite;
+        }
+
+        .ball-meltdown {
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle at 30% 30%, #FF0000, #8B0000);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+            animation: meltdownBounce 0.5s linear infinite;
+        }
+
+        @keyframes calmBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-50px); }
+        }
+
+        @keyframes angryBounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-100px) rotate(180deg); }
+        }
+
+        @keyframes meltdownBounce {
+            0%, 100% { transform: translateY(0) translateX(0) rotate(0deg) scale(1); }
+            25% { transform: translateY(-150px) translateX(-50px) rotate(180deg) scale(1.2); }
+            50% { transform: translateY(0) translateX(50px) rotate(360deg) scale(0.8); }
+            75% { transform: translateY(-100px) translateX(0) rotate(540deg) scale(1.1); }
+        }
+
+        /* Steam effect */
+        .steam {
+            position: absolute;
+            bottom: -20px;
+            width: 100%;
+            height: 200px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .steam.active {
+            opacity: 1;
+        }
+
+        .steam-particle {
+            position: absolute;
+            bottom: 0;
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.3), transparent);
+            border-radius: 50%;
+            animation: steamRise 2s ease-out infinite;
+        }
+
+        @keyframes steamRise {
+            0% {
+                transform: translateY(0) scale(0.5);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-200px) scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* Alarm lights */
+        .alarm-lights {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 20;
+        }
+
+        .alarm-lights.active {
+            animation: alarmFlash 0.5s ease-in-out infinite;
+        }
+
+        @keyframes alarmFlash {
+            0%, 100% { 
+                opacity: 0;
+                background: transparent;
+            }
+            50% { 
+                opacity: 0.3;
+                background: linear-gradient(180deg, 
+                    rgba(255, 0, 0, 0.5) 0%, 
+                    transparent 20%, 
+                    transparent 80%, 
+                    rgba(255, 0, 0, 0.5) 100%);
+            }
+        }
+
+        /* Nuclear warning */
+        .nuclear-warning {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5em;
+            color: #FF0000;
+            text-transform: uppercase;
+            font-weight: 900;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 100;
+            text-shadow: 
+                0 0 30px rgba(255, 0, 0, 1),
+                0 0 60px rgba(255, 0, 0, 0.8);
+        }
+
+        .nuclear-warning.active {
+            animation: nuclearPulse 0.3s ease-in-out infinite;
+        }
+
+        @keyframes nuclearPulse {
+            0%, 100% { 
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            }
+            50% { 
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2) rotate(5deg);
+            }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .rage-title { font-size: 2.5em; }
+            .meter-frame { 
+                width: 90%;
+                max-width: 400px;
+            }
+            .rage-level { font-size: 1.8em; }
+            .rage-percentage { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="rage-atmosphere" id="rageAtmosphere"></div>
+    <div class="alarm-lights" id="alarmLights"></div>
+    
+    <!-- Bouncing balls -->
+    <div class="rage-ball ball-calm" style="left: 10%; bottom: 20%;" id="ball1"></div>
+    <div class="rage-ball ball-calm" style="left: 85%; bottom: 30%;" id="ball2"></div>
+    <div class="rage-ball ball-calm" style="left: 50%; bottom: 25%;" id="ball3"></div>
+    
+    <!-- Warning message -->
+    <div class="warning-message" id="warningMsg">⚠️ DANGER ZONE ⚠️</div>
+    
+    <div class="rage-container">
+        <h1 class="rage-title">RAGE METER</h1>
+        
+        <!-- Meter -->
+        <div class="meter-frame" id="meterFrame">
+            <div class="rage-fill" id="rageFill"></div>
+            <div class="rage-percentage" id="ragePercent">0%</div>
+            <div class="meter-segments">
+                <div class="segment-line" style="left: 20%;"></div>
+                <div class="segment-line" style="left: 40%;"></div>
+                <div class="segment-line" style="left: 60%;"></div>
+                <div class="segment-line" style="left: 80%;"></div>
+            </div>
+        </div>
+        
+        <div class="rage-level calm" id="rageLevel">CALM</div>
+    </div>
+    
+    <!-- Steam effect -->
+    <div class="steam" id="steam"></div>
+    
+    <!-- Nuclear warning -->
+    <div class="nuclear-warning" id="nuclearWarning">☢️ NUCLEAR MELTDOWN ☢️</div>
+
+    <script>
+        let currentRage = 0;
+        let targetRage = 0;
+        let rageInterval;
+        
+        const rageFill = document.getElementById('rageFill');
+        const ragePercent = document.getElementById('ragePercent');
+        const rageLevel = document.getElementById('rageLevel');
+        const meterFrame = document.getElementById('meterFrame');
+        const warningMsg = document.getElementById('warningMsg');
+        const steam = document.getElementById('steam');
+        const alarmLights = document.getElementById('alarmLights');
+        const nuclearWarning = document.getElementById('nuclearWarning');
+        const rageAtmosphere = document.getElementById('rageAtmosphere');
+        const ball1 = document.getElementById('ball1');
+        const ball2 = document.getElementById('ball2');
+        const ball3 = document.getElementById('ball3');
+        
+        // Create steam particles
+        function createSteam() {
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'steam-particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = (i * 0.2) + 's';
+                steam.appendChild(particle);
+            }
+        }
+        createSteam();
+        
+        // Update rage display
+        function updateRageDisplay() {
+            rageFill.style.width = currentRage + '%';
+            ragePercent.textContent = Math.round(currentRage) + '%';
+            
+            // Remove all classes
+            rageLevel.className = 'rage-level';
+            meterFrame.className = 'meter-frame';
+            rageAtmosphere.className = 'rage-atmosphere';
+            warningMsg.classList.remove('active');
+            steam.classList.remove('active');
+            alarmLights.classList.remove('active');
+            nuclearWarning.classList.remove('active');
+            
+            // Update based on rage level
+            if (currentRage < 20) {
+                rageLevel.textContent = 'CALM';
+                rageLevel.classList.add('calm');
+                ball1.className = 'rage-ball ball-calm';
+                ball2.className = 'rage-ball ball-calm';
+                ball3.className = 'rage-ball ball-calm';
+            } else if (currentRage < 40) {
+                rageLevel.textContent = 'ANNOYED';
+                rageLevel.classList.add('annoyed');
+                ball1.className = 'rage-ball ball-calm';
+                ball2.className = 'rage-ball ball-calm';
+                ball3.className = 'rage-ball ball-angry';
+            } else if (currentRage < 60) {
+                rageLevel.textContent = 'ANGRY';
+                rageLevel.classList.add('angry');
+                meterFrame.classList.add('warning');
+                ball1.className = 'rage-ball ball-angry';
+                ball2.className = 'rage-ball ball-angry';
+                ball3.className = 'rage-ball ball-angry';
+            } else if (currentRage < 80) {
+                rageLevel.textContent = 'FURIOUS';
+                rageLevel.classList.add('furious');
+                meterFrame.classList.add('danger');
+                rageAtmosphere.classList.add('danger');
+                warningMsg.classList.add('active');
+                steam.classList.add('active');
+                ball1.className = 'rage-ball ball-angry';
+                ball2.className = 'rage-ball ball-meltdown';
+                ball3.className = 'rage-ball ball-angry';
+                
+                // Screen shake
+                document.body.style.animation = 'bodyShake 0.2s ease-in-out infinite';
+            } else {
+                rageLevel.textContent = '💥 MAXIMUM TILT 💥';
+                rageLevel.classList.add('meltdown');
+                meterFrame.classList.add('critical');
+                rageAtmosphere.classList.add('critical');
+                warningMsg.classList.add('active');
+                warningMsg.textContent = '🚨 MELTDOWN IMMINENT 🚨';
+                steam.classList.add('active');
+                alarmLights.classList.add('active');
+                ball1.className = 'rage-ball ball-meltdown';
+                ball2.className = 'rage-ball ball-meltdown';
+                ball3.className = 'rage-ball ball-meltdown';
+                
+                if (currentRage >= 95) {
+                    nuclearWarning.classList.add('active');
+                    document.body.style.animation = 'bodyShake 0.1s ease-in-out infinite';
+                    document.body.style.filter = `hue-rotate(${Math.random() * 30}deg) contrast(1.5)`;
+                } else {
+                    document.body.style.animation = 'bodyShake 0.15s ease-in-out infinite';
+                }
+            }
+            
+            // Reset animations for calm state
+            if (currentRage < 60) {
+                document.body.style.animation = '';
+                document.body.style.filter = '';
+            }
+        }
+        
+        // Add body shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes bodyShake {
+                0%, 100% { transform: translate(0, 0); }
+                25% { transform: translate(-3px, -3px); }
+                75% { transform: translate(3px, 3px); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Smooth rage animation
+        function animateRage() {
+            const diff = targetRage - currentRage;
+            const step = diff * 0.1; // Smooth easing
+            
+            if (Math.abs(diff) > 0.5) {
+                currentRage += step;
+                updateRageDisplay();
+                requestAnimationFrame(animateRage);
+            } else {
+                currentRage = targetRage;
+                updateRageDisplay();
+            }
+        }
+        
+        // Demo: Cycle through rage levels
+        function demoRage() {
+            const rageSteps = [0, 15, 35, 50, 70, 85, 95, 100, 95, 80, 60, 40, 20, 0];
+            let stepIndex = 0;
+            
+            function nextStep() {
+                targetRage = rageSteps[stepIndex];
+                animateRage();
+                stepIndex = (stepIndex + 1) % rageSteps.length;
+            }
+            
+            nextStep();
+            setInterval(nextStep, 3000);
+        }
+        
+        // Start demo
+        demoRage();
+        
+        // Create explosion on max rage
+        function createExplosion() {
+            if (currentRage >= 95) {
+                for (let i = 0; i < 20; i++) {
+                    const explosion = document.createElement('div');
+                    explosion.style.position = 'absolute';
+                    explosion.style.width = '10px';
+                    explosion.style.height = '10px';
+                    explosion.style.background = Math.random() > 0.5 ? '#FF0000' : '#FFD700';
+                    explosion.style.borderRadius = '50%';
+                    explosion.style.left = '50%';
+                    explosion.style.top = '50%';
+                    explosion.style.pointerEvents = 'none';
+                    explosion.style.zIndex = '200';
+                    
+                    const angle = (Math.PI * 2 * i) / 20;
+                    const velocity = 300 + Math.random() * 200;
+                    const endX = Math.cos(angle) * velocity;
+                    const endY = Math.sin(angle) * velocity;
+                    
+                    document.body.appendChild(explosion);
+                    
+                    explosion.animate([
+                        { 
+                            transform: 'translate(-50%, -50%) scale(1)',
+                            opacity: 1
+                        },
+                        { 
+                            transform: `translate(calc(-50% + ${endX}px), calc(-50% + ${endY}px)) scale(0)`,
+                            opacity: 0
+                        }
+                    ], {
+                        duration: 1500,
+                        easing: 'ease-out'
+                    }).onfinish = () => explosion.remove();
+                }
+            }
+        }
+        
+        // Check for explosions periodically
+        setInterval(() => {
+            if (currentRage >= 95 && Math.random() > 0.7) {
+                createExplosion();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

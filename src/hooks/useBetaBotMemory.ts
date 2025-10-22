@@ -38,7 +38,7 @@ export interface StoreMemoryParams {
   episodeTopic?: string;
   topic: string;
   conversationSnippet: string;
-  contextMetadata?: Record<string, any>;
+  contextMetadata?: Record<string, any> & { type?: string };
   hostId?: string;
   showId?: string;
 }
@@ -93,7 +93,10 @@ export function useBetaBotMemory(): UseBetaBotMemory {
       // Calculate importance score
       const importanceScore = calculateImportanceScore(params.conversationSnippet, {
         hasControversialKeywords: sentiment === 'spicy',
+        mentionsHost: false, // Could be enhanced to detect host mentions
+        emotionalIntensity: sentiment === 'spicy' ? 0.8 : 0.3,
         hasQuestions: params.conversationSnippet.includes('?'),
+        uniqueness: 0.5, // Default uniqueness score
         // Could add more context here
       });
 
@@ -162,7 +165,11 @@ export function useBetaBotMemory(): UseBetaBotMemory {
           const entities = extractEntities(params.conversationSnippet);
           const sentiment = detectSentiment(params.conversationSnippet);
           const importanceScore = calculateImportanceScore(params.conversationSnippet, {
-            hasControversialKeywords: sentiment === 'spicy'
+            hasControversialKeywords: sentiment === 'spicy',
+            mentionsHost: false,
+            emotionalIntensity: sentiment === 'spicy' ? 0.8 : 0.3,
+            hasQuestions: params.conversationSnippet.includes('?'),
+            uniqueness: 0.5
           });
 
           return {

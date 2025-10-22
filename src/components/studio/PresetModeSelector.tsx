@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PRESET_MODES, getRecommendedPreset, type PresetMode } from '@/utils/studio/presetModes';
-import type { AutoDJSettings } from '../types/database';
+import type { AutoDJSettings } from "@/types/database";
 
 interface PresetModeSelectorProps {
   currentSettings: AutoDJSettings | null;

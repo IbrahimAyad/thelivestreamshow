@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ThreeBandEQ } from '@/utils/eqSystem'
 import { ProfessionalFXChain } from '@/utils/fxChain'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 
 export interface DeckState {
   track: MusicTrack | null
@@ -178,14 +178,14 @@ export function useDualDeckPlayer() {
       sourceBRef.current = sourceB
       
       // Create EQ systems
-      const eqA = new ThreeBandEQ(ctx)
-      const eqB = new ThreeBandEQ(ctx)
+      const eqA = new ThreeBandEQ()
+      const eqB = new ThreeBandEQ()
       eqARef.current = eqA
       eqBRef.current = eqB
       
       // Create FX chains
-      const fxA = new ProfessionalFXChain(ctx)
-      const fxB = new ProfessionalFXChain(ctx)
+      const fxA = new ProfessionalFXChain()
+      const fxB = new ProfessionalFXChain()
       fxARef.current = fxA
       fxBRef.current = fxB
       

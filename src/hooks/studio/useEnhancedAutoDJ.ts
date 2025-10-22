@@ -11,9 +11,10 @@ import {
   selectTransitionType, 
   AITransitionController,
   type AITransitionConfig,
-  type AITransitionPlan 
+  type AITransitionPlan,
+  type TrackAnalysis
 } from '@/utils/aiDjIntelligence'
-import type { MusicTrack, AutoDJSettings } from '@/types/database'
+import type { MusicTrack, AutoDJSettings } from "@/types/database"
 import type { ThreeBandEQ } from '@/utils/eqSystem'
 import type { ProfessionalFXChain } from '@/utils/fxChain'
 
@@ -189,30 +190,39 @@ export function useEnhancedAutoDJ(options: UseEnhancedAutoDJOptions) {
     
     // Generate AI transition plan if AI is enabled
     if (aiEnabled) {
-      const transitionType = selectTransitionType(
-        {
-          bpm: currentTrack.bpm,
-          key: currentTrack.musical_key,
-          energy: currentTrack.energy_level || 50,
-        },
-        {
-          bpm: nextTrack.track.bpm,
-          key: nextTrack.track.musical_key,
-          energy: nextTrack.track.energy_level || 50,
-        }
-      )
+      const currentTrackAnalysis: TrackAnalysis = {
+        energy: (currentTrack.energy_level || 50) / 100,
+        mood: 'energetic',
+        genre: currentTrack.category || 'electronic',
+        key: currentTrack.musical_key || 'C',
+        bpm: currentTrack.bpm || 120,
+        danceability: 0.7,
+        valence: 0.6,
+        acousticness: 0.2,
+        instrumentalness: 0.8
+      };
+      
+      const nextTrackAnalysis: TrackAnalysis = {
+        energy: (nextTrack.track.energy_level || 50) / 100,
+        mood: 'energetic',
+        genre: nextTrack.track.category || 'electronic',
+        key: nextTrack.track.musical_key || 'C',
+        bpm: nextTrack.track.bpm || 120,
+        danceability: 0.7,
+        valence: 0.6,
+        acousticness: 0.2,
+        instrumentalness: 0.8
+      };
+      
+      const transitionType = selectTransitionType(currentTrackAnalysis, nextTrackAnalysis)
       
       const transitionConfig: AITransitionConfig = {
-        currentTrack: {
-          bpm: currentTrack.bpm,
-          key: currentTrack.musical_key,
-          energy: currentTrack.energy_level || 50,
-        },
-        nextTrack: {
-          bpm: nextTrack.track.bpm,
-          key: nextTrack.track.musical_key,
-          energy: nextTrack.track.energy_level || 50,
-        },
+        enabled: true,
+        confidenceThreshold: 0.7,
+        maxSuggestions: 5,
+        preferredTransitionTypes: ['smooth', 'beatmatch'],
+        currentTrack: currentTrackAnalysis,
+        nextTrack: nextTrackAnalysis,
         transitionType,
         transitionDuration: 8, // 8 seconds default
       }
@@ -271,7 +281,7 @@ export function useEnhancedAutoDJ(options: UseEnhancedAutoDJOptions) {
     }
     
     // Create AI transition controller
-    const controller = new AITransitionController(plan, fromEQ, fromFX)
+    const controller = new AITransitionController()
     transitionControllerRef.current = controller
     
     // Start AI automation

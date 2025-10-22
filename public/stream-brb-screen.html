@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRB - Be Right Back</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #1a1a1a 50%, #2d2d2d 75%, #1a1a1a 100%);
+            background-size: 400% 400%;
+            animation: backgroundShift 10s ease infinite;
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes backgroundShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Diagonal stripes pattern */
+        .stripe-pattern {
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            top: 0;
+            left: -50%;
+            opacity: 0.05;
+            background: repeating-linear-gradient(
+                45deg,
+                #FF0000,
+                #FF0000 20px,
+                #FFD700 20px,
+                #FFD700 40px,
+                #666666 40px,
+                #666666 60px
+            );
+            animation: stripeMove 10s linear infinite;
+        }
+
+        @keyframes stripeMove {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(60px); }
+        }
+
+        .container {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+        }
+
+        /* BRB Title with glitch effect */
+        .brb-title {
+            font-size: 7em;
+            font-weight: 900;
+            color: #FFD700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 20px;
+            position: relative;
+            text-shadow: 
+                4px 4px 0px #FF0000,
+                8px 8px 0px #8B0000,
+                12px 12px 20px rgba(0, 0, 0, 0.8);
+            animation: glitch 3s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 90%, 100% {
+                text-shadow: 
+                    4px 4px 0px #FF0000,
+                    8px 8px 0px #8B0000,
+                    12px 12px 20px rgba(0, 0, 0, 0.8);
+                transform: translate(0);
+            }
+            91% {
+                text-shadow: 
+                    -4px 4px 0px #FF0000,
+                    8px -8px 0px #FFD700,
+                    12px 12px 20px rgba(0, 0, 0, 0.8);
+                transform: translate(2px, -2px);
+            }
+            92% {
+                text-shadow: 
+                    4px -4px 0px #FFD700,
+                    -8px 8px 0px #FF0000,
+                    12px 12px 20px rgba(0, 0, 0, 0.8);
+                transform: translate(-2px, 2px);
+            }
+        }
+
+        .subtitle {
+            font-size: 2em;
+            color: #CCCCCC;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+            font-weight: bold;
+            letter-spacing: 0.05em;
+        }
+
+        .message-box {
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+            border: 3px solid #FF0000;
+            border-radius: 15px;
+            padding: 20px 40px;
+            display: inline-block;
+            margin-top: 20px;
+            box-shadow: 
+                0 0 40px rgba(255, 0, 0, 0.3),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .rotating-messages {
+            color: #FFD700;
+            font-size: 1.5em;
+            min-height: 1.5em;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        /* Multiple bouncing balls with different paths */
+        .game-area {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .ball-container {
+            position: absolute;
+            width: 100%;
+            height: 250px;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
+
+        .ball {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle at 30% 30%, #FFD700, #FF0000);
+            border-radius: 50%;
+            box-shadow: 
+                0 5px 20px rgba(255, 0, 0, 0.6),
+                inset -5px -5px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .ball1 {
+            animation: ballPath1 4s ease-in-out infinite;
+        }
+
+        .ball2 {
+            width: 35px;
+            height: 35px;
+            background: radial-gradient(circle at 30% 30%, #999, #666);
+            animation: ballPath2 3s ease-in-out infinite 0.5s;
+        }
+
+        .ball3 {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 30% 30%, #FF0000, #8B0000);
+            animation: ballPath3 5s ease-in-out infinite 1s;
+        }
+
+        @keyframes ballPath1 {
+            0%, 100% { 
+                left: 5%;
+                top: 50%;
+                transform: scale(1.1, 0.9);
+            }
+            25% {
+                left: 25%;
+                top: 10%;
+                transform: scale(0.9, 1.1);
+            }
+            50% {
+                left: 95%;
+                top: 50%;
+                transform: translateX(-100%) scale(1.1, 0.9);
+            }
+            75% {
+                left: 75%;
+                top: 90%;
+                transform: scale(0.9, 1.1);
+            }
+        }
+
+        @keyframes ballPath2 {
+            0%, 100% {
+                left: 95%;
+                top: 80%;
+                transform: translateX(-100%) scale(1.1, 0.9);
+            }
+            50% {
+                left: 5%;
+                top: 20%;
+                transform: scale(1.1, 0.9);
+            }
+        }
+
+        @keyframes ballPath3 {
+            0%, 100% {
+                left: 50%;
+                top: 90%;
+                transform: translateX(-50%) scale(1.2, 0.8);
+            }
+            33% {
+                left: 10%;
+                top: 10%;
+                transform: scale(0.8, 1.2);
+            }
+            66% {
+                left: 90%;
+                top: 10%;
+                transform: scale(0.8, 1.2);
+            }
+        }
+
+        /* Animated paddles */
+        .paddle {
+            position: absolute;
+            width: 25px;
+            height: 120px;
+            background: linear-gradient(180deg, #FFD700, #FFA500, #FF0000);
+            border-radius: 12px;
+            box-shadow: 
+                0 0 25px rgba(255, 215, 0, 0.6),
+                inset 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .paddle-left {
+            left: 3%;
+            animation: paddleLeftMove 3s ease-in-out infinite;
+        }
+
+        .paddle-right {
+            right: 3%;
+            animation: paddleRightMove 3s ease-in-out infinite;
+        }
+
+        @keyframes paddleLeftMove {
+            0%, 100% { top: 40%; }
+            25% { top: 20%; }
+            75% { top: 60%; }
+        }
+
+        @keyframes paddleRightMove {
+            0%, 100% { top: 40%; }
+            50% { top: 25%; }
+            75% { top: 55%; }
+        }
+
+        /* Corner elements */
+        .corner-bracket {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border: 4px solid #FFD700;
+        }
+
+        .corner-bracket.top-left {
+            top: 30px;
+            left: 30px;
+            border-right: none;
+            border-bottom: none;
+            animation: bracketGlow 2s infinite;
+        }
+
+        .corner-bracket.top-right {
+            top: 30px;
+            right: 30px;
+            border-left: none;
+            border-bottom: none;
+            animation: bracketGlow 2s infinite 0.5s;
+        }
+
+        .corner-bracket.bottom-left {
+            bottom: 30px;
+            left: 30px;
+            border-right: none;
+            border-top: none;
+            animation: bracketGlow 2s infinite 1s;
+        }
+
+        .corner-bracket.bottom-right {
+            bottom: 30px;
+            right: 30px;
+            border-left: none;
+            border-top: none;
+            animation: bracketGlow 2s infinite 1.5s;
+        }
+
+        @keyframes bracketGlow {
+            0%, 100% {
+                opacity: 0.3;
+                box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+            }
+            50% {
+                opacity: 1;
+                box-shadow: 0 0 20px rgba(255, 215, 0, 1);
+            }
+        }
+
+        /* Status indicator */
+        .status-bar {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 30px;
+            border-radius: 30px;
+            border: 2px solid #FF0000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .status-icon {
+            width: 15px;
+            height: 15px;
+            background: #FFD700;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 10px rgba(255, 215, 0, 0);
+            }
+        }
+
+        .status-text {
+            color: #CCCCCC;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Loading bar */
+        .loading-bar {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #FF0000, #FFD700, #FF0000);
+            background-size: 200% 100%;
+            animation: loadingMove 2s linear infinite, gradientMove 3s linear infinite;
+        }
+
+        @keyframes loadingMove {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .brb-title { font-size: 4em; }
+            .subtitle { font-size: 1.5em; }
+            .rotating-messages { font-size: 1.2em; }
+            .paddle { 
+                width: 20px;
+                height: 80px;
+            }
+            .ball { 
+                width: 35px;
+                height: 35px;
+            }
+            .corner-bracket {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stripe-pattern"></div>
+    
+    <!-- Corner brackets -->
+    <div class="corner-bracket top-left"></div>
+    <div class="corner-bracket top-right"></div>
+    <div class="corner-bracket bottom-left"></div>
+    <div class="corner-bracket bottom-right"></div>
+    
+    <!-- Status indicator -->
+    <div class="status-bar">
+        <div class="status-icon"></div>
+        <span class="status-text">Stream Paused</span>
+    </div>
+    
+    <div class="container">
+        <h1 class="brb-title">BRB</h1>
+        <p class="subtitle">Be Right Back!</p>
+        
+        <div class="message-box">
+            <div class="rotating-messages" id="message">Grabbing a quick break...</div>
+        </div>
+    </div>
+    
+    <!-- Bouncing balls and paddles -->
+    <div class="game-area">
+        <div class="ball-container">
+            <div class="paddle paddle-left"></div>
+            <div class="ball ball1"></div>
+            <div class="ball ball2"></div>
+            <div class="ball ball3"></div>
+            <div class="paddle paddle-right"></div>
+        </div>
+    </div>
+    
+    <!-- Loading bar -->
+    <div class="loading-bar">
+        <div class="loading-progress"></div>
+    </div>
+
+    <script>
+        // Rotating messages
+        const messages = [
+            "Grabbing a quick break...",
+            "Refilling the energy tank...",
+            "Technical timeout in progress...",
+            "Back in a few moments...",
+            "Stay tuned, don't go anywhere!",
+            "Quick intermission...",
+            "Recharging the stream...",
+            "BRB - Keep the hype alive!",
+            "Stretching legs, back soon...",
+            "Plot twist: I need coffee..."
+        ];
+        
+        let messageIndex = 0;
+        
+        function rotateMessage() {
+            const messageElement = document.getElementById('message');
+            messageElement.style.opacity = '0';
+            
+            setTimeout(() => {
+                messageIndex = (messageIndex + 1) % messages.length;
+                messageElement.textContent = messages[messageIndex];
+                messageElement.style.opacity = '1';
+            }, 500);
+        }
+        
+        // Change message every 4 seconds
+        setInterval(rotateMessage, 4000);
+        
+        // Add CSS transition for smooth fade
+        document.getElementById('message').style.transition = 'opacity 0.5s ease-in-out';
+        
+        // Create particle effects
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.style.position = 'absolute';
+            particle.style.width = '4px';
+            particle.style.height = '4px';
+            particle.style.background = Math.random() > 0.5 ? '#FFD700' : '#FF0000';
+            particle.style.borderRadius = '50%';
+            particle.style.pointerEvents = 'none';
+            particle.style.zIndex = '2';
+            
+            const startX = Math.random() * window.innerWidth;
+            const startY = window.innerHeight + 10;
+            
+            particle.style.left = startX + 'px';
+            particle.style.top = startY + 'px';
+            
+            const duration = 5000 + Math.random() * 5000;
+            const endX = startX + (Math.random() - 0.5) * 200;
+            
+            particle.animate([
+                { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                { transform: `translate(${endX - startX}px, -${window.innerHeight + 20}px) scale(0)`, opacity: 0 }
+            ], {
+                duration: duration,
+                easing: 'ease-out'
+            }).onfinish = () => particle.remove();
+            
+            document.body.appendChild(particle);
+        }
+        
+        // Create particles periodically
+        setInterval(createParticle, 200);
+        
+        // Random glitch effect on BRB title
+        function randomGlitch() {
+            const title = document.querySelector('.brb-title');
+            const originalAnimation = title.style.animation;
+            
+            title.style.animation = 'glitch 0.1s 5';
+            
+            setTimeout(() => {
+                title.style.animation = originalAnimation;
+            }, 500);
+        }
+        
+        // Trigger random glitch every 8-12 seconds
+        setInterval(() => {
+            if (Math.random() > 0.7) {
+                randomGlitch();
+            }
+        }, 10000);
+        
+        // Add occasional screen flash effect
+        function screenFlash() {
+            const flash = document.createElement('div');
+            flash.style.position = 'fixed';
+            flash.style.top = '0';
+            flash.style.left = '0';
+            flash.style.width = '100%';
+            flash.style.height = '100%';
+            flash.style.background = 'rgba(255, 215, 0, 0.1)';
+            flash.style.pointerEvents = 'none';
+            flash.style.zIndex = '100';
+            
+            document.body.appendChild(flash);
+            
+            setTimeout(() => flash.remove(), 100);
+        }
+        
+        // Occasional flash effect
+        setInterval(() => {
+            if (Math.random() > 0.8) {
+                screenFlash();
+            }
+        }, 15000);
+    </script>
+</body>
+</html>

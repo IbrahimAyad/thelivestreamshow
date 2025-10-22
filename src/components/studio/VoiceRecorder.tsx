@@ -5,7 +5,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Mic, Square, Play, Save, Trash2 } from 'lucide-react'
-import * as Tone from 'tone'
+import * as Tone from '@/utils/tone'
 import { supabase } from '@/lib/supabase'
 
 interface VoicePreset {

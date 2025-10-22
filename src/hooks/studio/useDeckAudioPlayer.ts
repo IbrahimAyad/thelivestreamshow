@@ -14,7 +14,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { AudioEffectsChain } from '@/utils/studio/audioEffects'
-import type { MusicTrack, AudioEffectsConfig } from '@/types/database'
+import type { MusicTrack, AudioEffectsConfig } from "@/types/database"
 
 export type DeckId = 'A' | 'B'
 
@@ -235,7 +235,7 @@ export function useDeckAudioPlayer(options: DeckAudioPlayerOptions) {
       setIsPlaying(false)
 
       // Set new source
-      audioRef.current.src = track.url
+      audioRef.current.src = track.file_url
       await audioRef.current.load()
 
       // Initialize AudioContext on first track load

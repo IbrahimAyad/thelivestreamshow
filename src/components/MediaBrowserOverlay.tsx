@@ -111,7 +111,7 @@ export function MediaBrowserOverlay({
             } else if (queryParams.channelId) {
               youtubeVideos = await youtube.getChannelVideos(queryParams.channelId)
             } else {
-              youtubeVideos = await youtube.searchVideos(queryParams.query || query, {
+              youtubeVideos = await youtube.searchVideos(queryParams.cleanQuery || query, {
                 type: queryParams.type,
                 sortBy: queryParams.sortBy,
               })
@@ -362,7 +362,7 @@ export function MediaBrowserOverlay({
         isSearching,
         hasError,
         answerLength: answer?.length || 0,
-        shouldShowAnswer: type !== 'videos' && !isSearching && !hasError && answer
+        shouldShowAnswer: (type as 'images' | 'videos') !== 'videos' && !isSearching && !hasError && answer
       })
     }
   }, [type, isSearching, hasError, answer])

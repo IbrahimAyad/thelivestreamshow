@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRB - Tomato Throwing Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #2d1b3d 0%, #0f0617 100%);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            cursor: crosshair;
+            position: relative;
+        }
+
+        body.screen-shake {
+            animation: screenShake 0.4s;
+        }
+
+        @keyframes screenShake {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-10px, 10px); }
+            20% { transform: translate(10px, -10px); }
+            30% { transform: translate(-10px, -10px); }
+            40% { transform: translate(10px, 10px); }
+            50% { transform: translate(-10px, 10px); }
+            60% { transform: translate(10px, -10px); }
+            70% { transform: translate(-10px, -10px); }
+            80% { transform: translate(10px, 10px); }
+            90% { transform: translate(-5px, 5px); }
+        }
+
+        /* Animated background particles */
+        .bg-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 99, 71, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% {
+                transform: translateY(-100vh) translateX(100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Title */
+        .brb-title {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 5em;
+            color: #ff6347;
+            text-shadow:
+                0 0 30px rgba(255, 99, 71, 1),
+                0 0 60px rgba(255, 99, 71, 0.7),
+                0 0 90px rgba(255, 99, 71, 0.4),
+                5px 5px 0 #000,
+                -2px -2px 0 #fff;
+            letter-spacing: 0.15em;
+            z-index: 100;
+            animation: neonPulse 2s ease-in-out infinite;
+            text-align: center;
+        }
+
+        @keyframes neonPulse {
+            0%, 100% {
+                text-shadow:
+                    0 0 30px rgba(255, 99, 71, 1),
+                    0 0 60px rgba(255, 99, 71, 0.7),
+                    0 0 90px rgba(255, 99, 71, 0.4),
+                    5px 5px 0 #000;
+            }
+            50% {
+                text-shadow:
+                    0 0 40px rgba(255, 99, 71, 1),
+                    0 0 80px rgba(255, 99, 71, 0.9),
+                    0 0 120px rgba(255, 99, 71, 0.6),
+                    5px 5px 0 #000;
+            }
+        }
+
+        /* Target Container */
+        .target-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 10;
+        }
+
+        /* Target Image Container */
+        .target-container {
+            position: relative;
+            width: 600px;
+            height: 700px;
+            border: 5px solid #ff6347;
+            border-radius: 20px;
+            box-shadow:
+                0 0 40px rgba(255, 99, 71, 0.8),
+                inset 0 0 40px rgba(255, 99, 71, 0.2);
+            overflow: hidden;
+            background: #000;
+            transition: transform 0.1s;
+        }
+
+        .target-container.shake-light {
+            animation: shakeLightAnim 0.3s;
+        }
+
+        .target-container.shake-medium {
+            animation: shakeMediumAnim 0.4s;
+        }
+
+        .target-container.shake-heavy {
+            animation: shakeHeavyAnim 0.5s;
+        }
+
+        @keyframes shakeLightAnim {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(-5px, 5px) rotate(-2deg); }
+            75% { transform: translate(5px, -5px) rotate(2deg); }
+        }
+
+        @keyframes shakeMediumAnim {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-10px, 10px) rotate(-4deg); }
+            40% { transform: translate(10px, -10px) rotate(4deg); }
+            60% { transform: translate(-10px, -10px) rotate(-4deg); }
+            80% { transform: translate(10px, 10px) rotate(4deg); }
+        }
+
+        @keyframes shakeHeavyAnim {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            10% { transform: translate(-15px, 15px) rotate(-6deg); }
+            20% { transform: translate(15px, -15px) rotate(6deg); }
+            30% { transform: translate(-15px, -15px) rotate(-6deg); }
+            40% { transform: translate(15px, 15px) rotate(6deg); }
+            50% { transform: translate(-15px, 10px) rotate(-6deg); }
+            60% { transform: translate(15px, -10px) rotate(6deg); }
+            70% { transform: translate(-10px, -15px) rotate(-6deg); }
+            80% { transform: translate(10px, 15px) rotate(6deg); }
+            90% { transform: translate(-5px, 5px) rotate(-3deg); }
+        }
+
+        #targetImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Damage overlay */
+        .damage-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 0%, rgba(0, 0, 0, 0) 100%);
+            pointer-events: none;
+            z-index: 2;
+            transition: background 0.5s;
+        }
+
+        /* Health Bar Container */
+        .health-bar-container {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #ff6347;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(255, 99, 71, 0.6);
+        }
+
+        .health-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg,
+                #ff1744 0%,
+                #ff6347 50%,
+                #ff9800 100%
+            );
+            transition: width 0.5s ease-out;
+            box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .health-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.3) 50%,
+                transparent 100%
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .health-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5em;
+            color: #fff;
+            text-shadow: 2px 2px 4px #000;
+            z-index: 10;
+            font-weight: bold;
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 30px;
+            z-index: 100;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #ff6347;
+            border-radius: 15px;
+            padding: 20px 40px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255, 99, 71, 0.6);
+            min-width: 150px;
+        }
+
+        .stat-label {
+            color: #ff6347;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .stat-value {
+            color: #fff;
+            font-size: 3em;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Combo Indicator */
+        .combo-indicator {
+            position: absolute;
+            top: 150px;
+            right: 100px;
+            font-size: 4em;
+            color: #ffd700;
+            text-shadow:
+                0 0 20px rgba(255, 215, 0, 1),
+                0 0 40px rgba(255, 215, 0, 0.7),
+                3px 3px 0 #000;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s;
+            z-index: 150;
+        }
+
+        .combo-indicator.show {
+            opacity: 1;
+            transform: scale(1.2);
+            animation: comboBounce 0.5s;
+        }
+
+        @keyframes comboBounce {
+            0%, 100% { transform: scale(1.2); }
+            50% { transform: scale(1.4); }
+        }
+
+        /* Tomato */
+        .tomato {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #ff3333);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 50;
+            box-shadow:
+                0 0 20px rgba(255, 99, 71, 0.8),
+                inset -10px -10px 20px rgba(0, 0, 0, 0.3);
+            animation: tomatoFly 0.35s cubic-bezier(0.33, 0.01, 0.23, 1) forwards;
+            will-change: transform;
+        }
+
+        @keyframes tomatoFly {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(0.8);
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            50% {
+                transform: translate(var(--throw-mid-x), var(--throw-mid-y)) rotate(180deg) scale(1.3);
+            }
+            100% {
+                transform: translate(var(--throw-end-x), var(--throw-end-y)) rotate(360deg) scale(1);
+            }
+        }
+
+        .tomato::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 15px;
+            background: #2d5016;
+            border-radius: 50% 50% 0 0;
+        }
+
+        .tomato::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 107, 107, 0.8), transparent);
+            border-radius: 50%;
+            filter: blur(15px);
+            transform: scale(1.8);
+            z-index: -1;
+            will-change: transform;
+        }
+
+        /* Splat */
+        .splat {
+            position: absolute;
+            pointer-events: none;
+            z-index: 60;
+        }
+
+        .splat-center {
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, #ff3333, #cc0000);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.9;
+            animation: splatExpand 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: transform, opacity;
+        }
+
+        @keyframes splatExpand {
+            0% {
+                width: 0px;
+                height: 0px;
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+            }
+            100% {
+                width: 120px;
+                height: 120px;
+                opacity: 0.9;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .splat-drop {
+            position: absolute;
+            background: #ff3333;
+            border-radius: 50%;
+            opacity: 0.8;
+        }
+
+        /* Hit Text */
+        .hit-text {
+            position: absolute;
+            font-size: 3em;
+            color: #ffd700;
+            text-shadow:
+                0 0 20px rgba(255, 215, 0, 1),
+                3px 3px 0 #000;
+            pointer-events: none;
+            z-index: 200;
+            animation: hitTextAnim 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            will-change: transform, opacity;
+        }
+
+        @keyframes hitTextAnim {
+            0% {
+                transform: scale(0) translateY(0);
+                opacity: 0;
+            }
+            30% {
+                transform: scale(1.8) translateY(-20px);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) translateY(-120px);
+                opacity: 0;
+            }
+        }
+
+        /* K.O. Screen */
+        .ko-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+            animation: koFadeIn 0.5s;
+        }
+
+        @keyframes koFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .ko-text {
+            font-size: 10em;
+            color: #ff0000;
+            text-shadow:
+                0 0 50px rgba(255, 0, 0, 1),
+                0 0 100px rgba(255, 0, 0, 0.8),
+                10px 10px 0 #000;
+            animation: koShake 0.5s infinite;
+            letter-spacing: 0.05em;
+        }
+
+        @keyframes koShake {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        .ko-subtext {
+            font-size: 3em;
+            color: #fff;
+            margin-top: 30px;
+            text-shadow: 3px 3px 0 #000;
+            animation: koFade 1s infinite;
+        }
+
+        @keyframes koFade {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Instructions */
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff6347;
+            border-radius: 10px;
+            padding: 15px 30px;
+            color: #fff;
+            font-size: 1.2em;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(255, 99, 71, 0.5);
+            z-index: 100;
+        }
+
+        .instructions span {
+            color: #ff6347;
+            font-weight: bold;
+        }
+
+        /* Sound toggle */
+        .sound-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff6347;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+
+        .sound-toggle:hover {
+            background: rgba(255, 99, 71, 0.3);
+            box-shadow: 0 0 20px rgba(255, 99, 71, 0.8);
+        }
+
+        .sound-toggle.muted {
+            opacity: 0.5;
+            border-color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Particles -->
+    <div class="bg-particles" id="bgParticles"></div>
+
+    <!-- Title -->
+    <div class="brb-title">BE RIGHT BACK</div>
+
+    <!-- Target Area -->
+    <div class="target-area">
+        <div class="health-bar-container">
+            <div class="health-bar" id="healthBar">
+                <div class="health-text" id="healthText">100%</div>
+            </div>
+        </div>
+
+        <div class="target-container" id="targetContainer">
+            <img id="targetImage" src="/targets/netanyahu.jpg" alt="Target">
+            <div class="damage-overlay" id="damageOverlay"></div>
+        </div>
+    </div>
+
+    <!-- Stats Panel -->
+    <div class="stats-panel">
+        <div class="stat-box">
+            <div class="stat-label">Hits</div>
+            <div class="stat-value" id="hitsValue">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Accuracy</div>
+            <div class="stat-value" id="accuracyValue">0%</div>
+        </div>
+    </div>
+
+    <!-- Combo Indicator -->
+    <div class="combo-indicator" id="comboIndicator">
+        <span id="comboCount">x2</span> COMBO!
+    </div>
+
+    <!-- K.O. Screen -->
+    <div class="ko-screen" id="koScreen">
+        <div class="ko-text">ELIMINATED!</div>
+        <div class="ko-subtext">Game resetting...</div>
+    </div>
+
+    <!-- Sound Toggle -->
+    <div class="sound-toggle" id="soundToggle" title="Toggle Sound">
+        <span style="font-size: 2em;">🔊</span>
+    </div>
+
+    <!-- Instructions -->
+    <div class="instructions">
+        🍅 <span>Click anywhere</span> to throw tomatoes! 🍅
+    </div>
+
+    <!-- Splat Container -->
+    <div id="splatContainer"></div>
+
+    <script>
+        // Audio Context for sound effects
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let soundEnabled = true;
+
+        // Sound effects functions
+        function playThrowSound() {
+            if (!soundEnabled) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.3);
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        function playSplatSound() {
+            if (!soundEnabled) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter();
+
+            oscillator.type = 'sawtooth';
+            filter.type = 'lowpass';
+            filter.frequency.value = 1000;
+
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.15);
+
+            gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.15);
+        }
+
+        function playCriticalHitSound() {
+            if (!soundEnabled) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.type = 'square';
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.setValueAtTime(100, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(30, audioContext.currentTime + 0.3);
+
+            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        function playComboSound(comboCount) {
+            if (!soundEnabled) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.type = 'sine';
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            const baseFreq = 400 + (comboCount * 100);
+            oscillator.frequency.setValueAtTime(baseFreq, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(baseFreq * 2, audioContext.currentTime + 0.1);
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        }
+
+        function playKOSound() {
+            if (!soundEnabled) return;
+            // First explosion
+            const osc1 = audioContext.createOscillator();
+            const gain1 = audioContext.createGain();
+            osc1.type = 'sawtooth';
+            osc1.connect(gain1);
+            gain1.connect(audioContext.destination);
+            osc1.frequency.setValueAtTime(200, audioContext.currentTime);
+            osc1.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + 0.5);
+            gain1.gain.setValueAtTime(0.6, audioContext.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            osc1.start(audioContext.currentTime);
+            osc1.stop(audioContext.currentTime + 0.5);
+
+            // Second layer
+            setTimeout(() => {
+                const osc2 = audioContext.createOscillator();
+                const gain2 = audioContext.createGain();
+                osc2.type = 'triangle';
+                osc2.connect(gain2);
+                gain2.connect(audioContext.destination);
+                osc2.frequency.setValueAtTime(100, audioContext.currentTime);
+                osc2.frequency.exponentialRampToValueAtTime(10, audioContext.currentTime + 0.8);
+                gain2.gain.setValueAtTime(0.4, audioContext.currentTime);
+                gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+                osc2.start(audioContext.currentTime);
+                osc2.stop(audioContext.currentTime + 0.8);
+            }, 100);
+        }
+
+        function playHitSound() {
+            if (!soundEnabled) return;
+            // Impact sound
+            const noise = audioContext.createBufferSource();
+            const bufferSize = audioContext.sampleRate * 0.1;
+            const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const output = buffer.getChannelData(0);
+
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            noise.buffer = buffer;
+            const filter = audioContext.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 800;
+
+            const gainNode = audioContext.createGain();
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+            noise.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            noise.start(audioContext.currentTime);
+            noise.stop(audioContext.currentTime + 0.1);
+        }
+
+        // Game State
+        let health = 100;
+        let hits = 0;
+        let totalThrows = 0;
+        let combo = 0;
+        let comboTimer = null;
+
+        // DOM Elements
+        const healthBar = document.getElementById('healthBar');
+        const healthText = document.getElementById('healthText');
+        const hitsValue = document.getElementById('hitsValue');
+        const accuracyValue = document.getElementById('accuracyValue');
+        const targetContainer = document.getElementById('targetContainer');
+        const damageOverlay = document.getElementById('damageOverlay');
+        const splatContainer = document.getElementById('splatContainer');
+        const comboIndicator = document.getElementById('comboIndicator');
+        const comboCountText = document.getElementById('comboCount');
+        const koScreen = document.getElementById('koScreen');
+        const targetImage = document.getElementById('targetImage');
+
+        // Handle image load error - show placeholder if image not found
+        targetImage.onerror = function() {
+            this.style.display = 'none';
+            targetContainer.innerHTML += '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:2em;color:#666;">📸 Add Target Image<br>/public/targets/netanyahu.jpg</div>';
+        };
+
+        // Create background particles
+        function createBackgroundParticles() {
+            const bgParticles = document.getElementById('bgParticles');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.width = `${Math.random() * 40 + 20}px`;
+                particle.style.height = particle.style.width;
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.animationDelay = `${Math.random() * 15}s`;
+                particle.style.animationDuration = `${Math.random() * 10 + 10}s`;
+                bgParticles.appendChild(particle);
+            }
+        }
+
+        // Throw tomato
+        function throwTomato(targetX, targetY) {
+            totalThrows++;
+
+            // Play throw sound
+            playThrowSound();
+
+            // Start position (bottom left corner)
+            const startX = Math.random() < 0.5 ? -50 : window.innerWidth + 50;
+            const startY = window.innerHeight + 50;
+
+            // Calculate throw trajectory
+            const deltaX = targetX - startX;
+            const deltaY = targetY - startY;
+            const midX = deltaX * 0.5;
+            const midY = deltaY * 0.5 - 200; // Arc height
+
+            // Create tomato
+            const tomato = document.createElement('div');
+            tomato.className = 'tomato';
+            tomato.style.left = `${startX}px`;
+            tomato.style.top = `${startY}px`;
+
+            // Set CSS custom properties for animation
+            tomato.style.setProperty('--throw-mid-x', `${midX}px`);
+            tomato.style.setProperty('--throw-mid-y', `${midY}px`);
+            tomato.style.setProperty('--throw-end-x', `${deltaX}px`);
+            tomato.style.setProperty('--throw-end-y', `${deltaY}px`);
+
+            document.body.appendChild(tomato);
+
+            // Check if hit target after flight time
+            setTimeout(() => {
+                const targetRect = targetContainer.getBoundingClientRect();
+                const isHit = (
+                    targetX >= targetRect.left &&
+                    targetX <= targetRect.right &&
+                    targetY >= targetRect.top &&
+                    targetY <= targetRect.bottom
+                );
+
+                if (isHit) {
+                    handleHit(targetX, targetY);
+                }
+
+                updateStats();
+            }, 350); // Match animation duration (faster)
+
+            // Remove tomato after animation
+            setTimeout(() => tomato.remove(), 500);
+        }
+
+        // Handle hit
+        function handleHit(x, y) {
+            hits++;
+            combo++;
+
+            // Damage calculation (reduced to 1/3 for longer gameplay)
+            const damage = 1.67 + Math.random() * 1.67; // 1.67-3.34 damage
+            health = Math.max(0, health - damage);
+
+            // Play hit sounds based on health
+            playSplatSound();
+            playHitSound();
+            if (health < 25) {
+                playCriticalHitSound();
+            }
+
+            // Update health bar
+            healthBar.style.width = `${health}%`;
+            healthText.textContent = `${Math.round(health)}%`;
+
+            // Update damage overlay (gets darker as health decreases)
+            const darkness = 1 - (health / 100);
+            damageOverlay.style.background = `radial-gradient(circle, transparent 0%, rgba(0, 0, 0, ${darkness * 0.7}) 100%)`;
+
+            // Shake effect based on remaining health
+            targetContainer.classList.remove('shake-light', 'shake-medium', 'shake-heavy');
+            if (health > 50) {
+                targetContainer.classList.add('shake-light');
+            } else if (health > 25) {
+                targetContainer.classList.add('shake-medium');
+            } else {
+                targetContainer.classList.add('shake-heavy');
+                // Screen shake on critical health
+                document.body.classList.add('screen-shake');
+                setTimeout(() => {
+                    document.body.classList.remove('screen-shake');
+                }, 400);
+            }
+            setTimeout(() => {
+                targetContainer.classList.remove('shake-light', 'shake-medium', 'shake-heavy');
+            }, 500);
+
+            // Create splat
+            createSplat(x, y);
+
+            // Show hit text
+            showHitText(x, y);
+
+            // Show combo
+            if (combo >= 2) {
+                showCombo();
+            }
+
+            // Reset combo timer
+            clearTimeout(comboTimer);
+            comboTimer = setTimeout(() => {
+                combo = 0;
+            }, 2000);
+
+            // Check for K.O.
+            if (health <= 0) {
+                showKO();
+            }
+        }
+
+        // Create splat effect
+        function createSplat(x, y) {
+            const splat = document.createElement('div');
+            splat.className = 'splat';
+            splat.style.left = `${x}px`;
+            splat.style.top = `${y}px`;
+
+            // Center circle
+            const center = document.createElement('div');
+            center.className = 'splat-center';
+            splat.appendChild(center);
+
+            // Random drops
+            for (let i = 0; i < 12; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'splat-drop';
+                const size = Math.random() * 20 + 10;
+                drop.style.width = `${size}px`;
+                drop.style.height = `${size}px`;
+                const angle = (Math.PI * 2 * i) / 12;
+                const distance = Math.random() * 40 + 30;
+                drop.style.left = `${Math.cos(angle) * distance}px`;
+                drop.style.top = `${Math.sin(angle) * distance}px`;
+                splat.appendChild(drop);
+            }
+
+            splatContainer.appendChild(splat);
+
+            // Fade out and remove
+            setTimeout(() => {
+                splat.style.transition = 'opacity 1s';
+                splat.style.opacity = '0';
+                setTimeout(() => splat.remove(), 1000);
+            }, 2000);
+        }
+
+        // Show hit text
+        function showHitText(x, y) {
+            const hitText = document.createElement('div');
+            hitText.className = 'hit-text';
+
+            // Different messages based on health
+            let hitMessages;
+            if (health > 50) {
+                hitMessages = ['POW!', 'SMACK!', 'BAM!'];
+            } else if (health > 25) {
+                hitMessages = ['KAPOW!', 'WHAM!', 'CRUNCH!'];
+                hitText.style.fontSize = '4em';
+            } else {
+                hitMessages = ['CRITICAL!', 'DEVASTATED!', 'OBLITERATED!'];
+                hitText.style.fontSize = '5em';
+                hitText.style.color = '#ff0000';
+            }
+
+            hitText.textContent = hitMessages[Math.floor(Math.random() * hitMessages.length)];
+            hitText.style.left = `${x}px`;
+            hitText.style.top = `${y}px`;
+            document.body.appendChild(hitText);
+            setTimeout(() => hitText.remove(), 1000);
+        }
+
+        // Show combo
+        function showCombo() {
+            comboCountText.textContent = `x${combo}`;
+            comboIndicator.classList.add('show');
+            playComboSound(combo);
+            setTimeout(() => {
+                comboIndicator.classList.remove('show');
+            }, 1000);
+        }
+
+        // Show K.O.
+        function showKO() {
+            koScreen.style.display = 'flex';
+            playKOSound();
+            setTimeout(() => {
+                resetGame();
+                koScreen.style.display = 'none';
+            }, 3000);
+        }
+
+        // Reset game
+        function resetGame() {
+            health = 100;
+            hits = 0;
+            totalThrows = 0;
+            combo = 0;
+            healthBar.style.width = '100%';
+            healthText.textContent = '100%';
+            damageOverlay.style.background = 'radial-gradient(circle, transparent 0%, rgba(0, 0, 0, 0) 100%)';
+            updateStats();
+        }
+
+        // Update stats
+        function updateStats() {
+            hitsValue.textContent = hits;
+            const accuracy = totalThrows > 0 ? Math.round((hits / totalThrows) * 100) : 0;
+            accuracyValue.textContent = `${accuracy}%`;
+        }
+
+        // Click handler
+        document.addEventListener('click', (e) => {
+            throwTomato(e.clientX, e.clientY);
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ') {
+                e.preventDefault();
+                const rect = targetContainer.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                throwTomato(x, y);
+            } else if (e.key === 'r' || e.key === 'R') {
+                resetGame();
+            }
+        });
+
+        // Sound toggle
+        const soundToggle = document.getElementById('soundToggle');
+        soundToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent throwing tomato
+            soundEnabled = !soundEnabled;
+            soundToggle.innerHTML = soundEnabled ?
+                '<span style="font-size: 2em;">🔊</span>' :
+                '<span style="font-size: 2em;">🔇</span>';
+            soundToggle.classList.toggle('muted', !soundEnabled);
+        });
+
+        // Initialize
+        createBackgroundParticles();
+
+        // Resume audio context on first interaction
+        document.addEventListener('click', () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>

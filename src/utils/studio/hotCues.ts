@@ -33,6 +33,21 @@ const DEFAULT_CUE_COLORS = [
   '#4488ff', // Blue
 ];
 
+// Export as EXTENDED_CUE_COLORS for backwards compatibility
+export const EXTENDED_CUE_COLORS = DEFAULT_CUE_COLORS;
+
+// Preset cue labels
+export const PRESET_CUE_LABELS = [
+  'Intro',
+  'Verse',
+  'Chorus',
+  'Drop',
+  'Break',
+  'Build',
+  'Outro',
+  'Custom',
+];
+
 /**
  * Initialize IndexedDB for cue points
  */

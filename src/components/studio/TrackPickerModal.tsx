@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X, Search } from 'lucide-react'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 import { TrackListItem } from './TrackListItem'
 
 interface TrackPickerModalProps {

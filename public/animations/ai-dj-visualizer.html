@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI DJ Controller - Live Mix Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f, #1a1a2e);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Animated background */
+        .bg-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(138, 43, 226, 0.6);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        /* Main DJ Console */
+        .dj-console {
+            position: relative;
+            width: 95%;
+            max-width: 1400px;
+            height: 85vh;
+            background: linear-gradient(145deg, #1e1e2e, #2d2d44);
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.8),
+                inset 0 2px 20px rgba(138, 43, 226, 0.2);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto 1fr auto;
+            gap: 30px;
+            z-index: 10;
+        }
+
+        /* Header with status */
+        .console-header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+        }
+
+        .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .ai-indicator {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #8a2be2, #00bfff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            color: white;
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.8);
+            animation: aiPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes aiPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 30px rgba(138, 43, 226, 0.8);
+            }
+            50% { 
+                transform: scale(1.1);
+                box-shadow: 0 0 50px rgba(0, 191, 255, 1);
+            }
+        }
+
+        .status-text {
+            font-size: 1.2em;
+            color: #00bfff;
+            text-shadow: 0 0 10px currentColor;
+            animation: statusChange 3s ease-in-out infinite;
+        }
+
+        /* BPM and Audio Controls */
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .bpm-display {
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            border: 2px solid #00bfff;
+            color: #00bfff;
+            font-size: 1.2em;
+            font-weight: bold;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #8a2be2, #00bfff);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(138, 43, 226, 0.6);
+        }
+
+        .control-btn.active {
+            background: linear-gradient(135deg, #00ff88, #00bfff);
+            animation: btnPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes btnPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Deck Section */
+        .deck {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Waveform Display */
+        .waveform-container {
+            width: 100%;
+            height: 100px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            padding: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .waveform {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 2px;
+        }
+
+        .wave-bar {
+            width: 3px;
+            background: linear-gradient(to top, #8a2be2, #00bfff, #00ff88);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+        }
+
+        .playhead {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background: #ff0000;
+            box-shadow: 0 0 10px #ff0000;
+            z-index: 10;
+        }
+
+        /* Vinyl/Jog Wheel */
+        .vinyl-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+        }
+
+        .vinyl {
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at center, 
+                    transparent 28%,
+                    #1a1a1a 28%, #1a1a1a 30%,
+                    #2a2a2a 30%, #2a2a2a 31%,
+                    #1a1a1a 31%, #1a1a1a 60%,
+                    #0a0a0a 60%, #0a0a0a 90%,
+                    #2a2a2a 90%
+                ),
+                repeating-conic-gradient(
+                    from 0deg,
+                    #2a2a2a 0deg 2deg,
+                    #1a1a1a 2deg 4deg
+                );
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 
+                0 10px 40px rgba(0, 0, 0, 0.8),
+                inset 0 0 20px rgba(0, 0, 0, 0.9);
+            transition: transform 0.1s linear;
+        }
+
+        .vinyl.playing {
+            animation: vinylSpin 2s linear infinite;
+        }
+
+        @keyframes vinylSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .vinyl-label {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #8a2be2, #00bfff, #00ff88);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.8);
+        }
+
+        /* Transport Controls */
+        .transport-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .transport-btn {
+            width: 60px;
+            height: 60px;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .play-btn {
+            background: linear-gradient(135deg, #00ff88, #00bfff);
+            color: #1a1a1a;
+        }
+
+        .play-btn.playing {
+            background: linear-gradient(135deg, #ff6b35, #ff0066);
+            animation: playPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes playPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .cue-btn {
+            background: linear-gradient(135deg, #ff6b35, #ff0066);
+            color: white;
+        }
+
+        /* Tempo Slider */
+        .tempo-control {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tempo-slider {
+            flex: 1;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .tempo-handle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #8a2be2, #00bfff);
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(138, 43, 226, 0.6);
+            transition: left 0.3s ease;
+        }
+
+        .tempo-display {
+            min-width: 60px;
+            text-align: center;
+            color: #00bfff;
+            font-weight: bold;
+        }
+
+        /* EQ Knobs */
+        .eq-section {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+        }
+
+        .eq-knob {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .knob {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle at 40% 40%, #3a3a4e, #1a1a2e);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 
+                0 5px 15px rgba(0, 0, 0, 0.5),
+                inset -3px -3px 8px rgba(0, 0, 0, 0.8);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .knob::before {
+            content: '';
+            position: absolute;
+            width: 4px;
+            height: 25px;
+            background: linear-gradient(to bottom, #00bfff, #8a2be2);
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
+        }
+
+        .knob-label {
+            color: #00bfff;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+
+        /* Crossfader */
+        .crossfader-section {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+        }
+
+        .crossfader {
+            width: 400px;
+            height: 60px;
+            background: linear-gradient(90deg, #8a2be2 0%, #1a1a2e 50%, #00bfff 100%);
+            border-radius: 30px;
+            position: relative;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .crossfader-handle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 50px;
+            background: linear-gradient(135deg, #00ff88, #00bfff);
+            border-radius: 25px;
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.5);
+            cursor: grab;
+            transition: left 0.5s ease;
+        }
+
+        .crossfader-handle.dragging {
+            cursor: grabbing;
+        }
+
+        /* VU Meters */
+        .vu-meters {
+            display: flex;
+            gap: 30px;
+        }
+
+        .vu-meter {
+            display: flex;
+            gap: 3px;
+        }
+
+        .vu-bar {
+            width: 8px;
+            height: 40px;
+            background: #222;
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vu-bar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(to top, #00ff88, #ffff00, #ff0000);
+            transition: height 0.1s ease;
+            border-radius: 2px;
+        }
+
+        /* Track Info */
+        .track-info {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .track-title {
+            font-size: 1.1em;
+            color: #00bfff;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-artist {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        /* Audio Input Section */
+        .audio-input-section {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;  /* Hidden for streaming overlay */
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            border: 2px solid #8a2be2;
+            z-index: 100;
+        }
+
+        .input-btn {
+            padding: 8px 16px;
+            background: #2d2d44;
+            border: 1px solid #8a2be2;
+            border-radius: 8px;
+            color: #00bfff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .input-btn:hover {
+            background: #3d3d54;
+            transform: translateY(-2px);
+        }
+
+        .input-btn.active {
+            background: linear-gradient(135deg, #8a2be2, #00bfff);
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dj-console {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .crossfader-section {
+                grid-column: 1;
+            }
+        }
+
+        /* === React Integration Styles === */
+
+        /* AI Status Indicator */
+        .ai-status {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .ai-status.active {
+            background: rgba(6, 255, 165, 0.2);
+            border: 2px solid #06ffa5;
+            color: #06ffa5;
+            box-shadow: 0 0 20px rgba(6, 255, 165, 0.4);
+        }
+
+        .ai-status.inactive {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #666;
+            color: #666;
+        }
+
+        .ai-status.pulsing {
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(6, 255, 165, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(6, 255, 165, 0.8);
+            }
+        }
+
+        /* AI Decision Overlay */
+        .ai-decision-overlay {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #06ffa5;
+            border-radius: 12px;
+            padding: 20px;
+            z-index: 1000;
+            animation: slideInRight 0.5s ease-out;
+            transition: opacity 0.5s;
+            box-shadow: 0 0 30px rgba(6, 255, 165, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .ai-decision-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ai-decision-label {
+            font-size: 12px;
+            color: #06ffa5;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .ai-decision-action {
+            font-size: 20px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(6, 255, 165, 0.5);
+        }
+
+        .ai-decision-confidence {
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-particles" id="particles"></div>
+
+    <!-- AI Status Indicator (React controlled) -->
+    <div id="aiStatusIndicator" class="ai-status inactive">MANUAL MODE</div>
+
+    <div class="dj-console">
+        <!-- Console Header -->
+        <div class="console-header">
+            <div class="ai-status">
+                <div class="ai-indicator">AI</div>
+                <div class="status-text" id="aiStatus">Analyzing Beat...</div>
+            </div>
+            
+            <div class="audio-controls">
+                <div class="bpm-display" id="bpmDisplay">128 BPM</div>
+                <button class="control-btn" id="autoMixBtn">Auto Mix</button>
+                <button class="control-btn" id="connectAudioBtn">Connect Audio</button>
+            </div>
+        </div>
+        
+        <!-- Deck A -->
+        <div class="deck" id="deckA">
+            <div class="waveform-container">
+                <div class="waveform" id="waveformA"></div>
+                <div class="playhead"></div>
+            </div>
+            
+            <div class="vinyl-container">
+                <div class="vinyl" id="vinylA">
+                    <div class="vinyl-label">A</div>
+                </div>
+            </div>
+            
+            <div class="transport-controls">
+                <button class="transport-btn play-btn" id="playA">▶</button>
+                <button class="transport-btn cue-btn" id="cueA">CUE</button>
+                <button class="transport-btn" id="loopA">LOOP</button>
+            </div>
+            
+            <div class="tempo-control">
+                <span class="tempo-display">-8</span>
+                <div class="tempo-slider" id="tempoSliderA">
+                    <div class="tempo-handle" id="tempoHandleA"></div>
+                </div>
+                <span class="tempo-display">+8</span>
+            </div>
+            
+            <div class="eq-section">
+                <div class="eq-knob">
+                    <div class="knob" id="highA" data-rotation="0"></div>
+                    <span class="knob-label">HIGH</span>
+                </div>
+                <div class="eq-knob">
+                    <div class="knob" id="midA" data-rotation="0"></div>
+                    <span class="knob-label">MID</span>
+                </div>
+                <div class="eq-knob">
+                    <div class="knob" id="lowA" data-rotation="0"></div>
+                    <span class="knob-label">LOW</span>
+                </div>
+            </div>
+            
+            <div class="track-info">
+                <div class="track-title" id="titleA">Electric Dreams</div>
+                <div class="track-artist" id="artistA">Luna Eclipse</div>
+            </div>
+        </div>
+        
+        <!-- Deck B -->
+        <div class="deck" id="deckB">
+            <div class="waveform-container">
+                <div class="waveform" id="waveformB"></div>
+                <div class="playhead"></div>
+            </div>
+            
+            <div class="vinyl-container">
+                <div class="vinyl" id="vinylB">
+                    <div class="vinyl-label">B</div>
+                </div>
+            </div>
+            
+            <div class="transport-controls">
+                <button class="transport-btn play-btn" id="playB">▶</button>
+                <button class="transport-btn cue-btn" id="cueB">CUE</button>
+                <button class="transport-btn" id="loopB">LOOP</button>
+            </div>
+            
+            <div class="tempo-control">
+                <span class="tempo-display">-8</span>
+                <div class="tempo-slider" id="tempoSliderB">
+                    <div class="tempo-handle" id="tempoHandleB"></div>
+                </div>
+                <span class="tempo-display">+8</span>
+            </div>
+            
+            <div class="eq-section">
+                <div class="eq-knob">
+                    <div class="knob" id="highB" data-rotation="0"></div>
+                    <span class="knob-label">HIGH</span>
+                </div>
+                <div class="eq-knob">
+                    <div class="knob" id="midB" data-rotation="0"></div>
+                    <span class="knob-label">MID</span>
+                </div>
+                <div class="eq-knob">
+                    <div class="knob" id="lowB" data-rotation="0"></div>
+                    <span class="knob-label">LOW</span>
+                </div>
+            </div>
+            
+            <div class="track-info">
+                <div class="track-title" id="titleB">Cosmic Journey</div>
+                <div class="track-artist" id="artistB">Space Collective</div>
+            </div>
+        </div>
+        
+        <!-- Crossfader Section -->
+        <div class="crossfader-section">
+            <div class="crossfader">
+                <div class="crossfader-handle" id="crossfaderHandle"></div>
+            </div>
+            
+            <div class="vu-meters">
+                <div class="vu-meter" id="vuLeft"></div>
+                <div class="vu-meter" id="vuRight"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Audio Input Controls -->
+    <div class="audio-input-section">
+        <button class="input-btn" id="micInput">🎤 Mic Input</button>
+        <button class="input-btn" id="fileInput">📁 Load File</button>
+        <input type="file" id="audioFile" accept="audio/*" style="display: none;">
+        <button class="input-btn active" id="demoMode">🎵 Demo Mode</button>
+    </div>
+
+    <script>
+        // === DJ Controller State ===
+        const djState = {
+            deckA: {
+                playing: false,
+                bpm: 128,
+                position: 0,
+                tempo: 0,
+                rotation: 0
+            },
+            deckB: {
+                playing: false,
+                bpm: 126,
+                position: 0,
+                tempo: 0,
+                rotation: 0
+            },
+            crossfaderPosition: 50,
+            autoMixing: false,
+            audioContext: null,
+            analyser: null,
+            source: null,
+            demoMode: true
+        };
+
+        // === Initialize ===
+        function init() {
+            createParticles();
+            createWaveforms();
+            createVUMeters();
+            setupEventListeners();
+            startDemoMode();
+        }
+
+        // === Particle Background ===
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                
+                const colors = ['#8a2be2', '#00bfff', '#00ff88'];
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                container.appendChild(particle);
+            }
+        }
+
+        // === Waveform Creation ===
+        function createWaveforms() {
+            ['waveformA', 'waveformB'].forEach(id => {
+                const container = document.getElementById(id);
+                for (let i = 0; i < 60; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'wave-bar';
+                    bar.style.height = '20px';
+                    container.appendChild(bar);
+                }
+            });
+        }
+
+        // === VU Meters ===
+        function createVUMeters() {
+            ['vuLeft', 'vuRight'].forEach(id => {
+                const container = document.getElementById(id);
+                for (let i = 0; i < 12; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'vu-bar';
+                    container.appendChild(bar);
+                }
+            });
+        }
+
+        // === Event Listeners ===
+        function setupEventListeners() {
+            // Play buttons
+            document.getElementById('playA').addEventListener('click', () => togglePlay('A'));
+            document.getElementById('playB').addEventListener('click', () => togglePlay('B'));
+            
+            // Auto Mix
+            document.getElementById('autoMixBtn').addEventListener('click', toggleAutoMix);
+            
+            // Audio input
+            document.getElementById('connectAudioBtn').addEventListener('click', connectAudio);
+            document.getElementById('micInput').addEventListener('click', connectMicrophone);
+            document.getElementById('fileInput').addEventListener('click', () => {
+                document.getElementById('audioFile').click();
+            });
+            document.getElementById('audioFile').addEventListener('change', loadAudioFile);
+            document.getElementById('demoMode').addEventListener('click', toggleDemoMode);
+            
+            // EQ Knobs
+            setupKnobs();
+            
+            // Crossfader
+            setupCrossfader();
+        }
+
+        // === Play/Pause Control ===
+        function togglePlay(deck) {
+            const state = djState[`deck${deck}`];
+            state.playing = !state.playing;
+            
+            const playBtn = document.getElementById(`play${deck}`);
+            const vinyl = document.getElementById(`vinyl${deck}`);
+            
+            if (state.playing) {
+                playBtn.textContent = '⏸';
+                playBtn.classList.add('playing');
+                vinyl.classList.add('playing');
+                startDeckAnimation(deck);
+            } else {
+                playBtn.textContent = '▶';
+                playBtn.classList.remove('playing');
+                vinyl.classList.remove('playing');
+                stopDeckAnimation(deck);
+            }
+        }
+
+        // === Deck Animation ===
+        function startDeckAnimation(deck) {
+            const state = djState[`deck${deck}`];
+            
+            // Animate waveform
+            state.waveformInterval = setInterval(() => {
+                animateWaveform(deck);
+            }, 50);
+            
+            // Rotate vinyl manually for better control
+            state.vinylInterval = setInterval(() => {
+                state.rotation += 3;
+                const vinyl = document.getElementById(`vinyl${deck}`);
+                vinyl.style.transform = `rotate(${state.rotation}deg)`;
+            }, 20);
+        }
+
+        function stopDeckAnimation(deck) {
+            const state = djState[`deck${deck}`];
+            
+            if (state.waveformInterval) {
+                clearInterval(state.waveformInterval);
+                state.waveformInterval = null;
+            }
+            
+            if (state.vinylInterval) {
+                clearInterval(state.vinylInterval);
+                state.vinylInterval = null;
+            }
+        }
+
+        // === Waveform Animation ===
+        function animateWaveform(deck) {
+            const bars = document.querySelectorAll(`#waveform${deck} .wave-bar`);
+            bars.forEach((bar, i) => {
+                const height = Math.random() * 60 + 20;
+                bar.style.height = height + 'px';
+                
+                // Color based on frequency
+                const freq = Math.random();
+                if (freq < 0.3) {
+                    bar.style.background = 'linear-gradient(to top, #8a2be2, #6a1b9a)';
+                } else if (freq < 0.7) {
+                    bar.style.background = 'linear-gradient(to top, #00bfff, #0088cc)';
+                } else {
+                    bar.style.background = 'linear-gradient(to top, #00ff88, #00cc66)';
+                }
+            });
+        }
+
+        // === Auto Mix Feature ===
+        function toggleAutoMix() {
+            djState.autoMixing = !djState.autoMixing;
+            const btn = document.getElementById('autoMixBtn');
+            
+            if (djState.autoMixing) {
+                btn.classList.add('active');
+                btn.textContent = 'Auto Mixing...';
+                startAutoMix();
+            } else {
+                btn.classList.remove('active');
+                btn.textContent = 'Auto Mix';
+                stopAutoMix();
+            }
+        }
+
+        function startAutoMix() {
+            // Start both decks
+            if (!djState.deckA.playing) togglePlay('A');
+            if (!djState.deckB.playing) togglePlay('B');
+            
+            // Auto crossfade
+            djState.autoMixInterval = setInterval(() => {
+                autoCrossfade();
+                autoEQ();
+                updateAIStatus();
+            }, 3000);
+        }
+
+        function stopAutoMix() {
+            if (djState.autoMixInterval) {
+                clearInterval(djState.autoMixInterval);
+                djState.autoMixInterval = null;
+            }
+        }
+
+        function autoCrossfade() {
+            const handle = document.getElementById('crossfaderHandle');
+            const targetPosition = Math.random() * 60 + 20; // Keep it mostly centered
+            
+            handle.style.left = targetPosition + '%';
+            djState.crossfaderPosition = targetPosition;
+            
+            // Update VU meters based on crossfader
+            updateVUMeters();
+        }
+
+        function autoEQ() {
+            ['A', 'B'].forEach(deck => {
+                ['high', 'mid', 'low'].forEach(band => {
+                    const knob = document.getElementById(`${band}${deck}`);
+                    const rotation = (Math.random() - 0.5) * 120; // -60 to +60 degrees
+                    knob.style.transform = `rotate(${rotation}deg)`;
+                    knob.dataset.rotation = rotation;
+                });
+            });
+        }
+
+        // === EQ Knobs ===
+        function setupKnobs() {
+            document.querySelectorAll('.knob').forEach(knob => {
+                knob.addEventListener('click', function() {
+                    const currentRotation = parseFloat(this.dataset.rotation) || 0;
+                    const newRotation = currentRotation + 30;
+                    this.style.transform = `rotate(${newRotation}deg)`;
+                    this.dataset.rotation = newRotation;
+                });
+            });
+        }
+
+        // === Crossfader ===
+        function setupCrossfader() {
+            const crossfader = document.querySelector('.crossfader');
+            const handle = document.getElementById('crossfaderHandle');
+            let isDragging = false;
+            
+            handle.addEventListener('mousedown', () => {
+                isDragging = true;
+                handle.classList.add('dragging');
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const rect = crossfader.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+                
+                handle.style.left = percentage + '%';
+                djState.crossfaderPosition = percentage;
+                updateVUMeters();
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                handle.classList.remove('dragging');
+            });
+        }
+
+        // === VU Meter Updates ===
+        function updateVUMeters() {
+            const leftBars = document.querySelectorAll('#vuLeft .vu-bar');
+            const rightBars = document.querySelectorAll('#vuRight .vu-bar');
+            
+            const leftLevel = djState.deckA.playing ? (100 - djState.crossfaderPosition) / 100 : 0;
+            const rightLevel = djState.deckB.playing ? djState.crossfaderPosition / 100 : 0;
+            
+            animateVUMeter(leftBars, leftLevel);
+            animateVUMeter(rightBars, rightLevel);
+        }
+
+        function animateVUMeter(bars, level) {
+            bars.forEach((bar, i) => {
+                const threshold = (i + 1) / bars.length;
+                const barLevel = Math.random() * 0.2 + level; // Add some variation
+                
+                if (barLevel > threshold) {
+                    bar.style.setProperty('--height', '100%');
+                } else {
+                    bar.style.setProperty('--height', '0%');
+                }
+                
+                // Update the pseudo-element height
+                bar.setAttribute('style', bar.getAttribute('style') + `; --height: ${barLevel > threshold ? 100 : 0}%;`);
+            });
+        }
+
+        // === Demo Mode ===
+        function startDemoMode() {
+            // Automatic animations
+            setInterval(() => {
+                if (djState.demoMode && !djState.autoMixing) {
+                    // Random play/pause
+                    if (Math.random() > 0.8) {
+                        const deck = Math.random() > 0.5 ? 'A' : 'B';
+                        if (!djState[`deck${deck}`].playing) {
+                            togglePlay(deck);
+                        }
+                    }
+                    
+                    // Update VU meters
+                    updateVUMeters();
+                    
+                    // Update BPM
+                    const bpm = 120 + Math.floor(Math.random() * 20);
+                    document.getElementById('bpmDisplay').textContent = `${bpm} BPM`;
+                }
+            }, 2000);
+        }
+
+        function toggleDemoMode() {
+            djState.demoMode = !djState.demoMode;
+            const btn = document.getElementById('demoMode');
+            
+            if (djState.demoMode) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+                // Stop all animations
+                stopDeckAnimation('A');
+                stopDeckAnimation('B');
+            }
+        }
+
+        // === AI Status Updates ===
+        function updateAIStatus() {
+            const statuses = [
+                'Analyzing Beat...',
+                'Matching BPM...',
+                'Detecting Key...',
+                'Applying EQ...',
+                'Perfect Mix!',
+                'Building Energy...',
+                'Dropping Bass...',
+                'Transitioning...',
+                'Reading Crowd...',
+                'Peak Time!'
+            ];
+            
+            const status = statuses[Math.floor(Math.random() * statuses.length)];
+            document.getElementById('aiStatus').textContent = status;
+        }
+
+        // === Audio API Integration ===
+        async function connectAudio() {
+            try {
+                if (!djState.audioContext) {
+                    djState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    djState.analyser = djState.audioContext.createAnalyser();
+                    djState.analyser.fftSize = 256;
+                }
+                
+                alert('Audio API connected! You can now load files or use microphone input.');
+                document.getElementById('connectAudioBtn').classList.add('active');
+                startAudioVisualization();
+            } catch (error) {
+                console.error('Error connecting audio:', error);
+                alert('Error connecting to Web Audio API');
+            }
+        }
+
+        async function connectMicrophone() {
+            try {
+                if (!djState.audioContext) await connectAudio();
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                djState.source = djState.audioContext.createMediaStreamSource(stream);
+                djState.source.connect(djState.analyser);
+                
+                document.getElementById('micInput').classList.add('active');
+                djState.demoMode = false;
+                toggleDemoMode();
+                
+                startRealTimeVisualization();
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                alert('Could not access microphone');
+            }
+        }
+
+        async function loadAudioFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            try {
+                if (!djState.audioContext) await connectAudio();
+                
+                const arrayBuffer = await file.arrayBuffer();
+                const audioBuffer = await djState.audioContext.decodeAudioData(arrayBuffer);
+                
+                if (djState.source) djState.source.disconnect();
+                
+                djState.source = djState.audioContext.createBufferSource();
+                djState.source.buffer = audioBuffer;
+                djState.source.connect(djState.analyser);
+                djState.source.connect(djState.audioContext.destination);
+                djState.source.start();
+                
+                document.getElementById('fileInput').classList.add('active');
+                djState.demoMode = false;
+                toggleDemoMode();
+                
+                // Update track info
+                document.getElementById('titleA').textContent = file.name.replace(/\.[^/.]+$/, '');
+                document.getElementById('artistA').textContent = 'Local File';
+                
+                togglePlay('A');
+                startRealTimeVisualization();
+            } catch (error) {
+                console.error('Error loading audio file:', error);
+                alert('Error loading audio file');
+            }
+        }
+
+        function startAudioVisualization() {
+            if (!djState.analyser) return;
+            
+            const bufferLength = djState.analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                djState.analyser.getByteFrequencyData(dataArray);
+                
+                // Update waveforms based on real audio
+                updateWaveformsFromAudio(dataArray);
+                
+                // Update VU meters from audio
+                updateVUFromAudio(dataArray);
+                
+                // Detect BPM (simplified)
+                detectBPM(dataArray);
+            }
+            
+            animate();
+        }
+
+        function startRealTimeVisualization() {
+            startAudioVisualization();
+            
+            // Auto-adjust controls based on audio
+            setInterval(() => {
+                if (djState.autoMixing && djState.analyser) {
+                    // This would contain real audio analysis logic
+                    updateAIStatus();
+                }
+            }, 1000);
+        }
+
+        function updateWaveformsFromAudio(dataArray) {
+            const barsA = document.querySelectorAll('#waveformA .wave-bar');
+            const barsB = document.querySelectorAll('#waveformB .wave-bar');
+            
+            const barCount = barsA.length;
+            const step = Math.floor(dataArray.length / barCount);
+            
+            for (let i = 0; i < barCount; i++) {
+                const value = dataArray[i * step];
+                const height = (value / 255) * 80 + 10;
+                
+                if (djState.deckA.playing) {
+                    barsA[i].style.height = height + 'px';
+                }
+                if (djState.deckB.playing) {
+                    barsB[i].style.height = height + 'px';
+                }
+            }
+        }
+
+        function updateVUFromAudio(dataArray) {
+            const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+            const level = average / 255;
+            
+            const leftBars = document.querySelectorAll('#vuLeft .vu-bar');
+            const rightBars = document.querySelectorAll('#vuRight .vu-bar');
+            
+            const leftLevel = djState.deckA.playing ? level * (100 - djState.crossfaderPosition) / 100 : 0;
+            const rightLevel = djState.deckB.playing ? level * djState.crossfaderPosition / 100 : 0;
+            
+            animateVUMeter(leftBars, leftLevel);
+            animateVUMeter(rightBars, rightLevel);
+        }
+
+        function detectBPM(dataArray) {
+            // Simplified BPM detection (would need proper algorithm)
+            const bass = dataArray.slice(0, 10).reduce((a, b) => a + b) / 10;
+            if (bass > 200) {
+                const currentBPM = parseInt(document.getElementById('bpmDisplay').textContent);
+                const variance = Math.random() * 4 - 2;
+                const newBPM = Math.round(currentBPM + variance);
+                document.getElementById('bpmDisplay').textContent = `${Math.max(60, Math.min(180, newBPM))} BPM`;
+            }
+        }
+
+        // === Initialize on Load ===
+        document.addEventListener('DOMContentLoaded', init);
+
+        // === Update AI Status Periodically ===
+        setInterval(updateAIStatus, 3000);
+
+        // === React Integration - Message Listeners ===
+
+        /**
+         * Listen for messages from React app
+         * Allows control panel to sync deck state, audio, and AI decisions
+         */
+        window.addEventListener('message', (event) => {
+            const { type, deckA, deckB, crossfader, aiActive, aiDecision } = event.data;
+
+            if (type === 'AUDIO_STATE_UPDATE') {
+                // Update Deck A
+                if (deckA) {
+                    updateDeckStateFromReact('A', deckA.playing, deckA.bpm, deckA.track);
+                }
+
+                // Update Deck B
+                if (deckB) {
+                    updateDeckStateFromReact('B', deckB.playing, deckB.bpm, deckB.track);
+                }
+
+                // Update crossfader position
+                if (crossfader !== undefined) {
+                    updateCrossfaderFromReact(crossfader);
+                }
+
+                // Update AI status
+                if (aiActive !== undefined) {
+                    updateAIStatusFromReact(aiActive, aiDecision);
+                }
+            }
+
+            // Handle track loading
+            if (type === 'LOAD_TRACK') {
+                loadTrackFromReact(event.data.url, event.data.deck);
+            }
+        });
+
+        /**
+         * Update deck state from React control panel
+         */
+        function updateDeckStateFromReact(deck, playing, bpm, trackName) {
+            const deckState = deck === 'A' ? djState.deckA : djState.deckB;
+            deckState.playing = playing;
+            deckState.bpm = bpm || 120;
+
+            // Update BPM display
+            const bpmElement = document.getElementById(`bpm${deck}`);
+            if (bpmElement) {
+                bpmElement.textContent = bpm || '--';
+            }
+
+            // Update vinyl spin animation
+            const vinyl = document.getElementById(`vinyl${deck}`);
+            if (vinyl) {
+                if (playing) {
+                    vinyl.classList.add('playing');
+                    // Sync vinyl spin speed to BPM
+                    const rpm = (bpm / 60) * 2;
+                    const duration = 60 / rpm;
+                    vinyl.style.animationDuration = duration + 's';
+                } else {
+                    vinyl.classList.remove('playing');
+                }
+            }
+
+            // Update track name if display exists
+            const trackDisplay = document.getElementById(`track${deck}`);
+            if (trackDisplay && trackName) {
+                trackDisplay.textContent = trackName;
+            }
+
+            // Trigger BPM-synced waveform animation
+            if (playing) {
+                startBPMSyncedAnimation(deck, bpm);
+            } else {
+                stopBPMSyncedAnimation(deck);
+            }
+        }
+
+        /**
+         * Update crossfader position from React
+         */
+        function updateCrossfaderFromReact(position) {
+            // Position is 0-1, where 0.5 is center
+            djState.crossfaderPosition = position * 100;
+
+            const percentage = position * 100;
+            const crossfader = document.querySelector('.crossfader-thumb');
+            if (crossfader) {
+                crossfader.style.left = percentage + '%';
+            }
+        }
+
+        /**
+         * Update AI status from React
+         */
+        function updateAIStatusFromReact(isActive, decision) {
+            // Update AI indicator
+            const aiIndicator = document.getElementById('aiStatusIndicator');
+            if (aiIndicator) {
+                aiIndicator.textContent = isActive ? 'AI ACTIVE' : 'MANUAL MODE';
+                aiIndicator.className = isActive
+                    ? 'ai-status active pulsing'
+                    : 'ai-status inactive';
+            }
+
+            // Show AI decision overlay if available
+            if (decision) {
+                showAIDecisionOverlay(decision);
+            }
+        }
+
+        /**
+         * Show AI decision as overlay
+         */
+        function showAIDecisionOverlay(decision) {
+            // Create or update overlay showing what AI is doing
+            let overlay = document.getElementById('aiDecisionOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'aiDecisionOverlay';
+                overlay.className = 'ai-decision-overlay';
+                document.body.appendChild(overlay);
+            }
+
+            overlay.innerHTML = `
+                <div class="ai-decision-content">
+                    <div class="ai-decision-label">AI DJ</div>
+                    <div class="ai-decision-action">${decision.action || 'Analyzing...'}</div>
+                    ${decision.confidence ? `<div class="ai-decision-confidence">${Math.round(decision.confidence * 100)}% confident</div>` : ''}
+                </div>
+            `;
+
+            overlay.style.opacity = '1';
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    if (overlay.parentNode) {
+                        overlay.parentNode.removeChild(overlay);
+                    }
+                }, 500);
+            }, 5000);
+        }
+
+        /**
+         * Load and play track from React app
+         */
+        async function loadTrackFromReact(url, deck) {
+            try {
+                // Initialize audio context if needed
+                if (!djState.audioContext) {
+                    djState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    djState.analyser = djState.audioContext.createAnalyser();
+                    djState.analyser.fftSize = 256;
+                }
+
+                // Create audio element
+                const audio = new Audio(url);
+                audio.crossOrigin = 'anonymous';
+
+                // Connect to Web Audio API
+                const source = djState.audioContext.createMediaElementSource(audio);
+                source.connect(djState.analyser);
+                djState.analyser.connect(djState.audioContext.destination);
+
+                // Store audio element
+                if (deck === 'A') {
+                    djState.deckA.audio = audio;
+                } else {
+                    djState.deckB.audio = audio;
+                }
+
+                // Start visualization
+                startAudioVisualization();
+            } catch (error) {
+                console.error('Error loading track:', error);
+            }
+        }
+
+        // === BPM-Synced Waveform Animation (No Audio Required) ===
+        const animationIntervals = {};
+
+        /**
+         * Start BPM-synced waveform animation for a deck
+         * Creates visual pulsing that matches the BPM even without real audio
+         */
+        function startBPMSyncedAnimation(deck, bpm) {
+            // Clear existing animation if any
+            stopBPMSyncedAnimation(deck);
+
+            const waveform = document.getElementById(`waveform${deck}`);
+            if (!waveform) return;
+
+            const bars = waveform.querySelectorAll('.wave-bar');
+            const beatInterval = (60 / bpm) * 1000; // ms per beat
+
+            // Create animated waveform that pulses with BPM
+            let beatPhase = 0;
+
+            const animate = () => {
+                beatPhase = (beatPhase + 0.1) % (Math.PI * 2);
+
+                bars.forEach((bar, i) => {
+                    // Create wave pattern that moves with beat
+                    const offset = (i / bars.length) * Math.PI * 2;
+                    const wave = Math.sin(beatPhase + offset);
+                    const energy = Math.abs(wave);
+
+                    // Add some randomness for more organic feel
+                    const randomFactor = 0.7 + Math.random() * 0.3;
+                    const height = 20 + (energy * 60 * randomFactor);
+
+                    bar.style.height = height + 'px';
+
+                    // Color intensity based on energy
+                    const intensity = energy * 100;
+                    bar.style.opacity = 0.6 + (energy * 0.4);
+                });
+
+                // Also animate VU meters
+                animateVUMeterForDeck(deck, Math.abs(Math.sin(beatPhase)));
+            };
+
+            // Run animation at 60fps
+            animationIntervals[deck] = setInterval(animate, 16);
+        }
+
+        /**
+         * Stop BPM-synced animation for a deck
+         */
+        function stopBPMSyncedAnimation(deck) {
+            if (animationIntervals[deck]) {
+                clearInterval(animationIntervals[deck]);
+                delete animationIntervals[deck];
+
+                // Reset waveform bars
+                const waveform = document.getElementById(`waveform${deck}`);
+                if (waveform) {
+                    const bars = waveform.querySelectorAll('.wave-bar');
+                    bars.forEach(bar => {
+                        bar.style.height = '20px';
+                        bar.style.opacity = '0.6';
+                    });
+                }
+
+                // Reset VU meters for this deck
+                animateVUMeterForDeck(deck, 0);
+            }
+        }
+
+        /**
+         * Animate VU meter for a specific deck
+         */
+        function animateVUMeterForDeck(deck, level) {
+            const vuId = deck === 'A' ? 'vuLeft' : 'vuRight';
+            const vuMeter = document.getElementById(vuId);
+            if (!vuMeter) return;
+
+            const bars = vuMeter.querySelectorAll('.vu-bar');
+            const activeCount = Math.floor(bars.length * level);
+
+            bars.forEach((bar, index) => {
+                if (index < activeCount) {
+                    const height = 70 + (Math.random() * 30);
+                    bar.style.setProperty('--height', `${height}%`);
+                } else {
+                    bar.style.setProperty('--height', '0%');
+                }
+            });
+        }
+
+        // CSS fix for VU meters
+        const style = document.createElement('style');
+        style.textContent = `
+            .vu-bar::after {
+                height: var(--height, 0%);
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

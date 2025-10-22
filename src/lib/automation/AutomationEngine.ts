@@ -486,3 +486,6 @@ export class AutomationEngine {
     }
   }
 }
+
+// Re-export types for convenience
+export type { AutomationConfig, AutomationEvent, TriggerRule, AutomationDecision, ActionType, TriggerType, ExecutionMode } from './types';

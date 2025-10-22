@@ -12,6 +12,7 @@
     "install-deps": "pnpm install --prefer-offline",
     "clean": "rm -rf node_modules .pnpm-store pnpm-lock.yaml && pnpm store prune",
     "migrate": "node scripts/run-migrations.mjs",
+    "setup:graphics": "tsx scripts/setup-graphics.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",

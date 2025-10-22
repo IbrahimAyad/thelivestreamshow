@@ -37,7 +37,9 @@ export function PresetLibrary({ onEditPreset }: PresetLibraryProps) {
 
   // Load presets
   useEffect(() => {
-    const unsubscribe = presetManager.subscribe(setPresets)
+    const unsubscribe = presetManager.subscribe(() => {
+      presetManager.getAllPresets().then(setPresets)
+    })
     presetManager.loadPresets()
     return unsubscribe
   }, [presetManager])
@@ -89,9 +91,9 @@ export function PresetLibrary({ onEditPreset }: PresetLibraryProps) {
     }
   }
 
-  const handleExport = (presetId: string) => {
+  const handleExport = async (presetId: string) => {
     try {
-      const json = presetManager.exportPreset(presetId)
+      const json = await presetManager.exportPreset(presetId)
       const blob = new Blob([json], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')

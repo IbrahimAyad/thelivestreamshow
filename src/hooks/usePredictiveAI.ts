@@ -183,11 +183,19 @@ export function usePredictiveAI(config: Partial<PredictiveAIConfig> = {}) {
 
       for (const question of questions) {
         const showContext = {
-          currentTopic: context.currentTopic,
-          showLengthMinutes: context.showLengthMinutes,
-          elapsedMinutes: context.elapsedMinutes,
-          currentEngagement: context.currentEngagement,
-          recentQuestionIds: [] // TODO: Get from history
+          episode: {
+            episode_number: 1,
+            episode_date: new Date().toISOString(),
+            episode_title: context.currentTopic || 'General Discussion',
+            episode_topic: context.currentTopic || 'General Discussion'
+          } as any,
+          segment: {
+            segment_name: 'Main Segment',
+            segment_topic: context.currentTopic || 'General Discussion',
+            question_text: question.question_text || question.text || ''
+          } as any,
+          isLive: true,
+          isRehearsal: false
         };
 
         const prediction = await engines.current.predictive.predictOutcome(
@@ -385,8 +393,8 @@ export function usePredictiveAI(config: Partial<PredictiveAIConfig> = {}) {
       setState(prev => ({
         ...prev,
         topPerformingTopics: topics.map(t => ({
-          topic: t.topic,
-          avgEngagement: t.avgEngagement
+          topic: t.name,
+          avgEngagement: t.predictedEngagement
         })),
         successPatterns: {
           optimalLength: patterns.lengthPattern,

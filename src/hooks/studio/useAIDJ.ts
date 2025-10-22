@@ -21,7 +21,7 @@ import { analyzeTrack, quickBPMEstimate } from '@/utils/studio/trackAnalysis';
 import { Track } from '@/utils/studio/aiContextAnalyzer';
 import { DecisionContext } from '@/utils/studio/aiDecisionEngine';
 import { UserAction as LearningUserAction } from '@/utils/studio/aiLearningSystem';
-import type { MusicTrack } from '@/types/database';
+import type { MusicTrack } from "@/types/database";
 
 export interface UseAIDJProps {
   djCommandContext?: DJCommandContext;

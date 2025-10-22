@@ -47,8 +47,8 @@ export function ShowPlanSelector({ selectedPlanId, onSelect, className = '' }: S
 
       if (fetchError) throw fetchError;
 
-      setPlans(data || []);
-      setFilteredPlans(data || []);
+      setPlans((data as unknown as SavedShowPlan[]) || []);
+      setFilteredPlans((data as unknown as SavedShowPlan[]) || []);
     } catch (err) {
       console.error('Error loading plans:', err);
       setError(err instanceof Error ? err.message : 'Failed to load plans');

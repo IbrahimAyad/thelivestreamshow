@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Out of Context - Streaming Background</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #0a0a0a;
+            overflow: hidden;
+            width: 1920px;
+            height: 1080px;
+            position: relative;
+        }
+        
+        /* Animated gradient background */
+        .background-gradient {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a0a 0%, #0f1419 50%, #0a0a0a 100%);
+            animation: gradientShift 20s ease-in-out infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% {
+                background: linear-gradient(135deg, #0a0a0a 0%, #0f1419 50%, #0a0a0a 100%);
+            }
+            50% {
+                background: linear-gradient(135deg, #0f1419 0%, #0a0a0a 50%, #0f1419 100%);
+            }
+        }
+        
+        /* Grid pattern overlay */
+        .grid-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(14, 165, 233, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(14, 165, 233, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 30s linear infinite;
+        }
+        
+        @keyframes gridMove {
+            0% {
+                transform: translate(0, 0);
+            }
+            100% {
+                transform: translate(50px, 50px);
+            }
+        }
+        
+        /* Camera frame containers */
+        .camera-container {
+            position: absolute;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            height: 100%;
+            padding: 140px 60px 160px 60px;
+            gap: 40px;
+        }
+        
+        .camera-frame {
+            position: relative;
+            width: calc(50% - 20px);
+            height: 100%;
+            background: rgba(15, 15, 15, 0.6);
+            border: 2px solid rgba(14, 165, 233, 0.2);
+            border-radius: 20px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 0 40px rgba(14, 165, 233, 0.1),
+                inset 0 0 60px rgba(0, 0, 0, 0.4);
+        }
+        
+        .camera-frame::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #0EA5E9, transparent, transparent, #0EA5E9);
+            border-radius: 20px;
+            opacity: 0;
+            animation: borderGlow 4s ease-in-out infinite;
+            z-index: -1;
+        }
+        
+        .camera-frame:nth-child(2)::before {
+            animation-delay: 2s;
+        }
+        
+        @keyframes borderGlow {
+            0%, 100% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+        
+        /* Camera labels */
+        .camera-label {
+            position: absolute;
+            top: -35px;
+            left: 20px;
+            background: rgba(14, 165, 233, 0.15);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #0EA5E9;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            backdrop-filter: blur(10px);
+        }
+        
+        .camera-frame:nth-child(1) .camera-label {
+            content: 'HOST';
+        }
+        
+        .camera-frame:nth-child(2) .camera-label {
+            content: 'GUEST';
+        }
+        
+        /* Animated particles */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #0EA5E9;
+            border-radius: 50%;
+            opacity: 0;
+            animation: float 20s linear infinite;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.4;
+            }
+            90% {
+                opacity: 0.4;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+        
+        /* Generate multiple particles */
+        .particle:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 18s; }
+        .particle:nth-child(2) { left: 20%; animation-delay: 2s; animation-duration: 22s; }
+        .particle:nth-child(3) { left: 30%; animation-delay: 4s; animation-duration: 20s; }
+        .particle:nth-child(4) { left: 40%; animation-delay: 6s; animation-duration: 24s; }
+        .particle:nth-child(5) { left: 50%; animation-delay: 8s; animation-duration: 19s; }
+        .particle:nth-child(6) { left: 60%; animation-delay: 10s; animation-duration: 21s; }
+        .particle:nth-child(7) { left: 70%; animation-delay: 12s; animation-duration: 23s; }
+        .particle:nth-child(8) { left: 80%; animation-delay: 14s; animation-duration: 20s; }
+        .particle:nth-child(9) { left: 90%; animation-delay: 16s; animation-duration: 18s; }
+        .particle:nth-child(10) { left: 15%; animation-delay: 1s; animation-duration: 25s; }
+        
+        /* Animated connection lines */
+        .connection-lines {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #0EA5E9, transparent);
+            opacity: 0.1;
+        }
+        
+        .line-horizontal {
+            width: 200px;
+            animation: slideHorizontal 15s ease-in-out infinite;
+        }
+        
+        .line-vertical {
+            width: 1px;
+            height: 200px;
+            background: linear-gradient(180deg, transparent, #0EA5E9, transparent);
+            animation: slideVertical 15s ease-in-out infinite;
+        }
+        
+        @keyframes slideHorizontal {
+            0%, 100% {
+                transform: translateX(-200px);
+                opacity: 0;
+            }
+            50% {
+                transform: translateX(calc(100vw + 200px));
+                opacity: 0.2;
+            }
+        }
+        
+        @keyframes slideVertical {
+            0%, 100% {
+                transform: translateY(-200px);
+                opacity: 0;
+            }
+            50% {
+                transform: translateY(calc(100vh + 200px));
+                opacity: 0.2;
+            }
+        }
+        
+        .line:nth-child(1) { top: 20%; animation-delay: 0s; }
+        .line:nth-child(2) { top: 40%; animation-delay: 3s; }
+        .line:nth-child(3) { top: 60%; animation-delay: 6s; }
+        .line:nth-child(4) { top: 80%; animation-delay: 9s; }
+        .line:nth-child(5) { left: 25%; animation-delay: 1.5s; }
+        .line:nth-child(6) { left: 50%; animation-delay: 4.5s; }
+        .line:nth-child(7) { left: 75%; animation-delay: 7.5s; }
+        
+        /* Corner accents */
+        .corner-accent {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border: 2px solid rgba(14, 165, 233, 0.3);
+        }
+        
+        .corner-accent.top-left {
+            top: 20px;
+            left: 20px;
+            border-right: none;
+            border-bottom: none;
+            border-radius: 10px 0 0 0;
+        }
+        
+        .corner-accent.top-right {
+            top: 20px;
+            right: 20px;
+            border-left: none;
+            border-bottom: none;
+            border-radius: 0 10px 0 0;
+        }
+        
+        .corner-accent.bottom-left {
+            bottom: 20px;
+            left: 20px;
+            border-right: none;
+            border-top: none;
+            border-radius: 0 0 0 10px;
+        }
+        
+        .corner-accent.bottom-right {
+            bottom: 20px;
+            right: 20px;
+            border-left: none;
+            border-top: none;
+            border-radius: 0 0 10px 0;
+        }
+        
+        /* Center divider */
+        .center-divider {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 2px;
+            height: 60%;
+            background: linear-gradient(180deg, 
+                transparent, 
+                rgba(14, 165, 233, 0.2), 
+                rgba(14, 165, 233, 0.4),
+                rgba(14, 165, 233, 0.2),
+                transparent);
+            animation: pulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+        
+        /* Camera placeholder text - remove when cameras are added */
+        .camera-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(14, 165, 233, 0.3);
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Show title */
+        .show-title {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 100;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .title-main {
+            font-size: 64px;
+            font-weight: 900;
+            color: #FFFFFF;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            text-shadow:
+                0 0 20px rgba(14, 165, 233, 0.5),
+                0 4px 8px rgba(0, 0, 0, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .title-subtitle {
+            font-size: 20px;
+            font-weight: 500;
+            color: #0EA5E9;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* Name cards */
+        .name-card {
+            position: absolute;
+            bottom: 60px;
+            background: rgba(15, 15, 15, 0.92);
+            border-radius: 8px;
+            padding: 20px 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.8s ease-out;
+            z-index: 100;
+        }
+
+        .name-card.left {
+            left: 60px;
+            border-left: 4px solid #0EA5E9;
+        }
+
+        .name-card.right {
+            right: 60px;
+            border-right: 4px solid #0EA5E9;
+        }
+
+        .name-card .name {
+            font-size: 28px;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-bottom: 6px;
+        }
+
+        .name-card .title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #9CA3AF;
+            margin-bottom: 4px;
+        }
+
+        .name-card .social {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0EA5E9;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .name-card.right {
+            animation: slideInRight 0.8s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background layers -->
+    <div class="background-gradient"></div>
+    <div class="grid-overlay"></div>
+    
+    <!-- Animated particles -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    
+    <!-- Animated connection lines -->
+    <div class="connection-lines">
+        <div class="line line-horizontal"></div>
+        <div class="line line-horizontal"></div>
+        <div class="line line-horizontal"></div>
+        <div class="line line-horizontal"></div>
+        <div class="line line-vertical"></div>
+        <div class="line line-vertical"></div>
+        <div class="line line-vertical"></div>
+    </div>
+    
+    <!-- Corner accents -->
+    <div class="corner-accent top-left"></div>
+    <div class="corner-accent top-right"></div>
+    <div class="corner-accent bottom-left"></div>
+    <div class="corner-accent bottom-right"></div>
+    
+    <!-- Center divider -->
+    <div class="center-divider"></div>
+    
+    <!-- Camera frames -->
+    <div class="camera-container">
+        <div class="camera-frame">
+            <div class="camera-label">HOST</div>
+            <div class="camera-placeholder">CAMERA 1</div>
+        </div>
+        <div class="camera-frame">
+            <div class="camera-label">GUEST</div>
+            <div class="camera-placeholder">CAMERA 2</div>
+        </div>
+    </div>
+
+    <!-- Show title -->
+    <div class="show-title">
+        <div class="title-main">OUT OF CONTEXT</div>
+        <div class="title-subtitle">Conversations That Matter</div>
+    </div>
+
+    <!-- Name cards -->
+    <div class="name-card left">
+        <div class="name">Abe</div>
+        <div class="title">Host • The Live Stream Show</div>
+        <div class="social">@abelivestream</div>
+    </div>
+
+    <div class="name-card right">
+        <div class="name">Moe</div>
+        <div class="title">Real Estate & Development • NYC</div>
+        <div class="social">Live on Discord</div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERSUS - Debate Battle Screen</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            background: linear-gradient(to bottom, #1a1a1a, #2d2d2d, #1a1a1a);
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Lightning background effect */
+        .lightning-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at top left, rgba(255, 0, 0, 0.1) 0%, transparent 40%),
+                radial-gradient(ellipse at top right, rgba(255, 215, 0, 0.1) 0%, transparent 40%),
+                radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+            animation: bgPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Arena floor */
+        .arena-floor {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 40%;
+            background: linear-gradient(to top, #000 0%, transparent 100%);
+            opacity: 0.5;
+            transform: perspective(500px) rotateX(60deg);
+            transform-origin: bottom;
+        }
+
+        /* Split screen container */
+        .versus-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Fighter sides */
+        .fighter-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            height: 100%;
+        }
+
+        .fighter-left {
+            background: linear-gradient(to right, rgba(255, 0, 0, 0.2), transparent);
+            animation: leftSlideIn 1s ease-out;
+        }
+
+        .fighter-right {
+            background: linear-gradient(to left, rgba(255, 215, 0, 0.2), transparent);
+            animation: rightSlideIn 1s ease-out;
+        }
+
+        @keyframes leftSlideIn {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes rightSlideIn {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Fighter portraits */
+        .portrait-box {
+            width: 250px;
+            height: 250px;
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+            border: 5px solid;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            animation: portraitPulse 2s ease-in-out infinite;
+        }
+
+        .fighter-left .portrait-box {
+            border-color: #FF0000;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.5);
+        }
+
+        .fighter-right .portrait-box {
+            border-color: #FFD700;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+        }
+
+        @keyframes portraitPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Silhouette placeholder */
+        .portrait-silhouette {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 120px;
+            color: rgba(255, 255, 255, 0.1);
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Fighter names */
+        .fighter-name {
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            border: 3px solid;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fighter-left .fighter-name {
+            border-color: #FF0000;
+            animation: nameFlashLeft 2s ease-in-out infinite;
+        }
+
+        .fighter-right .fighter-name {
+            border-color: #FFD700;
+            animation: nameFlashRight 2s ease-in-out infinite;
+        }
+
+        @keyframes nameFlashLeft {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(255, 0, 0, 0.8); }
+        }
+
+        @keyframes nameFlashRight {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); }
+        }
+
+        .name-text {
+            font-size: 2.5em;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .fighter-left .name-text {
+            color: #FF0000;
+            text-shadow: 
+                2px 2px 0 #8B0000,
+                4px 4px 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .fighter-right .name-text {
+            color: #FFD700;
+            text-shadow: 
+                2px 2px 0 #FFA500,
+                4px 4px 10px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Stats bars */
+        .stats-container {
+            margin-top: 20px;
+            width: 300px;
+        }
+
+        .stat-bar {
+            margin: 10px 0;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #666;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-fill {
+            height: 100%;
+            position: absolute;
+            top: 0;
+            animation: statGrow 1s ease-out forwards;
+        }
+
+        .fighter-left .stat-fill {
+            background: linear-gradient(90deg, #8B0000, #FF0000, #FF4500);
+            left: 0;
+        }
+
+        .fighter-right .stat-fill {
+            background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
+            right: 0;
+        }
+
+        @keyframes statGrow {
+            0% { width: 0; }
+            100% { width: 100%; }
+        }
+
+        /* VS Center */
+        .vs-center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        .vs-text {
+            font-size: 8em;
+            font-weight: 900;
+            color: #FFFFFF;
+            text-shadow: 
+                4px 4px 0 #FF0000,
+                8px 8px 0 #FFD700,
+                12px 12px 0 #8B0000,
+                16px 16px 30px rgba(0, 0, 0, 0.9);
+            animation: vsSlam 0.5s ease-out, vsPulse 1s ease-in-out 0.5s infinite;
+        }
+
+        @keyframes vsSlam {
+            0% {
+                transform: scale(10) rotate(360deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.5) rotate(10deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes vsPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* Battle balls */
+        .battle-ball {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+        }
+
+        .ball-left {
+            left: 20%;
+            top: 70%;
+            background: radial-gradient(circle at 30% 30%, #FF0000, #8B0000);
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+            animation: ballBounceLeft 1s ease-in-out infinite;
+        }
+
+        .ball-right {
+            right: 20%;
+            top: 70%;
+            background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            animation: ballBounceRight 1s ease-in-out infinite;
+        }
+
+        @keyframes ballBounceLeft {
+            0%, 100% { 
+                transform: translateY(0) scale(1);
+            }
+            50% { 
+                transform: translateY(-30px) scale(1.2);
+            }
+        }
+
+        @keyframes ballBounceRight {
+            0%, 100% { 
+                transform: translateY(0) scale(1);
+            }
+            50% { 
+                transform: translateY(-30px) scale(1.2);
+            }
+        }
+
+        /* Round indicator */
+        .round-indicator {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            padding: 15px 50px;
+            border: 3px solid #FFD700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            animation: roundSlam 0.5s ease-out 0.3s both;
+        }
+
+        .round-text {
+            font-size: 2em;
+            color: #FFD700;
+            text-transform: uppercase;
+            font-weight: 900;
+            letter-spacing: 0.2em;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+        }
+
+        @keyframes roundSlam {
+            0% {
+                transform: translateX(-50%) translateY(-100px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Fight announcement */
+        .fight-announcement {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3em;
+            color: #FF0000;
+            text-transform: uppercase;
+            font-weight: 900;
+            letter-spacing: 0.3em;
+            text-shadow: 
+                2px 2px 0 #FFD700,
+                4px 4px 10px rgba(0, 0, 0, 0.8);
+            animation: fightBlink 0.5s ease-in-out infinite;
+            opacity: 0;
+            animation-delay: 2s;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes fightBlink {
+            0%, 100% { 
+                opacity: 1;
+                transform: translateX(-50%) scale(1);
+            }
+            50% { 
+                opacity: 0.7;
+                transform: translateX(-50%) scale(1.1);
+            }
+        }
+
+        /* Electric sparks */
+        .spark {
+            position: absolute;
+            width: 2px;
+            background: linear-gradient(transparent, #FFD700, transparent);
+            opacity: 0;
+            animation: spark 2s infinite;
+        }
+
+        .spark1 { left: 50%; height: 100%; animation-delay: 0s; }
+        .spark2 { left: 45%; height: 80%; animation-delay: 0.5s; }
+        .spark3 { left: 55%; height: 80%; animation-delay: 1s; }
+
+        @keyframes spark {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .portrait-box {
+                width: 150px;
+                height: 150px;
+            }
+            .portrait-silhouette {
+                font-size: 80px;
+            }
+            .name-text {
+                font-size: 1.5em;
+            }
+            .vs-text {
+                font-size: 5em;
+            }
+            .round-text {
+                font-size: 1.5em;
+            }
+            .fight-announcement {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lightning-bg"></div>
+    <div class="arena-floor"></div>
+    
+    <!-- Electric sparks -->
+    <div class="spark spark1"></div>
+    <div class="spark spark2"></div>
+    <div class="spark spark3"></div>
+    
+    <div class="versus-container">
+        <!-- Left Fighter -->
+        <div class="fighter-side fighter-left">
+            <div class="portrait-box">
+                <div class="portrait-silhouette">👤</div>
+            </div>
+            <div class="fighter-name">
+                <div class="name-text" id="fighter1">PLAYER ONE</div>
+            </div>
+            <div class="stats-container">
+                <div class="stat-bar">
+                    <div class="stat-fill" style="animation-delay: 0.5s;"></div>
+                </div>
+                <div class="stat-bar">
+                    <div class="stat-fill" style="animation-delay: 0.7s;"></div>
+                </div>
+                <div class="stat-bar">
+                    <div class="stat-fill" style="animation-delay: 0.9s;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Fighter -->
+        <div class="fighter-side fighter-right">
+            <div class="portrait-box">
+                <div class="portrait-silhouette">👤</div>
+            </div>
+            <div class="fighter-name">
+                <div class="name-text" id="fighter2">PLAYER TWO</div>
+            </div>
+            <div class="stats-container">
+                <div class="stat-bar">
+                    <div class="stat-fill" style="animation-delay: 0.6s;"></div>
+                </div>
+                <div class="stat-bar">
+                    <div class="stat-fill" style="animation-delay: 0.8s;"></div>
+                </div>
+                <div class="stat-bar">
+                    <div class="stat-fill" style="animation-delay: 1s;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- VS Center -->
+    <div class="vs-center">
+        <div class="vs-text">VS</div>
+    </div>
+    
+    <!-- Battle balls -->
+    <div class="battle-ball ball-left"></div>
+    <div class="battle-ball ball-right"></div>
+    
+    <!-- Round indicator -->
+    <div class="round-indicator">
+        <div class="round-text">ROUND 1</div>
+    </div>
+    
+    <!-- Fight announcement -->
+    <div class="fight-announcement">GET READY TO DEBATE!</div>
+
+    <script>
+        // Example matchups
+        const matchups = [
+            { player1: "Rattlesnake", player2: "Jags" },
+            { player1: "Babs", player2: "El Garza" },
+            { player1: "Howard Hughes", player2: "Dr.MindEye" },
+            { player1: "Animal", player2: "HerbDullah" },
+            { player1: "Austin", player2: "Rattlesnake" }
+        ];
+        
+        let currentMatchup = 0;
+        
+        // Function to update fighters
+        function updateFighters() {
+            const fighter1 = document.getElementById('fighter1');
+            const fighter2 = document.getElementById('fighter2');
+            
+            fighter1.style.opacity = '0';
+            fighter2.style.opacity = '0';
+            
+            setTimeout(() => {
+                fighter1.textContent = matchups[currentMatchup].player1;
+                fighter2.textContent = matchups[currentMatchup].player2;
+                fighter1.style.opacity = '1';
+                fighter2.style.opacity = '1';
+                
+                currentMatchup = (currentMatchup + 1) % matchups.length;
+            }, 300);
+        }
+        
+        // Change matchup every 5 seconds for demo
+        setInterval(updateFighters, 5000);
+        
+        // Set initial matchup
+        document.getElementById('fighter1').textContent = matchups[0].player1;
+        document.getElementById('fighter2').textContent = matchups[0].player2;
+        
+        // Add transition
+        document.getElementById('fighter1').style.transition = 'opacity 0.3s';
+        document.getElementById('fighter2').style.transition = 'opacity 0.3s';
+        
+        // Screen shake effect
+        setTimeout(() => {
+            document.body.style.animation = 'screenShake 0.5s';
+        }, 500);
+        
+        // Add screen shake keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes screenShake {
+                0%, 100% { transform: translate(0, 0); }
+                10% { transform: translate(-5px, -5px); }
+                20% { transform: translate(5px, 5px); }
+                30% { transform: translate(-5px, 5px); }
+                40% { transform: translate(5px, -5px); }
+                50% { transform: translate(-3px, -3px); }
+                60% { transform: translate(3px, 3px); }
+                70% { transform: translate(-3px, 3px); }
+                80% { transform: translate(3px, -3px); }
+                90% { transform: translate(-1px, -1px); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Create impact flash
+        function createImpactFlash() {
+            const flash = document.createElement('div');
+            flash.style.position = 'fixed';
+            flash.style.top = '0';
+            flash.style.left = '0';
+            flash.style.width = '100%';
+            flash.style.height = '100%';
+            flash.style.background = 'radial-gradient(circle at center, rgba(255, 255, 255, 0.3), transparent)';
+            flash.style.pointerEvents = 'none';
+            flash.style.zIndex = '100';
+            
+            document.body.appendChild(flash);
+            
+            flash.animate([
+                { opacity: 0 },
+                { opacity: 1 },
+                { opacity: 0 }
+            ], {
+                duration: 300,
+                easing: 'ease-out'
+            }).onfinish = () => flash.remove();
+        }
+        
+        // Trigger impact flashes
+        setTimeout(createImpactFlash, 500);
+        setTimeout(createImpactFlash, 2000);
+        
+        // Electricity effect between fighters
+        function createElectricity() {
+            const electricity = document.createElement('div');
+            electricity.style.position = 'absolute';
+            electricity.style.left = '50%';
+            electricity.style.top = '50%';
+            electricity.style.transform = 'translate(-50%, -50%)';
+            electricity.style.width = '100%';
+            electricity.style.height = '2px';
+            electricity.style.background = 'linear-gradient(90deg, transparent, #FFD700, transparent)';
+            electricity.style.zIndex = '15';
+            electricity.style.opacity = '0';
+            
+            document.body.appendChild(electricity);
+            
+            electricity.animate([
+                { opacity: 0, transform: 'translate(-50%, -50%) scaleX(0)' },
+                { opacity: 1, transform: 'translate(-50%, -50%) scaleX(1)' },
+                { opacity: 0, transform: 'translate(-50%, -50%) scaleX(0)' }
+            ], {
+                duration: 500,
+                easing: 'ease-out'
+            }).onfinish = () => electricity.remove();
+        }
+        
+        // Create electricity periodically
+        setInterval(createElectricity, 3000);
+        
+        // Countdown sound visualization (visual only)
+        let countdown = 3;
+        function showCountdown() {
+            if (countdown > 0) {
+                const countText = document.createElement('div');
+                countText.style.position = 'fixed';
+                countText.style.left = '50%';
+                countText.style.top = '50%';
+                countText.style.transform = 'translate(-50%, -50%)';
+                countText.style.fontSize = '10em';
+                countText.style.color = '#FFD700';
+                countText.style.fontWeight = '900';
+                countText.style.textShadow = '5px 5px 0 #FF0000, 10px 10px 20px rgba(0,0,0,0.8)';
+                countText.style.zIndex = '200';
+                countText.textContent = countdown;
+                
+                document.body.appendChild(countText);
+                
+                countText.animate([
+                    { transform: 'translate(-50%, -50%) scale(0)', opacity: 0 },
+                    { transform: 'translate(-50%, -50%) scale(1.5)', opacity: 1 },
+                    { transform: 'translate(-50%, -50%) scale(1)', opacity: 0 }
+                ], {
+                    duration: 1000,
+                    easing: 'ease-out'
+                }).onfinish = () => countText.remove();
+                
+                countdown--;
+                if (countdown > 0) {
+                    setTimeout(showCountdown, 1000);
+                }
+            }
+        }
+        
+        // Start countdown after 3 seconds
+        setTimeout(showCountdown, 3000);
+    </script>
+</body>
+</html>

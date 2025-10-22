@@ -57,6 +57,7 @@ export interface VotingConfig {
   similarity_threshold: number; // 0.0-1.0, higher = more similar required for deduplication
   quality_weight: number; // Weight for quality in final score
   diversity_weight: number; // Weight for diversity in final score
+  novelty_weight?: number; // Weight for novelty in final score
   min_votes_required: number; // Minimum models that must succeed
 }
 
@@ -134,8 +135,11 @@ export interface ContextMemoryConfig {
   maxCacheSize: number;                // Max questions in memory (default: 100)
   similarityThreshold: number;         // Block if > this (default: 0.80)
   penaltySimilarityThreshold: number;  // Penalize if > this (default: 0.70)
+  penaltyThreshold?: number;           // Alias for penaltySimilarityThreshold
   noveltyBoostThreshold: number;       // Boost if < this (default: 0.60)
+  boostThreshold?: number;             // Alias for noveltyBoostThreshold
   temporalDecayHalfLife: number;       // Minutes (default: 30)
+  persistenceInterval?: number;        // Persistence interval in minutes
   persistToDatabase: boolean;          // Save to Supabase (default: true)
   retentionDays: number;               // Keep history for X days (default: 30)
 }
@@ -190,6 +194,7 @@ export interface ContextMemoryCache {
   questions: QuestionHistoryItem[];  // Historical questions
   maxSize: number;                // Max cache size
   createdAt: Date;                // When cache was initialized
+  push: (item: QuestionHistoryItem) => void; // Add question to cache
 }
 
 /**
@@ -224,12 +229,16 @@ export interface HostProfile {
   id: string;
   hostId: string;
   hostName?: string;
+  host_id?: string; // Alias for hostId
+  host_name?: string; // Alias for hostName
 
   // Show statistics
   totalShows: number;
   totalQuestionsGenerated: number;
   totalQuestionsAsked: number;
   totalQuestionsIgnored: number;
+  total_questions_analyzed?: number; // Alias for totalQuestionsAsked
+  confidence_score?: number; // Alias for confidenceScore
 
   // Usage metrics
   usageRate: number;        // 0-1, % of generated questions actually used
@@ -239,6 +248,15 @@ export interface HostProfile {
   avgComplexity: number;    // 0-1
   avgLength: number;        // words
   preferredStyle?: QuestionStyle;
+
+  // Advanced preferences
+  technical_depth_preference?: number; // 0-1
+  controversy_tolerance?: number; // 0-1
+  humor_preference?: number; // 0-1
+  philosophical_preference?: number; // 0-1
+  practical_preference?: number; // 0-1
+  preferred_topics?: string[]; // Array of preferred topics
+  avoided_topics?: string[]; // Array of avoided topics
 
   // Distributions
   topicDistribution: Record<string, number>;  // topic -> frequency

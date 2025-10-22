@@ -385,8 +385,8 @@ export function useBetaBotConversation(): UseBetaBotConversation {
           ...prev,
           history: [
             ...prev.history,
-            { role: 'user', content: query, timestamp: Date.now() },
-            { role: 'assistant', content: fullResponse, timestamp: Date.now() }
+            { role: 'user' as const, content: query, timestamp: Date.now() },
+            { role: 'assistant' as const, content: fullResponse, timestamp: Date.now() }
           ].slice(-20), // Keep last 20 messages
           lastInteraction: Date.now(),
           showContext: showContext
@@ -405,8 +405,8 @@ export function useBetaBotConversation(): UseBetaBotConversation {
         ...prev,
         history: [
           ...prev.history,
-          { role: 'user', content: query, timestamp: Date.now() },
-          { role: 'assistant', content: answer, timestamp: Date.now() }
+          { role: 'user' as const, content: query, timestamp: Date.now() },
+          { role: 'assistant' as const, content: answer, timestamp: Date.now() }
         ].slice(-20),
         lastInteraction: Date.now(),
         showContext: showContext

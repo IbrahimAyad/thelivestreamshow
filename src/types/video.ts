@@ -79,3 +79,16 @@ export type TransitionEffect = 'instant' | 'fade' | 'slide-left' | 'slide-right'
 export type VideoCategory = 'Funny' | 'Fails' | 'Gaming' | 'Tech' | 'Wholesome' | 'Trending';
 export type EnergyLevel = 'Hype' | 'Chill' | 'Funny';
 
+export interface YouTubeVideo {
+  id: string;
+  video_id: string;
+  title: string;
+  channel: string;
+  channelId?: string; // Alias for channel
+  thumbnail_url: string;
+  thumbnail?: string; // Alias for thumbnail_url
+  duration: number;
+  category?: string;
+  created_at?: string;
+  viewCount?: number; // View count
+}

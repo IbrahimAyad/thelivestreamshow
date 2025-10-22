@@ -232,9 +232,13 @@
 **/.nuxt
 **/dist
 
-# Gatsby files
+# Gatsby files  
 **/.cache/
-**/public
+# Allow graphics HTML files in public folder, ignore everything else
+**/public/*
+!**/public/*.html
+!**/public/graphics/
+!**/public/animations/
 
 # Vue.js
 **/dist/

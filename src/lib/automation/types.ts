@@ -115,6 +115,11 @@ export interface TriggerRule {
   // Trigger
   trigger_type: TriggerType
   trigger_conditions: Record<string, any>
+  
+  // Additional trigger properties for keyword triggers
+  keyword?: string
+  confidence_boost?: number
+  is_active?: boolean
 
   // Action
   action_type: ActionType

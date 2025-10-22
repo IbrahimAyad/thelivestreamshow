@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { X, Play, Pause, Scissors, Loader2 } from 'lucide-react'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 import { supabase } from '@/lib/supabase'
 import {
   fetchAndDecodeAudio,

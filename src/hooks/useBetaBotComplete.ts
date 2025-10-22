@@ -29,7 +29,7 @@ export interface ProducerAIQuestion {
 export interface BetaBotResponse {
   text: string;
   type: 'normal' | 'search' | 'video' | 'image' | 'producer_question';
-  data?: PerplexityResult | VideoResult[] | ImageResult[];
+  data?: PerplexityResult | VideoResult[] | ImageResult[] | ProducerAIQuestion;
   interactionId: string;
   source: 'keyword' | 'producer_ai';
 }
@@ -234,7 +234,7 @@ export function useBetaBotComplete(): UseBetaBotComplete {
     await conversation.storeConversationMemory(
       interactionId,
       `User asked for search: "${query}". BetaBot found: ${result.answer}`,
-      { type: 'perplexity_search', query }
+      { contextMetadata: { type: 'perplexity_search', query } }
     );
 
     return {
@@ -260,7 +260,7 @@ export function useBetaBotComplete(): UseBetaBotComplete {
     await conversation.storeConversationMemory(
       interactionId,
       `User asked for videos: "${query}". BetaBot found ${videos.length} videos.`,
-      { type: 'video_search', query }
+      { contextMetadata: { type: 'video_search', query } }
     );
 
     return {
@@ -286,7 +286,7 @@ export function useBetaBotComplete(): UseBetaBotComplete {
     await conversation.storeConversationMemory(
       interactionId,
       `User asked for images: "${query}". BetaBot found ${images.length} images.`,
-      { type: 'image_search', query }
+      { contextMetadata: { type: 'image_search', query } }
     );
 
     return {
@@ -313,12 +313,12 @@ export function useBetaBotComplete(): UseBetaBotComplete {
     }
 
     // Use conversation system with memory recall
-    const result = await conversation.chat(query, mode);
+    const result = await conversation.chat(query, mode as any);
 
     return {
-      text: result.response,
+      text: result,
       type: 'normal',
-      interactionId: result.interactionId,
+      interactionId: crypto.randomUUID(),
       source: 'keyword'
     };
   };
@@ -334,7 +334,7 @@ export function useBetaBotComplete(): UseBetaBotComplete {
     await conversation.storeConversationMemory(
       interactionId,
       `Producer AI suggested: "${questionData.question}". BetaBot read it out loud.`,
-      { type: 'producer_question', mode: questionData.mode }
+      { contextMetadata: { type: 'producer_question', mode: questionData.mode } }
     );
 
     const response: BetaBotResponse = {

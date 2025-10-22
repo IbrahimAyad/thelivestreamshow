@@ -12,7 +12,7 @@ import {
   clearAllCues,
   getCueIdFromKey,
 } from '@/utils/studio/hotCues';
-import { MusicTrack } from '../types/database';
+import { MusicTrack } from "@/types/database";
 
 interface UseHotCuesOptions {
   onCueJump?: (time: number) => void;

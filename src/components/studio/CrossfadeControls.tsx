@@ -1,5 +1,5 @@
 import { Waves } from 'lucide-react'
-import type { AudioSettings } from '@/types/database'
+import type { AudioSettings } from "@/types/database"
 
 interface CrossfadeControlsProps {
   settings: AudioSettings | null

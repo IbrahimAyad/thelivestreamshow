@@ -11,12 +11,15 @@ import {
   getFrequencyBands,
   getEnergyColor,
   getEnergyGradient,
+  getAverageVolume,
+  getFrequencyData,
   ParticleSystem,
-  type FrequencyData,
+  type AudioData,
+  type FrequencyData as AudioFrequencyData,
 } from '@/utils/audioVisualizer'
 import { extractFrequencyBands } from '@/utils/mockFrequencyData'
 import { loadPreset, type VisualizationPreset, VISUALIZATION_PRESETS } from '@/utils/visualizationPresets'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 
 interface BroadcastVisualizerProps {
   analyser: AnalyserNode | null
@@ -53,15 +56,16 @@ export function BroadcastVisualizer({
   const frameCountRef = useRef(0)
   const [localPlaybackPosition, setLocalPlaybackPosition] = useState(playbackPosition)
   
-  const [preset, setPreset] = useState<VisualizationPreset>(loadPreset())
-  const [frequencyBands, setFrequencyBands] = useState<FrequencyData>({
+  const [preset, setPreset] = useState<VisualizationPreset | null>(null)
+  const [frequencyBands, setFrequencyBands] = useState<AudioFrequencyData>({
+    frequencies: [],
+    timestamp: 0,
     low: 0,
     mid: 0,
     high: 0,
-    average: 0,
   })
   
-  const config = VISUALIZATION_PRESETS[preset]
+  const config = preset ? VISUALIZATION_PRESETS.find(p => p.id === preset.id) : null
   const color = getEnergyColor(energy)
   
   // Update local playback position in real-time (smooth updates)
@@ -95,7 +99,7 @@ export function BroadcastVisualizer({
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
     
-    particleSystemRef.current = new ParticleSystem(canvas)
+    particleSystemRef.current = new ParticleSystem()
     
     const handleResize = () => {
       canvas.width = window.innerWidth
@@ -109,12 +113,13 @@ export function BroadcastVisualizer({
   // Listen for preset changes from localStorage
   useEffect(() => {
     const checkPreset = () => {
-      const currentPreset = loadPreset()
-      if (currentPreset !== preset) {
+      const currentPreset = loadPreset('classic') // Default to classic preset
+      if (currentPreset && currentPreset !== preset) {
         setPreset(currentPreset)
       }
     }
     
+    checkPreset() // Initialize immediately
     const interval = setInterval(checkPreset, 1000)
     return () => clearInterval(interval)
   }, [preset])
@@ -136,7 +141,7 @@ export function BroadcastVisualizer({
         const canvas = canvasRef.current
         const x = canvas.width / 2
         const y = canvas.height / 2
-        particleSystemRef.current.emit(x, y, config.particleIntensity, color)
+        particleSystemRef.current.emit(x, y)
       }
     }
     
@@ -144,7 +149,7 @@ export function BroadcastVisualizer({
     if (beatPulseRef.current > 0) {
       beatPulseRef.current -= 0.05
     }
-  }, [analyser, isPlaying, bpm, config.showParticles, config.particleIntensity, color])
+  }, [analyser, isPlaying, bpm, config?.showParticles, config?.particleIntensity, color])
   
   // Main animation loop
   const animate = useCallback(() => {
@@ -157,22 +162,29 @@ export function BroadcastVisualizer({
     if (!ctx) return
     
     // Clear canvas
-    ctx.fillStyle = config.backgroundColor
+    ctx.fillStyle = config?.backgroundColor || '#000000'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     
     // Update frequency data (from analyser OR mock data)
     if (analyser) {
       // Real audio analysis
-      const bands = getFrequencyBands(analyser)
-      setFrequencyBands(bands)
+      const data: AudioFrequencyData = {
+        frequencies: [],
+        timestamp: Date.now(),
+        low: 0,
+        mid: 0,
+        high: 0,
+      }
+      setFrequencyBands(data)
     } else if (mockFrequencyData) {
       // Mock frequency data for visualization (actually REAL data reconstructed from control panel!)
-      const bands = extractFrequencyBands(mockFrequencyData)
+      const bands = extractFrequencyBands({ frequencies: Array.from(mockFrequencyData), timestamp: Date.now() })
       setFrequencyBands({
-        low: bands.low,
-        mid: bands.mid,
-        high: bands.high,
-        average: (bands.low + bands.mid + bands.high) / 3,
+        frequencies: Array.from(mockFrequencyData),
+        timestamp: Date.now(),
+        low: bands.low || 0,
+        mid: bands.mid || 0,
+        high: bands.high || 0,
       })
       
       // Debug log once per second (at 60fps, every 60 frames = 1 second)
@@ -185,23 +197,41 @@ export function BroadcastVisualizer({
       const centerX = canvas.width / 2
       const centerY = canvas.height / 2
       
+      // Create audio data object
+      const audioData: AudioData = {
+        volume: analyser ? getAverageVolume(analyser) : 0,
+        frequencies: analyser ? getFrequencyData(analyser) : [],
+        waveform: [],
+        peak: 0,
+        timestamp: Date.now()
+      };
+      
+      // Create visualizer config from preset
+      const visualizerConfig = {
+        colorScheme: (config?.config?.colorScheme as 'default' | 'rainbow' | 'monochrome') || 'default',
+        barCount: config?.config?.barCount || 32,
+        smoothing: config?.config?.smoothing || 0.8,
+        sensitivity: config?.config?.sensitivity || 1.0,
+        gradient: config?.config?.gradient || { from: '#00ff00', to: '#ff0000' }
+      };
+      
       // Draw vinyl disc (always visible)
       if (config.showVinyl) {
         if (isPlaying) {
           vinylRotationRef.current += 0.02 // Slow rotation when playing
         }
-        drawVinylDisc(canvas, centerX, centerY, 150, vinylRotationRef.current, isPlaying)
+        drawVinylDisc(ctx, audioData, visualizerConfig)
       }
       
       // Draw circular waveform
       if (config.showCircular && analyser) {
         // Only show with real audio analysis
-        drawCircularWaveform(canvas, analyser, centerX, centerY, 180, color)
+        drawCircularWaveform(ctx, audioData, visualizerConfig)
       }
       
       // Draw spectrum bars
       if (config.showSpectrum) {
-        if (preset === 'retro') {
+        if (preset?.id === 'retro') {
           // Retro grid style
           drawRetroGrid(ctx, canvas.width, canvas.height, frequencyBands.average)
         }
@@ -213,7 +243,10 @@ export function BroadcastVisualizer({
           spectrumCanvas.width = canvas.width * 0.8
           spectrumCanvas.height = 150
           
-          drawSpectrumBars(spectrumCanvas, analyser, color)
+          const spectrumCtx = spectrumCanvas.getContext('2d')
+          if (spectrumCtx) {
+            drawSpectrumBars(spectrumCtx, audioData, visualizerConfig)
+          }
           
           ctx.drawImage(
             spectrumCanvas,
@@ -243,8 +276,8 @@ export function BroadcastVisualizer({
       
       // Draw particles
       if (config.showParticles && particleSystemRef.current) {
-        particleSystemRef.current.update()
-        particleSystemRef.current.draw()
+        particleSystemRef.current.update(audioData)
+        particleSystemRef.current.draw(ctx)
       }
       
       // Beat pulse effect (screen flash)
@@ -382,7 +415,7 @@ export function BroadcastVisualizer({
           style={{ borderColor: color }}
         >
           <p className="text-xs font-bold" style={{ color }}>
-            {VISUALIZATION_PRESETS[preset].name.toUpperCase()}
+            {preset?.name.toUpperCase() || 'CLASSIC'}
           </p>
         </div>
       </div>

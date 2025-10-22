@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PATH AWARD SHOW - The Live Stream Show</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Luxury curtains */
+        .curtain-left, .curtain-right {
+            position: absolute;
+            top: 0;
+            width: 35%;
+            height: 100%;
+            background: linear-gradient(90deg, #2d2d2d, #1a1a1a);
+            box-shadow: inset 0 0 100px rgba(255, 215, 0, 0.1);
+            z-index: 3;
+        }
+
+        .curtain-left {
+            left: 0;
+            animation: curtainSlideLeft 2s ease-out forwards;
+            background: linear-gradient(90deg, #2d2d2d, #1a1a1a, transparent);
+        }
+
+        .curtain-right {
+            right: 0;
+            animation: curtainSlideRight 2s ease-out forwards;
+            background: linear-gradient(-90deg, #2d2d2d, #1a1a1a, transparent);
+        }
+
+        @keyframes curtainSlideLeft {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-80%); }
+        }
+
+        @keyframes curtainSlideRight {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(80%); }
+        }
+
+        /* Spotlight effects */
+        .spotlight-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .spotlight {
+            position: absolute;
+            width: 300px;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                rgba(255, 215, 0, 0.3),
+                rgba(255, 215, 0, 0.1),
+                transparent 60%
+            );
+            transform-origin: top center;
+            animation: spotlightSweep 8s ease-in-out infinite;
+        }
+
+        .spotlight1 {
+            left: 20%;
+            animation-delay: 0s;
+        }
+
+        .spotlight2 {
+            left: 50%;
+            animation-delay: 2s;
+            transform: translateX(-50%);
+        }
+
+        .spotlight3 {
+            right: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes spotlightSweep {
+            0%, 100% { transform: rotate(-15deg); opacity: 0.5; }
+            50% { transform: rotate(15deg); opacity: 1; }
+        }
+
+        /* Main stage */
+        .award-stage {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+            animation: stageRise 1s ease-out 0.5s both;
+        }
+
+        @keyframes stageRise {
+            0% { 
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            100% { 
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Path Award Show title */
+        .show-title {
+            font-size: 2em;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+
+        .main-title {
+            font-size: 6em;
+            font-weight: 900;
+            background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 20px;
+            text-shadow: 
+                0 0 30px rgba(255, 215, 0, 0.5),
+                0 0 60px rgba(255, 215, 0, 0.3);
+            animation: titleShine 3s ease-in-out infinite;
+            position: relative;
+        }
+
+        @keyframes titleShine {
+            0%, 100% { 
+                filter: brightness(1);
+                transform: scale(1);
+            }
+            50% { 
+                filter: brightness(1.3);
+                transform: scale(1.02);
+            }
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* Trophy pedestal */
+        .trophy-container {
+            margin: 40px 0;
+            position: relative;
+            animation: trophyReveal 1s ease-out 1.5s both;
+        }
+
+        @keyframes trophyReveal {
+            0% {
+                transform: scale(0) rotate(180deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1) rotate(10deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .pedestal {
+            width: 200px;
+            height: 250px;
+            background: linear-gradient(135deg, #8B0000, #FF0000, #8B0000);
+            margin: 0 auto;
+            position: relative;
+            clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.8),
+                inset 0 0 50px rgba(255, 215, 0, 0.2);
+        }
+
+        /* PATH Water Bottle Trophy */
+        .trophy {
+            position: absolute;
+            top: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: trophyFloat 3s ease-in-out infinite;
+        }
+
+        .bottle-body {
+            width: 80px;
+            height: 200px;
+            background: linear-gradient(180deg, 
+                #1a1a1a 0%, 
+                #2d2d2d 10%, 
+                #1a1a1a 20%, 
+                #2d2d2d 80%, 
+                #1a1a1a 100%
+            );
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 
+                0 0 50px rgba(255, 215, 0, 0.8),
+                inset -5px 0 15px rgba(0, 0, 0, 0.5),
+                inset 5px 0 15px rgba(255, 255, 255, 0.1);
+            border: 2px solid #FFD700;
+            overflow: hidden;
+        }
+
+        .bottle-body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, 
+                transparent, 
+                rgba(255, 215, 0, 0.1), 
+                transparent
+            );
+            animation: bottleShine 3s ease-in-out infinite;
+        }
+
+        @keyframes bottleShine {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .bottle-cap {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 30px;
+            background: linear-gradient(180deg, #FFD700, #FFA500, #FFD700);
+            border-radius: 5px 5px 0 0;
+            box-shadow: 
+                0 -5px 20px rgba(255, 215, 0, 0.6),
+                inset 0 5px 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .bottle-label {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 40%;
+            background: linear-gradient(135deg, 
+                rgba(255, 215, 0, 0.1), 
+                rgba(255, 215, 0, 0.3), 
+                rgba(255, 215, 0, 0.1)
+            );
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.2);
+        }
+
+        .path-text {
+            font-size: 20px;
+            font-weight: 900;
+            color: #FFD700;
+            text-shadow: 
+                0 0 10px rgba(255, 215, 0, 0.8),
+                1px 1px 2px rgba(0, 0, 0, 0.8);
+            letter-spacing: 0.1em;
+            margin-bottom: 5px;
+        }
+
+        .award-year {
+            font-size: 12px;
+            color: #FFA500;
+            text-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+        }
+
+        .bottle-highlight {
+            position: absolute;
+            top: 10%;
+            left: 15%;
+            width: 15px;
+            height: 60px;
+            background: linear-gradient(180deg, 
+                rgba(255, 255, 255, 0.4),
+                rgba(255, 255, 255, 0.1),
+                transparent
+            );
+            border-radius: 50%;
+            transform: rotate(-10deg);
+        }
+
+        .bottle-body::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(180deg, 
+                transparent 0%,
+                rgba(255, 215, 0, 0.05) 30%,
+                rgba(255, 215, 0, 0.1) 100%
+            );
+            animation: liquidSwirl 4s ease-in-out infinite;
+        }
+
+        @keyframes liquidSwirl {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(3deg) scale(1.02); }
+        }
+
+        .bottle-ring {
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 15px;
+            background: linear-gradient(180deg, #FFD700, #FFA500);
+            border-radius: 50%;
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.5);
+        }
+
+        @keyframes trophyFloat {
+            0%, 100% { 
+                transform: translateX(-50%) translateY(0) rotate(0deg);
+            }
+            50% { 
+                transform: translateX(-50%) translateY(-10px) rotate(3deg);
+            }
+        }
+
+        .trophy-star {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px;
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            animation: starPulse 2s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        @keyframes starPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        /* Winner name plate */
+        .winner-plate {
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            border: 3px solid #FFD700;
+            padding: 20px 50px;
+            margin-top: 30px;
+            display: inline-block;
+            box-shadow: 
+                0 0 30px rgba(255, 215, 0, 0.5),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+            animation: plateGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes plateGlow {
+            0%, 100% {
+                box-shadow: 
+                    0 0 30px rgba(255, 215, 0, 0.5),
+                    inset 0 0 20px rgba(0, 0, 0, 0.5);
+            }
+            50% {
+                box-shadow: 
+                    0 0 50px rgba(255, 215, 0, 0.8),
+                    inset 0 0 30px rgba(255, 215, 0, 0.1);
+            }
+        }
+
+        .winner-text {
+            font-size: 2.5em;
+            color: #FFD700;
+            text-transform: uppercase;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            text-shadow: 
+                2px 2px 0 #FF0000,
+                4px 4px 10px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Category text */
+        .category-text {
+            font-size: 1.5em;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease-out 2s both;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* Confetti */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #FFD700;
+        }
+
+        /* Red carpet floor */
+        .red-carpet {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 30%;
+            background: linear-gradient(to top, 
+                #8B0000 0%, 
+                #FF0000 50%, 
+                transparent 100%
+            );
+            opacity: 0.3;
+            transform: perspective(500px) rotateX(60deg);
+            transform-origin: bottom;
+        }
+
+        /* Floating stars */
+        .star-field {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .floating-star {
+            position: absolute;
+            color: #FFD700;
+            font-size: 20px;
+            animation: floatStar 10s linear infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes floatStar {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Victory balls */
+        .victory-ball {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #FFD700, #FF0000);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        .ball-left {
+            left: 10%;
+            bottom: 20%;
+            animation: victoryBounce 2s ease-in-out infinite;
+        }
+
+        .ball-right {
+            right: 10%;
+            bottom: 20%;
+            animation: victoryBounce 2s ease-in-out infinite 0.5s;
+        }
+
+        .ball-center {
+            left: 50%;
+            bottom: 15%;
+            transform: translateX(-50%);
+            animation: victoryBounce 2s ease-in-out infinite 1s;
+        }
+
+        @keyframes victoryBounce {
+            0%, 100% { 
+                transform: translateY(0) scale(1);
+            }
+            50% { 
+                transform: translateY(-200px) scale(1.2);
+            }
+        }
+
+        /* Fireworks */
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #FFD700;
+            border-radius: 50%;
+        }
+
+        /* Season badge */
+        .season-badge {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            background: linear-gradient(135deg, #8B0000, #FF0000);
+            padding: 15px 30px;
+            border: 2px solid #FFD700;
+            transform: rotate(5deg);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: badgePulse 3s ease-in-out infinite;
+        }
+
+        .season-text {
+            color: #FFD700;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { transform: rotate(5deg) scale(1); }
+            50% { transform: rotate(5deg) scale(1.05); }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .main-title { font-size: 3.5em; }
+            .show-title { font-size: 1.5em; }
+            .winner-text { font-size: 1.8em; }
+            .pedestal { 
+                width: 150px;
+                height: 200px;
+            }
+            .trophy {
+                top: -100px;
+            }
+            .bottle-body {
+                width: 60px;
+                height: 150px;
+            }
+            .bottle-cap {
+                width: 45px;
+                height: 25px;
+            }
+            .path-text {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="red-carpet"></div>
+    <div class="curtain-left"></div>
+    <div class="curtain-right"></div>
+    
+    <!-- Spotlights -->
+    <div class="spotlight-container">
+        <div class="spotlight spotlight1"></div>
+        <div class="spotlight spotlight2"></div>
+        <div class="spotlight spotlight3"></div>
+    </div>
+    
+    <!-- Floating stars -->
+    <div class="star-field" id="starField"></div>
+    
+    <!-- Victory balls -->
+    <div class="victory-ball ball-left"></div>
+    <div class="victory-ball ball-center"></div>
+    <div class="victory-ball ball-right"></div>
+    
+    <!-- Season badge -->
+    <div class="season-badge">
+        <div class="season-text">SEASON 4</div>
+    </div>
+    
+    <div class="award-stage">
+        <div class="show-title">The Live Stream Show Presents</div>
+        <h1 class="main-title">PATH AWARDS</h1>
+        
+        <div class="category-text" id="categoryText">FIND YOUR PATH - FYP AWARD</div>
+        
+        <!-- Trophy -->
+        <div class="trophy-container">
+            <div class="pedestal"></div>
+            <div class="trophy">
+                <div class="bottle-cap"></div>
+                <div class="bottle-body">
+                    <div class="bottle-highlight"></div>
+                    <div class="bottle-label">
+                        <div class="path-text">PATH</div>
+                        <div class="award-year">FYP AWARD</div>
+                        <div class="trophy-star">⭐</div>
+                    </div>
+                    <div class="bottle-ring"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Winner plate -->
+        <div class="winner-plate">
+            <div class="winner-text" id="winnerName">PATH LEGEND</div>
+        </div>
+    </div>
+
+    <script>
+        // Create floating stars
+        function createStars() {
+            const starField = document.getElementById('starField');
+            for (let i = 0; i < 20; i++) {
+                const star = document.createElement('div');
+                star.className = 'floating-star';
+                star.textContent = '✦';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 10 + 's';
+                star.style.animationDuration = (10 + Math.random() * 10) + 's';
+                starField.appendChild(star);
+            }
+        }
+        createStars();
+
+        // Create confetti
+        function createConfetti() {
+            const colors = ['#FFD700', '#FF0000', '#FFA500', '#FFFFFF'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-10px';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    
+                    document.body.appendChild(confetti);
+                    
+                    const endX = (Math.random() - 0.5) * 200;
+                    const endY = window.innerHeight + 20;
+                    
+                    confetti.animate([
+                        { 
+                            transform: `translate(0, 0) rotate(0deg)`,
+                            opacity: 1
+                        },
+                        { 
+                            transform: `translate(${endX}px, ${endY}px) rotate(${Math.random() * 720}deg)`,
+                            opacity: 0
+                        }
+                    ], {
+                        duration: 3000 + Math.random() * 2000,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    }).onfinish = () => confetti.remove();
+                }, i * 50);
+            }
+        }
+
+        // Trigger confetti after trophy reveal
+        setTimeout(createConfetti, 2000);
+
+        // Create fireworks
+        function createFirework(x, y) {
+            const colors = ['#FFD700', '#FF0000', '#FFA500'];
+            for (let i = 0; i < 30; i++) {
+                const firework = document.createElement('div');
+                firework.className = 'firework';
+                firework.style.left = x + 'px';
+                firework.style.top = y + 'px';
+                firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                const angle = (Math.PI * 2 * i) / 30;
+                const velocity = 100 + Math.random() * 150;
+                const endX = Math.cos(angle) * velocity;
+                const endY = Math.sin(angle) * velocity;
+                
+                document.body.appendChild(firework);
+                
+                firework.animate([
+                    { 
+                        transform: 'translate(0, 0) scale(1)',
+                        opacity: 1
+                    },
+                    { 
+                        transform: `translate(${endX}px, ${endY}px) scale(0)`,
+                        opacity: 0
+                    }
+                ], {
+                    duration: 1500,
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                }).onfinish = () => firework.remove();
+            }
+        }
+
+        // Random fireworks
+        function randomFireworks() {
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight * 0.5;
+            createFirework(x, y);
+        }
+
+        setInterval(randomFireworks, 2000);
+
+        // Award categories and winners rotation
+        const awards = [
+            { category: "FIND YOUR PATH - FYP AWARD", winner: "PATH LEGEND" },
+            { category: "LOOSE CANNON AWARD", winner: "CHAOS CHAMPION" },
+            { category: "GAMER OF THE YEAR", winner: "GAMING GOD" },
+            { category: "MOST VALUABLE PLAYER", winner: "MVP ELITE" },
+            { category: "FIND YOUR PATH - FYP AWARD", winner: "PATH PIONEER" },
+            { category: "LOOSE CANNON AWARD", winner: "WILDCARD WINNER" },
+            { category: "GAMER OF THE YEAR", winner: "CONTROLLER KING" },
+            { category: "MOST VALUABLE PLAYER", winner: "STREAM MVP" }
+        ];
+
+        let currentAward = 0;
+
+        function changeAward() {
+            const categoryText = document.getElementById('categoryText');
+            const winnerName = document.getElementById('winnerName');
+            
+            categoryText.style.opacity = '0';
+            winnerName.style.opacity = '0';
+            
+            setTimeout(() => {
+                currentAward = (currentAward + 1) % awards.length;
+                categoryText.textContent = awards[currentAward].category;
+                winnerName.textContent = awards[currentAward].winner;
+                categoryText.style.opacity = '1';
+                winnerName.style.opacity = '1';
+                
+                // Trigger celebration effects
+                createConfetti();
+                createFirework(window.innerWidth / 2, window.innerHeight / 3);
+            }, 500);
+        }
+
+        // Change award every 5 seconds
+        setInterval(changeAward, 5000);
+
+        // Add transitions
+        document.getElementById('categoryText').style.transition = 'opacity 0.5s';
+        document.getElementById('winnerName').style.transition = 'opacity 0.5s';
+
+        // Spotlight flash effect
+        function spotlightFlash() {
+            const flash = document.createElement('div');
+            flash.style.position = 'fixed';
+            flash.style.top = '0';
+            flash.style.left = '0';
+            flash.style.width = '100%';
+            flash.style.height = '100%';
+            flash.style.background = 'radial-gradient(circle at center, rgba(255, 215, 0, 0.3), transparent)';
+            flash.style.pointerEvents = 'none';
+            flash.style.zIndex = '100';
+            
+            document.body.appendChild(flash);
+            
+            flash.animate([
+                { opacity: 0 },
+                { opacity: 1 },
+                { opacity: 0 }
+            ], {
+                duration: 500,
+                easing: 'ease-out'
+            }).onfinish = () => flash.remove();
+        }
+
+        // Periodic spotlight flashes
+        setInterval(() => {
+            if (Math.random() > 0.7) {
+                spotlightFlash();
+            }
+        }, 3000);
+
+        // Drumroll sound visualization
+        function drumrollEffect() {
+            document.body.style.animation = 'drumroll 0.1s ease-in-out 20';
+            setTimeout(() => {
+                document.body.style.animation = '';
+                spotlightFlash();
+                createConfetti();
+            }, 2000);
+        }
+
+        // Add drumroll animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes drumroll {
+                0%, 100% { transform: translateX(0); }
+                50% { transform: translateX(2px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Trigger drumroll before each award change
+        setInterval(() => {
+            drumrollEffect();
+        }, 5000);
+    </script>
+</body>
+</html>

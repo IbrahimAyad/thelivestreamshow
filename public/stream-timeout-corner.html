@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIMEOUT CORNER - You've Been Bad!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Kindergarten wallpaper background */
+        .kindergarten-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(90deg, 
+                    transparent, 
+                    transparent 50px, 
+                    rgba(255, 192, 203, 0.1) 50px, 
+                    rgba(255, 192, 203, 0.1) 100px),
+                repeating-linear-gradient(0deg, 
+                    transparent, 
+                    transparent 50px, 
+                    rgba(135, 206, 235, 0.1) 50px, 
+                    rgba(135, 206, 235, 0.1) 100px);
+            animation: bgScroll 20s linear infinite;
+        }
+
+        @keyframes bgScroll {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(100px, 100px); }
+        }
+
+        /* Baby jail bars */
+        .jail-bars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(90deg,
+                transparent,
+                transparent 40px,
+                rgba(64, 64, 64, 0.8) 40px,
+                rgba(64, 64, 64, 0.8) 45px);
+            z-index: 20;
+            animation: barsRattle 5s ease-in-out infinite;
+        }
+
+        @keyframes barsRattle {
+            0%, 90%, 100% { transform: translateX(0); }
+            92%, 96% { transform: translateX(-2px); }
+            94%, 98% { transform: translateX(2px); }
+        }
+
+        /* Main container */
+        .timeout-container {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+            max-width: 900px;
+        }
+
+        /* Dunce cap */
+        .dunce-cap {
+            width: 0;
+            height: 0;
+            border-left: 60px solid transparent;
+            border-right: 60px solid transparent;
+            border-bottom: 120px solid #FFD700;
+            margin: 0 auto 20px;
+            position: relative;
+            animation: capWobble 3s ease-in-out infinite;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+        }
+
+        .dunce-cap::after {
+            content: 'D';
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3em;
+            color: #FF0000;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes capWobble {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        /* Main title */
+        .timeout-title {
+            font-size: 5em;
+            color: #FF0000;
+            text-transform: uppercase;
+            font-weight: 900;
+            text-shadow: 
+                3px 3px 0 #FFD700,
+                6px 6px 0 #8B0000,
+                9px 9px 20px rgba(0, 0, 0, 0.8);
+            margin-bottom: 20px;
+            animation: titleShame 2s ease-in-out infinite;
+        }
+
+        @keyframes titleShame {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.05) rotate(-2deg); }
+            75% { transform: scale(1.05) rotate(2deg); }
+        }
+
+        /* Shame box */
+        .shame-box {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(139, 0, 0, 0.3));
+            border: 5px dashed #FFD700;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 0 50px rgba(255, 0, 0, 0.5),
+                inset 0 0 50px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Rotating shame border */
+        .shame-box::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: conic-gradient(from 0deg, #FF0000, #FFD700, #FF0000);
+            border-radius: 20px;
+            animation: borderRotate 3s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes borderRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Banned username display */
+        .banned-user {
+            font-size: 2.5em;
+            color: #FFD700;
+            margin: 20px 0;
+            font-weight: bold;
+            text-transform: uppercase;
+            animation: userGlow 2s infinite;
+        }
+
+        .banned-user span {
+            color: #FFF;
+            text-decoration: line-through;
+            opacity: 0.8;
+        }
+
+        @keyframes userGlow {
+            0%, 100% { 
+                text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            }
+            50% { 
+                text-shadow: 0 0 30px rgba(255, 0, 0, 1);
+            }
+        }
+
+        /* Reason for ban */
+        .ban-reason {
+            background: rgba(0, 0, 0, 0.7);
+            border-left: 5px solid #FF0000;
+            padding: 20px;
+            margin: 20px 0;
+            font-size: 1.3em;
+            color: #FFF;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+        }
+
+        .ban-reason strong {
+            color: #FF0000;
+            text-transform: uppercase;
+        }
+
+        /* Shame counter */
+        .shame-counter {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+        }
+
+        .counter-item {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 25px;
+            border: 3px solid #FFD700;
+            border-radius: 10px;
+            animation: counterPulse 2s infinite;
+        }
+
+        .counter-item:nth-child(2) { animation-delay: 0.5s; }
+        .counter-item:nth-child(3) { animation-delay: 1s; }
+
+        @keyframes counterPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .counter-label {
+            color: #999;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .counter-value {
+            font-size: 2em;
+            color: #FFD700;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        /* Crying emoji rain */
+        .emoji-rain {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        .crying-emoji {
+            position: absolute;
+            font-size: 2em;
+            animation: emojieFall 5s linear infinite;
+        }
+
+        @keyframes emojieFall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0.3;
+            }
+        }
+
+        /* Baby bottle and pacifier decorations */
+        .baby-items {
+            position: absolute;
+            font-size: 4em;
+            opacity: 0.2;
+            animation: itemFloat 10s ease-in-out infinite;
+        }
+
+        .baby-bottle { 
+            left: 10%; 
+            top: 20%;
+        }
+
+        .pacifier { 
+            right: 10%; 
+            top: 20%;
+            animation-delay: 5s;
+        }
+
+        @keyframes itemFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+
+        /* Scrolling messages */
+        .scroll-container {
+            position: absolute;
+            bottom: 100px;
+            width: 100%;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            border-top: 3px solid #FFD700;
+            border-bottom: 3px solid #FFD700;
+            overflow: hidden;
+            z-index: 15;
+        }
+
+        .scroll-text {
+            position: absolute;
+            white-space: nowrap;
+            font-size: 1.5em;
+            color: #FFD700;
+            text-transform: uppercase;
+            line-height: 60px;
+            animation: textScroll 20s linear infinite;
+        }
+
+        @keyframes textScroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Wall of shame photos */
+        .wall-of-shame {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 20px;
+            z-index: 5;
+        }
+
+        .wall-of-shame.left { left: 20px; }
+        .wall-of-shame.right { right: 20px; }
+
+        .shame-portrait {
+            width: 80px;
+            height: 80px;
+            background: #333;
+            border: 3px solid #8B0000;
+            margin: 10px 0;
+            position: relative;
+            font-size: 2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.5;
+            transform: rotate(-5deg);
+        }
+
+        .shame-portrait:nth-child(even) {
+            transform: rotate(5deg);
+        }
+
+        /* Timer */
+        .timeout-timer {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            background: #FF0000;
+            color: #FFF;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+            animation: timerPulse 1s infinite;
+        }
+
+        .timer-label {
+            font-size: 0.6em;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.8;
+        }
+
+        .timer-value {
+            font-size: 2em;
+            font-family: 'Courier New', monospace;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Naughty stamp */
+        .naughty-stamp {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            font-size: 8em;
+            color: rgba(255, 0, 0, 0.3);
+            font-weight: 900;
+            text-transform: uppercase;
+            border: 10px solid rgba(255, 0, 0, 0.3);
+            padding: 20px;
+            pointer-events: none;
+            z-index: 25;
+            animation: stampSlam 0.5s ease-out;
+        }
+
+        @keyframes stampSlam {
+            0% {
+                transform: translate(-50%, -50%) rotate(-15deg) scale(5);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) rotate(-15deg) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(-15deg) scale(1);
+                opacity: 0.3;
+            }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .timeout-title { font-size: 3em; }
+            .banned-user { font-size: 1.8em; }
+            .shame-counter { flex-direction: column; gap: 10px; }
+            .wall-of-shame { display: none; }
+            .naughty-stamp { font-size: 5em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="kindergarten-bg"></div>
+    <div class="jail-bars"></div>
+    
+    <!-- Baby items floating -->
+    <div class="baby-items baby-bottle">🍼</div>
+    <div class="baby-items pacifier">👶</div>
+    
+    <!-- Crying emoji rain -->
+    <div class="emoji-rain" id="emojiRain"></div>
+    
+    <!-- Wall of shame portraits -->
+    <div class="wall-of-shame left">
+        <div class="shame-portrait">😭</div>
+        <div class="shame-portrait">🤐</div>
+        <div class="shame-portrait">😵</div>
+    </div>
+    
+    <div class="wall-of-shame right">
+        <div class="shame-portrait">🚫</div>
+        <div class="shame-portrait">💀</div>
+        <div class="shame-portrait">🤡</div>
+    </div>
+    
+    <!-- Timeout timer -->
+    <div class="timeout-timer">
+        <div class="timer-label">Time Remaining</div>
+        <div class="timer-value" id="timer">05:00</div>
+    </div>
+    
+    <div class="timeout-container">
+        <div class="dunce-cap"></div>
+        
+        <h1 class="timeout-title">TIMEOUT CORNER</h1>
+        
+        <div class="shame-box">
+            <div class="banned-user">
+                👎 <span id="username">Alpha</span> 👎
+            </div>
+            
+            <div class="ban-reason">
+                <strong>Crime:</strong> <span id="crime">Being too cringe in chat and thinking their opinion actually matters</span>
+            </div>
+            
+            <div class="shame-counter">
+                <div class="counter-item">
+                    <div class="counter-label">Timeout #</div>
+                    <div class="counter-value" id="timeoutCount">23</div>
+                </div>
+                <div class="counter-item">
+                    <div class="counter-label">Shame Level</div>
+                    <div class="counter-value">MAX</div>
+                </div>
+                <div class="counter-item">
+                    <div class="counter-label">Brain Cells</div>
+                    <div class="counter-value">-12</div>
+                </div>
+            </div>
+            
+            <div class="ban-reason" style="text-align: center; border-left: none; font-size: 1.5em; color: #FFD700;">
+                🎵 <em>"All by myself... Don't wanna be... All by myself..."</em> 🎵
+            </div>
+        </div>
+    </div>
+    
+    <!-- Naughty stamp -->
+    <div class="naughty-stamp">NAUGHTY</div>
+    
+    <!-- Scrolling message -->
+    <div class="scroll-container">
+        <div class="scroll-text">
+            🚨 SHAME! 🚨 SHAME! 🚨 SHAME! 🚨 YOU KNOW WHAT YOU DID 🚨 THINK ABOUT YOUR ACTIONS 🚨 
+            YOUR PARENTS ARE DISAPPOINTED 🚨 THE CHAT IS LAUGHING AT YOU 🚨 SHAME! 🚨 SHAME! 🚨
+        </div>
+    </div>
+
+    <script>
+        // Create falling crying emojis
+        function createCryingEmoji() {
+            const emojiTypes = ['😭', '😢', '😿', '😥', '💧'];
+            const emoji = document.createElement('div');
+            emoji.className = 'crying-emoji';
+            emoji.textContent = emojiTypes[Math.floor(Math.random() * emojiTypes.length)];
+            emoji.style.left = Math.random() * 100 + '%';
+            emoji.style.animationDuration = (3 + Math.random() * 3) + 's';
+            emoji.style.animationDelay = Math.random() * 2 + 's';
+            
+            document.getElementById('emojiRain').appendChild(emoji);
+            
+            // Remove after animation
+            setTimeout(() => emoji.remove(), 8000);
+        }
+        
+        // Create emojis periodically
+        setInterval(createCryingEmoji, 800);
+        
+        // Initial emojis
+        for (let i = 0; i < 10; i++) {
+            setTimeout(createCryingEmoji, i * 200);
+        }
+        
+        // Timeout timer countdown
+        let timeLeft = 300; // 5 minutes in seconds
+        const timerElement = document.getElementById('timer');
+        
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft > 0) {
+                timeLeft--;
+                
+                // Flash red when time is running out
+                if (timeLeft <= 30) {
+                    timerElement.style.color = timeLeft % 2 === 0 ? '#FFF' : '#FFD700';
+                }
+                
+                setTimeout(updateTimer, 1000);
+            } else {
+                timerElement.textContent = "FREED!";
+                document.querySelector('.timeout-title').textContent = "YOU'RE FREE!";
+                document.querySelector('.naughty-stamp').textContent = "RELEASED";
+            }
+        }
+        
+        updateTimer();
+        
+        // Rotating ban reasons
+        const crimes = [
+            "Being too cringe in chat and thinking their opinion actually matters",
+            "Excessive use of emojis and caps lock (we can hear you without the yelling)",
+            "Starting the 'pineapple on pizza' debate for the 47th time",
+            "Backseat streaming when nobody asked",
+            "Spoiling the show by reading ahead in the script (how did you even get that?)",
+            "Using 'first' unironically in 2024",
+            "Spamming 'L + Ratio + You fell off' like it's still funny",
+            "Trying to rickroll the stream in current year",
+            "Getting into a fight with AutoMod and losing",
+            "Simping for the banned list",
+            "Copy-pasting the entire Bee Movie script",
+            "Being confidently incorrect about easily Googleable facts"
+        ];
+        
+        const usernames = [
+            "Alpha",
+            "AZ",
+            "MGoBilliups",
+            "OLeDoit",
+            "Sand"
+        ];
+        
+        // Rotate username and crime every 10 seconds
+        setInterval(() => {
+            const username = document.getElementById('username');
+            const crime = document.getElementById('crime');
+            
+            username.style.opacity = '0';
+            crime.style.opacity = '0';
+            
+            setTimeout(() => {
+                username.textContent = usernames[Math.floor(Math.random() * usernames.length)];
+                crime.textContent = crimes[Math.floor(Math.random() * crimes.length)];
+                username.style.opacity = '1';
+                crime.style.opacity = '1';
+            }, 300);
+        }, 10000);
+        
+        // Add CSS transitions
+        document.getElementById('username').style.transition = 'opacity 0.3s';
+        document.getElementById('crime').style.transition = 'opacity 0.3s';
+        
+        // Update timeout count randomly
+        setInterval(() => {
+            const count = document.getElementById('timeoutCount');
+            count.textContent = Math.floor(Math.random() * 99) + 1;
+        }, 15000);
+        
+        // Add shame sounds visualization (bell rings)
+        function shameBell() {
+            const bell = document.createElement('div');
+            bell.textContent = '🔔';
+            bell.style.position = 'absolute';
+            bell.style.fontSize = '4em';
+            bell.style.left = '50%';
+            bell.style.top = '20%';
+            bell.style.transform = 'translateX(-50%)';
+            bell.style.zIndex = '30';
+            
+            bell.animate([
+                { transform: 'translateX(-50%) rotate(-30deg)', opacity: 1 },
+                { transform: 'translateX(-50%) rotate(30deg)', opacity: 1 },
+                { transform: 'translateX(-50%) rotate(-30deg)', opacity: 1 },
+                { transform: 'translateX(-50%) rotate(30deg)', opacity: 1 },
+                { transform: 'translateX(-50%) rotate(0deg) scale(2)', opacity: 0 }
+            ], {
+                duration: 2000,
+                easing: 'ease-in-out'
+            }).onfinish = () => bell.remove();
+            
+            document.body.appendChild(bell);
+        }
+        
+        // Ring shame bell periodically
+        setInterval(shameBell, 8000);
+        
+        // Add rainbow shame effect occasionally
+        function rainbowShame() {
+            const title = document.querySelector('.timeout-title');
+            title.style.background = 'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)';
+            title.style.backgroundClip = 'text';
+            title.style.webkitBackgroundClip = 'text';
+            title.style.webkitTextFillColor = 'transparent';
+            
+            setTimeout(() => {
+                title.style.background = 'none';
+                title.style.webkitTextFillColor = '';
+            }, 2000);
+        }
+        
+        setInterval(rainbowShame, 20000);
+    </script>
+</body>
+</html>

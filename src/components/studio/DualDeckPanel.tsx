@@ -25,7 +25,7 @@ import { CrossfaderSlider } from './CrossfaderSlider'
 import { BeatCounterDisplay } from './BeatCounterDisplay'
 import { HarmonicWheel } from './HarmonicWheel'
 import { ChevronDown, ChevronUp } from 'lucide-react'
-import type { MusicTrack } from '@/types/database'
+import type { MusicTrack } from "@/types/database"
 
 interface DualDeckPanelProps {
   dualDeck: ReturnType<typeof useDualDeckAudioPlayer>

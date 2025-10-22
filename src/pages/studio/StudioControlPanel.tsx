@@ -47,14 +47,38 @@ import { EmergencyControlsPanel } from '@/components/studio/EmergencyControlsPan
 import { MicDuckingPanel } from '@/components/studio/MicDuckingPanel'
 import { StreamSafetyPanel } from '@/components/studio/StreamSafetyPanel'
 import { CollapsibleSection } from '@/components/studio/CollapsibleSection'
+import { FilterKnobs } from '@/components/studio/FilterKnobs'
+import { MasterLimiterControls } from '@/components/studio/MasterLimiterControls'
+import { TempoKeyLockControls } from '@/components/studio/TempoKeyLockControls'
+import { GainTrimControls } from '@/components/studio/GainTrimControls'
+import { QuantizeControls } from '@/components/studio/QuantizeControls'
+import { LoopRollControls } from '@/components/studio/LoopRollControls'
+import { DualDeckPanel } from '@/components/studio/DualDeckPanel'
+import { VoiceRecorder } from '@/components/studio/VoiceRecorder'
+import { HotCuesPanel } from '@/components/studio/HotCuesPanel'
+import { LoopControlsPanel } from '@/components/studio/LoopControlsPanel'
+import { HeadphoneCuePanel } from '@/components/studio/HeadphoneCuePanel'
+import { AITrainingPanel } from '@/components/studio/AITrainingPanel'
+import { AITransitionPanel } from '@/components/studio/AITransitionPanel'
+import { MIDIControllerPanel } from '@/components/studio/MIDIControllerPanel'
+import { SlipModePanel } from '@/components/studio/SlipModePanel'
+import { WaveformDisplay } from '@/components/studio/WaveformDisplay'
+import { BeatGridEditorPanel } from '@/components/studio/BeatGridEditorPanel'
 import { useAutoDJ } from '@/hooks/studio/useAutoDJ'
 import { usePlayQueue } from '@/hooks/studio/usePlayQueue'
+import { useDualDeckAudioPlayer } from '@/hooks/studio/useDualDeckAudioPlayer'
 import type { MusicTrack, AudioEffectsConfig, AutoDJSettings } from '@/types/database'
 import type { ScoredTrack } from '@/utils/trackScorer'
 
 export function ControlPanel() {
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'music' | 'jingle'>('all')
+  const [hotCues, setHotCues] = useState<any[]>([])
+  const [activeLoop, setActiveLoop] = useState<any>(null)
+  const [headphoneCueConfig, setHeadphoneCueConfig] = useState({ enabled: false, mixLevel: 0.5, splitCue: false, volume: 0.8 })
+  const [beatGridState, setBeatGridState] = useState({ isEditing: false, tapBPM: null as number | null, tapCount: 0 })
+  const [midiState, setMidiState] = useState({ isConnected: false, devices: [] as any[], mappings: [] as any[], isLearning: false })
+  const [slipModeState, setSlipModeState] = useState({ isActive: false, slipStartTime: 0, slipStartPosition: 0, virtualPosition: 0 })
   const [jingleTypeFilter, setJingleTypeFilter] = useState<string>('all')
   const [currentPlayingJingle, setCurrentPlayingJingle] = useState<string | null>(null)
   const [showSettings, setShowSettings] = useState(false)
@@ -63,10 +87,10 @@ export function ControlPanel() {
   const [clipperTrack, setClipperTrack] = useState<MusicTrack | null>(null)
   const [metadataTrack, setMetadataTrack] = useState<MusicTrack | null>(null)
   const [showSmartPlaylistBuilder, setShowSmartPlaylistBuilder] = useState(false)
-  const [showDJPanel, setShowDJPanel] = useState(false)
+  const [showDJPanel, setShowDJPanel] = useState(true)
   const [showTrackPicker, setShowTrackPicker] = useState(false)
   const [queuedTrack, setQueuedTrack] = useState<MusicTrack | null>(null)
-  const [activeDJTab, setActiveDJTab] = useState<'autodj' | 'effects' | 'performance' | 'tools'>('autodj')
+  const [activeDJTab, setActiveDJTab] = useState<'autodj' | 'effects' | 'performance' | 'tools' | 'advanced'>('advanced')
   const [beginnerMode, setBeginnerMode] = useState(() => {
     const saved = localStorage.getItem('beginner-mode');
     return saved ? JSON.parse(saved) : true;
@@ -74,6 +98,9 @@ export function ControlPanel() {
 
   // Initialize Play Queue
   const playQueue = usePlayQueue()
+
+  // Initialize Dual Deck Audio Player
+  const dualDeck = useDualDeckAudioPlayer()
 
   // Save beginner mode preference
   useEffect(() => {
@@ -473,8 +500,8 @@ export function ControlPanel() {
       </div>
 
       <div className="grid grid-cols-12 gap-6 p-6">
-        {/* Left Column - Music Library */}
-        <div className="col-span-4 space-y-6">
+        {/* Left Column - Music Library (Wider) */}
+        <div className="col-span-6 space-y-6">
           <div className="bg-neutral-900 border border-neutral-700 rounded-lg p-4">
             <h2 className="text-xl font-semibold mb-4">Music Library</h2>
             
@@ -595,7 +622,7 @@ export function ControlPanel() {
             )}
 
             {/* Track list */}
-            <div className="mt-4 max-h-[500px] overflow-y-auto">
+            <div className="mt-4 max-h-[800px] overflow-y-auto">
               {loading ? (
                 <p className="text-center text-neutral-400 py-8">Loading tracks...</p>
               ) : filteredTracks.length === 0 ? (
@@ -622,7 +649,7 @@ export function ControlPanel() {
         </div>
 
         {/* Middle Column - Playlists & Player */}
-        <div className="col-span-4 space-y-6">
+        <div className="col-span-3 space-y-6">
           <PlaylistManager
             playlists={playlists}
             tracks={tracks}
@@ -668,7 +695,7 @@ export function ControlPanel() {
         </div>
 
         {/* Right Column - Sound Drops & Controls */}
-        <div className="col-span-4 space-y-6">
+        <div className="col-span-3 space-y-6">
           <div className="bg-neutral-900 border border-neutral-700 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-4">
               <Mic2 className="w-6 h-6 text-primary-500" />
@@ -795,9 +822,12 @@ export function ControlPanel() {
               {audioPlayer.isDucking ? 'Restore Volume' : 'Manual Duck'}
             </button>
           </div>
+        </div>
+      </div>
 
-          {/* DJ Tools Panel */}
-          {showDJPanel && (
+      {/* DJ Tools Panel - Full Width Section */}
+      <div className="px-6 pb-6">
+        {showDJPanel && (
             <>
               {/* DJ Tools Tabs */}
               <div className="bg-neutral-900 border border-neutral-700 rounded-lg p-4">
@@ -842,6 +872,16 @@ export function ControlPanel() {
                   >
                     Tools
                   </button>
+                  <button
+                    onClick={() => setActiveDJTab('advanced')}
+                    className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+                      activeDJTab === 'advanced'
+                        ? 'border-primary-500 text-primary-500'
+                        : 'border-transparent text-neutral-400 hover:text-neutral-200'
+                    }`}
+                  >
+                    Advanced DJ Sound
+                  </button>
                 </div>
 
                 {/* Auto-DJ Tab */}
@@ -857,6 +897,9 @@ export function ControlPanel() {
                       onEnergyRequest={handleEnergyRequest}
                       onSettingsChange={handleAutoDJSettingsChange}
                     />
+
+                    {/* AI Transition Suggestions - Requires Enhanced Auto-DJ */}
+                    {/* Note: This requires useEnhancedAutoDJ hook for full functionality */}
 
                     {/* Play Queue Panel */}
                     <QueuePanel
@@ -911,6 +954,51 @@ export function ControlPanel() {
                       onSeek={audioPlayer.seek}
                     />
 
+                    {/* Hot Cues Panel - 8 hot cue points */}
+                    <HotCuesPanel
+                      cues={hotCues}
+                      currentTime={audioPlayer.playbackPosition}
+                      duration={audioPlayer.duration}
+                      onJumpToCue={(cueId) => {
+                        const cue = hotCues.find(c => c.id === cueId)
+                        if (cue) audioPlayer.seek(cue.time)
+                      }}
+                      onSetCue={(cueId, time) => {
+                        setHotCues(prev => [...prev.filter(c => c.id !== cueId), { id: cueId, time, label: `Cue ${cueId}` }])
+                      }}
+                      onDeleteCue={(cueId) => {
+                        setHotCues(prev => prev.filter(c => c.id !== cueId))
+                      }}
+                    />
+
+                    {/* Loop Controls Panel */}
+                    <LoopControlsPanel
+                      loop={activeLoop}
+                      currentTime={audioPlayer.playbackPosition}
+                      onCreateLoop={(bars) => {
+                        setActiveLoop({ start: audioPlayer.playbackPosition, end: audioPlayer.playbackPosition + bars, isActive: true })
+                      }}
+                      onToggleLoop={() => {
+                        setActiveLoop(prev => prev ? { ...prev, isActive: !prev.isActive } : null)
+                      }}
+                      onHalveLoop={() => {}}
+                      onDoubleLoop={() => {}}
+                      onMoveLoopForward={() => {}}
+                      onMoveLoopBackward={() => {}}
+                      onClearLoop={() => setActiveLoop(null)}
+                      beatGridAvailable={false}
+                    />
+
+                    {/* Slip Mode Panel */}
+                    <SlipModePanel
+                      slipState={slipModeState}
+                      slipOffset={slipModeState.virtualPosition - slipModeState.slipStartPosition}
+                      onToggle={() => setSlipModeState(prev => ({ ...prev, isActive: !prev.isActive }))}
+                    />
+
+                    {/* Voice Recorder - MIC FILTER RECORDER for Sound Drops! */}
+                    <VoiceRecorder />
+
                     {/* Sound Effects Panel */}
                     <SoundEffectsPanel />
 
@@ -934,6 +1022,57 @@ export function ControlPanel() {
                     {/* AI Chat Control - Default Open (most used) */}
                     <CollapsibleSection title="AI DJ Chat" defaultOpen={true} icon={<Bot className="w-5 h-5" />}>
                       <AIChatPanel />
+                    </CollapsibleSection>
+
+                    {/* AI Training Panel */}
+                    <CollapsibleSection title="AI DJ Training" icon={<Bot className="w-5 h-5" />}>
+                      <AITrainingPanel />
+                    </CollapsibleSection>
+
+                    {/* MIDI Controller Panel */}
+                    <CollapsibleSection title="MIDI Controller" icon={<Settings className="w-5 h-5" />}>
+                      <MIDIControllerPanel
+                        isConnected={midiState.isConnected}
+                        devices={midiState.devices}
+                        mappings={midiState.mappings}
+                        isLearning={midiState.isLearning}
+                        onStartLearn={() => setMidiState(prev => ({ ...prev, isLearning: true }))}
+                        onStopLearn={() => setMidiState(prev => ({ ...prev, isLearning: false }))}
+                        onRemoveMapping={(id) => setMidiState(prev => ({ ...prev, mappings: prev.mappings.filter(m => m.id !== id) }))}
+                        onExport={() => {}}
+                        onImport={() => {}}
+                      />
+                    </CollapsibleSection>
+
+                    {/* Headphone Cue Panel */}
+                    <CollapsibleSection title="Headphone Cueing (PFL)" icon={<Music className="w-5 h-5" />}>
+                      <HeadphoneCuePanel
+                        config={headphoneCueConfig}
+                        onToggleEnabled={() => setHeadphoneCueConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
+                        onMixLevelChange={(level) => setHeadphoneCueConfig(prev => ({ ...prev, mixLevel: level }))}
+                        onToggleSplitCue={() => setHeadphoneCueConfig(prev => ({ ...prev, splitCue: !prev.splitCue }))}
+                        onVolumeChange={(volume) => setHeadphoneCueConfig(prev => ({ ...prev, volume }))}
+                        isReady={!!audioPlayer.audioContext}
+                      />
+                    </CollapsibleSection>
+
+                    {/* Beat Grid Editor */}
+                    <CollapsibleSection title="Beat Grid Editor" icon={<Activity className="w-5 h-5" />}>
+                      <BeatGridEditorPanel
+                        grid={null}
+                        isEditing={beatGridState.isEditing}
+                        tapBPM={beatGridState.tapBPM}
+                        tapCount={beatGridState.tapCount}
+                        onStartEditing={() => setBeatGridState(prev => ({ ...prev, isEditing: true }))}
+                        onStopEditing={() => setBeatGridState(prev => ({ ...prev, isEditing: false }))}
+                        onSetBPM={() => {}}
+                        onNudgeLeft={() => {}}
+                        onNudgeRight={() => {}}
+                        onTapTempo={() => setBeatGridState(prev => ({ ...prev, tapCount: prev.tapCount + 1 }))}
+                        onResetTapTempo={() => setBeatGridState({ isEditing: false, tapBPM: null, tapCount: 0 })}
+                        onToggleLock={() => {}}
+                        onReset={() => {}}
+                      />
                     </CollapsibleSection>
 
                     {/* Analytics Dashboard */}
@@ -1001,9 +1140,121 @@ export function ControlPanel() {
                     </CollapsibleSection>
                   </div>
                 )}
+
+                {/* Advanced DJ Sound Tab */}
+                {activeDJTab === 'advanced' && (
+                  <div className="space-y-8 w-full">
+                    <div className="text-center mb-6">
+                      <h2 className="text-3xl font-bold text-white mb-3">Advanced DJ Sound Section</h2>
+                      <p className="text-neutral-400 text-lg">Professional mixing tools and audio effects</p>
+                    </div>
+
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-semibold text-white text-center">Mixing & Effects</h3>
+                      
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6 min-h-[300px]">
+                          <h4 className="text-lg font-semibold text-white mb-4">EQ & Filters</h4>
+                          <EQPanel audioContext={audioPlayer.audioContext} />
+                        </div>
+
+                        <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6 min-h-[300px]">
+                          <h4 className="text-lg font-semibold text-white mb-4">Filter Knobs</h4>
+                          <FilterKnobs audioContext={audioPlayer.audioContext} />
+                        </div>
+
+                        <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6 min-h-[300px]">
+                          <h4 className="text-lg font-semibold text-white mb-4">FX Chain</h4>
+                          <FXChainPanel audioContext={audioPlayer.audioContext} />
+                        </div>
+
+                        <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6 min-h-[300px]">
+                          <h4 className="text-lg font-semibold text-white mb-4">Audio Effects</h4>
+                          <AudioEffectsPanel track={audioPlayer.currentTrack} onEffectsChange={handleEffectsChange} />
+                        </div>
+
+                        <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6 min-h-[300px]">
+                          <h4 className="text-lg font-semibold text-white mb-4">Crossfade</h4>
+                          <CrossfadeControls settings={settings} onUpdateSettings={updateSettings} />
+                        </div>
+
+                        <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6 min-h-[300px]">
+                          <h4 className="text-lg font-semibold text-white mb-4">Master Limiter</h4>
+                          <MasterLimiterControls limiter={null} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-semibold text-white text-center">Performance Tools</h3>
+                      
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6 min-h-[300px]">
+                          <h4 className="text-lg font-semibold text-white mb-4">Professional Sampler</h4>
+                          <ProfessionalSamplerPanel />
+                        </div>
+
+                        <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6 min-h-[300px]">
+                          <h4 className="text-lg font-semibold text-white mb-4">Tempo & Key Lock</h4>
+                          <TempoKeyLockControls tempo={1.0} isKeyLockEnabled={false} onTempoChange={() => {}} onKeyLockToggle={() => {}} />
+                        </div>
+
+                        <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6 min-h-[300px]">
+                          <h4 className="text-lg font-semibold text-white mb-4">Gain / Trim</h4>
+                          <GainTrimControls gain={1.0} onGainChange={() => {}} />
+                        </div>
+
+                        <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6 min-h-[300px]">
+                          <h4 className="text-lg font-semibold text-white mb-4">Quantize</h4>
+                          <QuantizeControls enabled={false} snapToGrid="1/4" onToggle={() => {}} onGridChange={() => {}} />
+                        </div>
+
+                        <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6 min-h-[300px]">
+                          <h4 className="text-lg font-semibold text-white mb-4">Loop Roll</h4>
+                          <LoopRollControls isActive={false} activeLength="1/4" onToggle={() => {}} />
+                        </div>
+
+                        <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6 min-h-[300px]">
+                          <h4 className="text-lg font-semibold text-white mb-4">Vinyl Mode</h4>
+                          <VinylModePanel audioElement={audioPlayer.audioElement} />
+                        </div>
+                      </div>
+
+                      <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6">
+                        <h4 className="text-lg font-semibold text-white mb-4">Beat Matching & Waveform</h4>
+                        <BeatMatchingPanel currentTrack={audioPlayer.currentTrack} isPlaying={audioPlayer.isPlaying} playbackPosition={audioPlayer.playbackPosition} duration={audioPlayer.duration} onSeek={audioPlayer.seek} />
+                      </div>
+
+                      <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6">
+                        <h4 className="text-lg font-semibold text-white mb-4">Full Track Waveform</h4>
+                        <WaveformDisplay
+                          waveformData={null}
+                          currentTime={audioPlayer.playbackPosition}
+                          duration={audioPlayer.duration}
+                          onSeek={audioPlayer.seek}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}
+      </div>
+
+      {/* Professional DJ Decks - Full Width Section */}
+      <div className="px-6 pb-6">
+        <div className="bg-neutral-900 border border-neutral-700 rounded-lg p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold text-white mb-2">Playback & Mixing</h2>
+            <p className="text-neutral-400">Dual-deck mixing system with harmonic analysis</p>
+          </div>
+          <DualDeckPanel 
+            dualDeck={dualDeck}
+            onLoadTrack={(deck, track) => {
+              console.log(`Loading track to Deck ${deck}:`, track.title)
+            }}
+          />
         </div>
       </div>
 

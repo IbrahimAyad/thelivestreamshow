@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MusicTrack } from '../types/database';
+import { MusicTrack } from "@/types/database";
 import { useBeatDetection } from '@/hooks/studio/useBeatDetection';
 import { useWaveform } from '@/hooks/studio/useWaveform';
 import { useHotCues } from '@/hooks/studio/useHotCues';

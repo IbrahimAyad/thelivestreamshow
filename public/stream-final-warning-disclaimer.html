@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FINAL WARNING - POINT OF NO RETURN</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            background: #000;
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Alarm strobe effect */
+        .alarm-strobe {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 0, 0, 0.3) 0%, transparent 70%);
+            animation: strobe 1s linear infinite;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        @keyframes strobe {
+            0%, 90%, 100% { opacity: 0; }
+            95% { opacity: 1; }
+        }
+
+        /* Prison bars effect */
+        .prison-bars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 50px,
+                rgba(64, 64, 64, 0.3) 50px,
+                rgba(64, 64, 64, 0.3) 60px
+            );
+            animation: barsSlide 10s linear infinite;
+            z-index: 2;
+        }
+
+        @keyframes barsSlide {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(60px); }
+        }
+
+        /* Danger tape borders */
+        .danger-tape {
+            position: absolute;
+            width: 100%;
+            height: 80px;
+            background: repeating-linear-gradient(
+                45deg,
+                #000,
+                #000 20px,
+                #FFD700 20px,
+                #FFD700 40px,
+                #000 40px,
+                #000 60px,
+                #FF0000 60px,
+                #FF0000 80px
+            );
+            font-size: 2em;
+            font-weight: 900;
+            color: #FFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 2px 2px 4px #000;
+            overflow: hidden;
+        }
+
+        .danger-tape.top {
+            top: 0;
+            animation: tapeMove 5s linear infinite;
+        }
+
+        .danger-tape.bottom {
+            bottom: 0;
+            animation: tapeMove 5s linear infinite reverse;
+        }
+
+        @keyframes tapeMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 113px 0; }
+        }
+
+        .danger-tape span {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 5px 20px;
+            margin: 0 20px;
+            animation: dangerBlink 1s infinite;
+        }
+
+        @keyframes dangerBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Main container with maximum drama */
+        .final-warning-container {
+            width: 95%;
+            max-width: 1000px;
+            z-index: 10;
+            position: relative;
+            text-align: center;
+            animation: containerShake 10s ease-in-out infinite;
+        }
+
+        @keyframes containerShake {
+            0%, 90%, 100% { transform: translateX(0); }
+            91% { transform: translateX(-5px); }
+            92% { transform: translateX(5px); }
+            93% { transform: translateX(-3px); }
+            94% { transform: translateX(3px); }
+        }
+
+        /* DEFCON level indicator */
+        .defcon-level {
+            position: absolute;
+            top: 100px;
+            left: 50px;
+            font-size: 1.5em;
+            color: #FF0000;
+            font-weight: bold;
+            text-transform: uppercase;
+            animation: defconPulse 1s infinite;
+        }
+
+        .defcon-number {
+            font-size: 3em;
+            color: #FFD700;
+            display: block;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+        }
+
+        @keyframes defconPulse {
+            0%, 100% { 
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% { 
+                transform: scale(1.1);
+                filter: brightness(1.5);
+            }
+        }
+
+        /* Main title with extreme effects */
+        .final-title {
+            font-size: 5em;
+            color: #FF0000;
+            text-transform: uppercase;
+            margin: 20px 0;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            text-shadow: 
+                0 0 10px rgba(255, 0, 0, 0.8),
+                3px 3px 0 #FFD700,
+                6px 6px 0 #8B0000,
+                9px 9px 20px rgba(0, 0, 0, 0.9);
+            animation: titleFlash 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleFlash {
+            0% { 
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            100% { 
+                transform: scale(1.02);
+                filter: brightness(1.2);
+            }
+        }
+
+        /* Critical warnings box */
+        .critical-box {
+            background: linear-gradient(135deg, 
+                rgba(139, 0, 0, 0.9), 
+                rgba(0, 0, 0, 0.9), 
+                rgba(139, 0, 0, 0.9));
+            border: 4px solid #FFD700;
+            border-radius: 0;
+            padding: 30px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 0 50px rgba(255, 0, 0, 0.5),
+                inset 0 0 50px rgba(0, 0, 0, 0.7);
+        }
+
+        /* Scanning laser effect */
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                #00FF00, 
+                transparent);
+            top: 0;
+            animation: scan 3s linear infinite;
+            box-shadow: 0 0 10px #00FF00;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        /* Warning items with escalation */
+        .warning-item {
+            color: #FFF;
+            font-size: 1.2em;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-left: 8px solid;
+            text-align: left;
+            position: relative;
+            font-family: 'Courier New', monospace;
+            animation: itemSlam 0.5s ease-out backwards;
+        }
+
+        .warning-item:nth-child(1) { 
+            border-color: #FFD700; 
+            animation-delay: 0.2s;
+        }
+        .warning-item:nth-child(2) { 
+            border-color: #FFA500; 
+            animation-delay: 0.4s;
+        }
+        .warning-item:nth-child(3) { 
+            border-color: #FF6600; 
+            animation-delay: 0.6s;
+        }
+        .warning-item:nth-child(4) { 
+            border-color: #FF3300; 
+            animation-delay: 0.8s;
+        }
+        .warning-item:nth-child(5) { 
+            border-color: #FF0000; 
+            animation-delay: 1s;
+            animation: itemSlam 0.5s ease-out backwards, criticalFlash 2s infinite 1.5s;
+        }
+        .warning-item:nth-child(6) { 
+            border-color: #CC0000; 
+            animation-delay: 1.2s;
+            animation: itemSlam 0.5s ease-out backwards, criticalFlash 2s infinite 1.7s;
+        }
+        .warning-item:nth-child(7) { 
+            border-color: #990000; 
+            animation-delay: 1.4s;
+            animation: itemSlam 0.5s ease-out backwards, criticalFlash 2s infinite 1.9s;
+        }
+
+        @keyframes itemSlam {
+            0% {
+                transform: translateX(-120%) rotate(-5deg);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes criticalFlash {
+            0%, 100% { background: rgba(0, 0, 0, 0.7); }
+            50% { background: rgba(255, 0, 0, 0.2); }
+        }
+
+        .warning-icon {
+            display: inline-block;
+            margin-right: 10px;
+            font-size: 1.5em;
+            animation: iconSpin 2s linear infinite;
+        }
+
+        @keyframes iconSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .warning-item strong {
+            color: #FFD700;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+
+        .critical-text {
+            color: #FF0000;
+            font-weight: bold;
+            text-transform: uppercase;
+            animation: criticalPulse 0.5s infinite;
+        }
+
+        @keyframes criticalPulse {
+            0%, 100% { 
+                opacity: 1;
+                text-shadow: 0 0 5px rgba(255, 0, 0, 0.8);
+            }
+            50% { 
+                opacity: 0.8;
+                text-shadow: 0 0 15px rgba(255, 0, 0, 1);
+            }
+        }
+
+        /* Skull and crossbones decoration */
+        .skull-decoration {
+            position: absolute;
+            font-size: 8em;
+            opacity: 0.1;
+            color: #FF0000;
+            animation: skullFloat 10s ease-in-out infinite;
+        }
+
+        .skull-left {
+            left: 5%;
+            top: 30%;
+            animation-delay: 0s;
+        }
+
+        .skull-right {
+            right: 5%;
+            top: 30%;
+            animation-delay: 5s;
+        }
+
+        @keyframes skullFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+
+        /* Viewer discretion button (fake) */
+        .viewer-discretion {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #FF0000;
+            color: #FFF;
+            padding: 15px 40px;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 3px solid #FFD700;
+            cursor: pointer;
+            animation: discretionPulse 1s infinite;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+        }
+
+        @keyframes discretionPulse {
+            0%, 100% { 
+                transform: translateX(-50%) scale(1);
+                box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+            }
+            50% { 
+                transform: translateX(-50%) scale(1.05);
+                box-shadow: 0 0 50px rgba(255, 0, 0, 0.8);
+            }
+        }
+
+        .viewer-discretion:hover {
+            animation: discretionShake 0.3s infinite;
+        }
+
+        @keyframes discretionShake {
+            0%, 100% { transform: translateX(-50%) rotate(0deg); }
+            25% { transform: translateX(-52%) rotate(-2deg); }
+            75% { transform: translateX(-48%) rotate(2deg); }
+        }
+
+        /* Countdown with more drama */
+        .final-countdown {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5em;
+            color: #FFD700;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+
+        .countdown-critical {
+            font-size: 2em;
+            color: #FF0000;
+            display: block;
+            animation: countdownFlash 0.5s infinite;
+        }
+
+        @keyframes countdownFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Biohazard symbols */
+        .biohazard {
+            position: absolute;
+            font-size: 4em;
+            color: rgba(255, 215, 0, 0.1);
+            animation: rotate 20s linear infinite;
+        }
+
+        .bio1 { top: 10%; right: 10%; }
+        .bio2 { bottom: 10%; left: 10%; animation-direction: reverse; }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .final-title { font-size: 2.5em; }
+            .warning-item { font-size: 0.9em; padding: 15px; }
+            .danger-tape { font-size: 1.2em; }
+            .defcon-level { display: none; }
+            .skull-decoration { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="alarm-strobe"></div>
+    <div class="prison-bars"></div>
+    
+    <!-- Danger tape borders -->
+    <div class="danger-tape top">
+        <span>⚠️ FINAL WARNING ⚠️</span>
+        <span>⚠️ FINAL WARNING ⚠️</span>
+        <span>⚠️ FINAL WARNING ⚠️</span>
+        <span>⚠️ FINAL WARNING ⚠️</span>
+    </div>
+    <div class="danger-tape bottom">
+        <span>☠️ POINT OF NO RETURN ☠️</span>
+        <span>☠️ POINT OF NO RETURN ☠️</span>
+        <span>☠️ POINT OF NO RETURN ☠️</span>
+    </div>
+    
+    <!-- DEFCON indicator -->
+    <div class="defcon-level">
+        DEFCON
+        <span class="defcon-number">1</span>
+    </div>
+    
+    <!-- Skull decorations -->
+    <div class="skull-decoration skull-left">☠️</div>
+    <div class="skull-decoration skull-right">☠️</div>
+    
+    <!-- Biohazard symbols -->
+    <div class="biohazard bio1">☣️</div>
+    <div class="biohazard bio2">☣️</div>
+    
+    <div class="final-warning-container">
+        <h1 class="final-title">⚠️ FINAL WARNING ⚠️</h1>
+        
+        <div class="critical-box">
+            <div class="scan-line"></div>
+            
+            <div class="warning-item">
+                <span class="warning-icon">⚠️</span>
+                <strong>SCRIPTED CONTENT:</strong> This show is <span class="critical-text">100% FAKE</span>. 
+                More scripted than a politician's apology. The opinions are manufactured in a factory that also makes 
+                rubber chickens and whoopee cushions.
+            </div>
+            
+            <div class="warning-item">
+                <span class="warning-icon">🎭</span>
+                <strong>ENTERTAINMENT ONLY:</strong> Nothing said here is factual, educational, or even slightly useful. 
+                Taking our advice is like using a chocolate teapot - <span class="critical-text">IT WON'T END WELL</span>.
+            </div>
+            
+            <div class="warning-item">
+                <span class="warning-icon">💀</span>
+                <strong>BRAIN CELL WARNING:</strong> Watching may cause permanent IQ damage. 
+                Side effects include: confused screaming, aggressive eye-rolling, and the inability to take anything seriously ever again.
+            </div>
+            
+            <div class="warning-item">
+                <span class="warning-icon">🚨</span>
+                <strong>CHAT TOXICITY ALERT:</strong> Any threats, harassment, or general tomfoolery in chat 
+                <span class="critical-text">WILL BE REPORTED</span> to the appropriate authorities 
+                (your mom, the FBI, and that guy Steve from accounting).
+            </div>
+            
+            <div class="warning-item">
+                <span class="warning-icon">🔥</span>
+                <strong>DOX YOURSELF AT YOUR OWN RISK:</strong> We are <span class="critical-text">NOT RESPONSIBLE</span> 
+                if chat calls your workplace, your grandmother, or orders 47 pizzas to your house. 
+                SERIOUSLY, DON'T SHARE PERSONAL INFO. The chat is feral and cannot be contained!
+            </div>
+            
+            <div class="warning-item">
+                <span class="warning-icon">☢️</span>
+                <strong>WORKPLACE HARASSMENT DISCLAIMER:</strong> If someone from chat contacts your boss, 
+                <span class="critical-text">THAT'S ON YOU</span>. We told you not to mention where you work. 
+                We can't control these animals. They're like digital gremlins fed after midnight.
+            </div>
+            
+            <div class="warning-item">
+                <span class="warning-icon">💣</span>
+                <strong>FINAL FINAL WARNING:</strong> This is a joke show. A comedy. A farce. A bamboozle. 
+                If you take us seriously, <span class="critical-text">YOU'VE ALREADY LOST</span>. 
+                There's no customer service. No refunds. No escape. Only chaos.
+            </div>
+        </div>
+        
+        <button class="viewer-discretion" onclick="fakeDiscretion()">
+            ⚠️ VIEWER DISCRETION ADVISED ⚠️
+        </button>
+    </div>
+    
+    <div class="final-countdown">
+        Your soul will be claimed in:
+        <span class="countdown-critical" id="countdown">15</span>
+        (Just kidding... OR ARE WE?)
+    </div>
+
+    <script>
+        // Countdown with increasing intensity
+        let count = 15;
+        const countdownElement = document.getElementById('countdown');
+        
+        const countInterval = setInterval(() => {
+            count--;
+            countdownElement.textContent = count;
+            
+            // Increase intensity as countdown decreases
+            if (count <= 10) {
+                document.querySelector('.alarm-strobe').style.animationDuration = '0.8s';
+            }
+            if (count <= 5) {
+                document.querySelector('.alarm-strobe').style.animationDuration = '0.5s';
+                countdownElement.style.fontSize = '2.5em';
+                document.body.style.animation = 'shake 0.3s infinite';
+            }
+            if (count <= 3) {
+                countdownElement.style.fontSize = '3em';
+                countdownElement.style.color = '#FF0000';
+                document.querySelector('.final-countdown').style.fontSize = '2em';
+            }
+            
+            if (count <= 0) {
+                clearInterval(countInterval);
+                countdownElement.parentElement.innerHTML = 
+                    '<span style="color: #00FF00; font-size: 2em; animation: none;">WELCOME TO HELL! ENJOY YOUR STAY! 😈</span>';
+                document.querySelector('.alarm-strobe').style.display = 'none';
+                document.body.style.animation = 'none';
+                
+                // Fireworks effect
+                createChaos();
+            }
+        }, 1000);
+        
+        // Fake discretion button
+        function fakeDiscretion() {
+            const messages = [
+                "DISCRETION WAS NEVER AN OPTION!",
+                "TOO LATE FOR DISCRETION NOW!",
+                "YOUR DISCRETION HAS BEEN NOTED AND IGNORED",
+                "ERROR: DISCRETION.EXE HAS STOPPED WORKING",
+                "DISCRETION? WE DON'T KNOW HER!",
+                "YOU SHOULD'VE THOUGHT OF THAT EARLIER!",
+                "VIEWING AT YOUR OWN RISK CONFIRMED!"
+            ];
+            
+            const button = document.querySelector('.viewer-discretion');
+            const originalText = button.textContent;
+            button.textContent = messages[Math.floor(Math.random() * messages.length)];
+            button.style.background = '#000';
+            button.style.animation = 'discretionShake 0.1s infinite';
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.background = '#FF0000';
+                button.style.animation = 'discretionPulse 1s infinite';
+            }, 2000);
+        }
+        
+        // Add screen shake
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translate(0, 0); }
+                10% { transform: translate(-2px, -2px); }
+                20% { transform: translate(2px, 2px); }
+                30% { transform: translate(-2px, 2px); }
+                40% { transform: translate(2px, -2px); }
+                50% { transform: translate(-1px, -1px); }
+                60% { transform: translate(1px, 1px); }
+                70% { transform: translate(-1px, 1px); }
+                80% { transform: translate(1px, -1px); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Chaos effect when countdown ends
+        function createChaos() {
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const emoji = document.createElement('div');
+                    const emojis = ['🔥', '💀', '😈', '🎉', '💣', '🚨', '⚡', '☠️'];
+                    emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                    emoji.style.position = 'absolute';
+                    emoji.style.fontSize = '3em';
+                    emoji.style.left = Math.random() * 100 + '%';
+                    emoji.style.top = Math.random() * 100 + '%';
+                    emoji.style.zIndex = '200';
+                    emoji.style.pointerEvents = 'none';
+                    
+                    emoji.animate([
+                        { 
+                            transform: 'translate(-50%, -50%) scale(0) rotate(0deg)',
+                            opacity: 0
+                        },
+                        { 
+                            transform: 'translate(-50%, -50%) scale(2) rotate(360deg)',
+                            opacity: 1
+                        },
+                        { 
+                            transform: 'translate(-50%, -50%) scale(0.5) rotate(720deg)',
+                            opacity: 0
+                        }
+                    ], {
+                        duration: 2000,
+                        easing: 'ease-out'
+                    }).onfinish = () => emoji.remove();
+                    
+                    document.body.appendChild(emoji);
+                }, i * 100);
+            }
+        }
+        
+        // Random alert messages
+        function createAlert() {
+            const alerts = [
+                'VIEWER DISCRETION ADVISED',
+                'ABANDON HOPE ALL YE WHO ENTER',
+                'YOUR BOSS IS WATCHING',
+                'THE CHAT KNOWS WHERE YOU LIVE',
+                'IT\'S TOO LATE TO TURN BACK',
+                'WE\'RE NOT LIABLE FOR ANYTHING'
+            ];
+            
+            const alert = document.createElement('div');
+            alert.textContent = alerts[Math.floor(Math.random() * alerts.length)];
+            alert.style.position = 'absolute';
+            alert.style.color = '#FF0000';
+            alert.style.fontSize = '1.5em';
+            alert.style.fontWeight = 'bold';
+            alert.style.left = '50%';
+            alert.style.top = '50%';
+            alert.style.transform = 'translate(-50%, -50%)';
+            alert.style.zIndex = '150';
+            alert.style.background = 'rgba(0, 0, 0, 0.9)';
+            alert.style.padding = '20px';
+            alert.style.border = '3px solid #FFD700';
+            alert.style.textTransform = 'uppercase';
+            alert.style.pointerEvents = 'none';
+            
+            document.body.appendChild(alert);
+            
+            alert.animate([
+                { 
+                    transform: 'translate(-50%, -50%) scale(0) rotate(0deg)',
+                    opacity: 0
+                },
+                { 
+                    transform: 'translate(-50%, -50%) scale(1.2) rotate(5deg)',
+                    opacity: 1
+                },
+                { 
+                    transform: 'translate(-50%, -50%) scale(1) rotate(-5deg)',
+                    opacity: 1
+                },
+                { 
+                    transform: 'translate(-50%, -50%) scale(0) rotate(0deg)',
+                    opacity: 0
+                }
+            ], {
+                duration: 3000,
+                easing: 'ease-in-out'
+            }).onfinish = () => alert.remove();
+        }
+        
+        // Show random alerts
+        setInterval(createAlert, 8000);
+        
+        // DEFCON level changes
+        const defconElement = document.querySelector('.defcon-number');
+        setInterval(() => {
+            const level = Math.floor(Math.random() * 5) + 1;
+            defconElement.textContent = level;
+            if (level === 1) {
+                defconElement.style.color = '#FF0000';
+                defconElement.style.fontSize = '4em';
+            } else {
+                defconElement.style.color = '#FFD700';
+                defconElement.style.fontSize = '3em';
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -42,29 +42,32 @@ export function PresetEditor({ presetId, onSave, onCancel }: PresetEditorProps) 
   // Load existing preset if editing
   useEffect(() => {
     if (presetId) {
-      const preset = presetManager.getPresetById(presetId)
-      if (preset) {
-        setName(preset.name)
-        setDescription(preset.description)
-        setCategory(preset.category)
-        setTags(preset.tags)
-        setIsPublic(preset.is_public)
+      presetManager.getPresetById(presetId).then(preset => {
+        if (preset) {
+          setName(preset.name)
+          setDescription(preset.description)
+          setCategory(preset.category)
+          setTags(preset.tags || [])
+          setIsPublic(preset.is_public || false)
 
-        if (preset.automation_config) {
-          setAutomationEnabled(true)
-          setAutoExecuteThreshold(preset.automation_config.autoExecuteThreshold || 0.85)
-          setRequireApprovalThreshold(preset.automation_config.requireApprovalThreshold || 0.60)
-          setAutoExecutionEnabled(preset.automation_config.autoExecutionEnabled || false)
-        }
+          if (preset.automation_config) {
+            setAutomationEnabled(true)
+            setAutoExecuteThreshold(preset.automation_config.autoExecuteThreshold || 0.85)
+            setRequireApprovalThreshold(preset.automation_config.requireApprovalThreshold || 0.60)
+            setAutoExecutionEnabled(preset.automation_config.autoExecutionEnabled || false)
+          }
 
-        if (preset.trigger_rules) {
-          setTriggerRules(preset.trigger_rules)
-        }
+          if (preset.trigger_rules) {
+            setTriggerRules(preset.trigger_rules)
+          }
 
-        if (preset.action_sequence) {
-          setActionSequence(preset.action_sequence)
+          if (preset.action_sequence) {
+            setActionSequence(preset.action_sequence)
+          }
         }
-      }
+      }).catch(err => {
+        setError('Failed to load preset: ' + err.message)
+      })
     }
   }, [presetId, presetManager])
 
@@ -105,8 +108,11 @@ export function PresetEditor({ presetId, onSave, onCancel }: PresetEditorProps) 
     setActionSequence([
       ...actionSequence,
       {
+        type: 'graphic',
         action_type: 'show_graphic',
+        data: {},
         params: {},
+        delay: 0,
         delay_ms: 0
       }
     ])

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Issues - Please Stand By</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Static noise background */
+        .static-noise {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            z-index: 1;
+            background-image: 
+                repeating-linear-gradient(0deg, 
+                    transparent, 
+                    transparent 2px, 
+                    rgba(255, 255, 255, 0.1) 2px, 
+                    rgba(255, 255, 255, 0.1) 4px),
+                repeating-linear-gradient(90deg, 
+                    transparent, 
+                    transparent 2px, 
+                    rgba(255, 255, 255, 0.1) 2px, 
+                    rgba(255, 255, 255, 0.1) 4px);
+            animation: staticMove 0.5s steps(5) infinite;
+        }
+
+        @keyframes staticMove {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(2px, -2px); }
+            60% { transform: translate(-2px, -2px); }
+            80% { transform: translate(2px, 2px); }
+        }
+
+        /* Scanlines effect */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                transparent 50%,
+                rgba(255, 0, 0, 0.03) 50%
+            );
+            background-size: 100% 4px;
+            animation: scanlineMove 10s linear infinite;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        @keyframes scanlineMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(10px); }
+        }
+
+        .container {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+        }
+
+        /* Main title with heavy glitch effect */
+        .error-title {
+            font-size: 6em;
+            font-weight: 900;
+            color: #FF0000;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 20px;
+            position: relative;
+            font-family: 'Arial Black', sans-serif;
+            animation: heavyGlitch 2s infinite;
+        }
+
+        .error-title::before,
+        .error-title::after {
+            content: 'TECHNICAL ISSUES';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .error-title::before {
+            color: #FFD700;
+            animation: glitchText1 0.3s infinite;
+            z-index: -1;
+        }
+
+        .error-title::after {
+            color: #666;
+            animation: glitchText2 0.3s infinite;
+            z-index: -2;
+        }
+
+        @keyframes heavyGlitch {
+            0%, 90%, 100% {
+                text-shadow: 
+                    2px 2px 0 #FFD700,
+                    -2px -2px 0 #666,
+                    0 0 30px rgba(255, 0, 0, 0.5);
+            }
+            92% {
+                text-shadow: 
+                    5px 5px 0 #FFD700,
+                    -5px -5px 0 #666,
+                    0 0 40px rgba(255, 0, 0, 0.8);
+                transform: skew(-5deg);
+            }
+            94% {
+                text-shadow: 
+                    -3px 3px 0 #FFD700,
+                    3px -3px 0 #666,
+                    0 0 35px rgba(255, 215, 0, 0.6);
+                transform: skew(5deg);
+            }
+        }
+
+        @keyframes glitchText1 {
+            0%, 100% { clip-path: inset(0 0 0 0); }
+            20% { clip-path: inset(20% 0 60% 0); transform: translate(-2px, 0); }
+            40% { clip-path: inset(50% 0 20% 0); transform: translate(2px, 0); }
+            60% { clip-path: inset(10% 0 80% 0); transform: translate(0, 2px); }
+            80% { clip-path: inset(80% 0 10% 0); transform: translate(0, -2px); }
+        }
+
+        @keyframes glitchText2 {
+            0%, 100% { clip-path: inset(0 0 0 0); }
+            20% { clip-path: inset(60% 0 20% 0); transform: translate(2px, 0); }
+            40% { clip-path: inset(20% 0 50% 0); transform: translate(-2px, 0); }
+            60% { clip-path: inset(80% 0 10% 0); transform: translate(0, -2px); }
+            80% { clip-path: inset(10% 0 80% 0); transform: translate(0, 2px); }
+        }
+
+        .subtitle {
+            font-size: 1.8em;
+            color: #999;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            font-weight: bold;
+            letter-spacing: 0.05em;
+            animation: flicker 3s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            95% { opacity: 0.5; }
+            96% { opacity: 1; }
+            97% { opacity: 0.3; }
+        }
+
+        /* Error message box */
+        .error-box {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #FF0000;
+            border-radius: 0;
+            padding: 20px 40px;
+            display: inline-block;
+            margin-top: 20px;
+            position: relative;
+            box-shadow: 
+                0 0 20px rgba(255, 0, 0, 0.5),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+            animation: boxGlitch 5s infinite;
+        }
+
+        @keyframes boxGlitch {
+            0%, 93%, 100% { 
+                transform: translate(0, 0);
+                border-color: #FF0000;
+            }
+            94% { 
+                transform: translate(-3px, 0);
+                border-color: #FFD700;
+            }
+            95% { 
+                transform: translate(3px, 0);
+                border-color: #666;
+            }
+            96% { 
+                transform: translate(0, -2px);
+                border-color: #FF0000;
+            }
+        }
+
+        .error-code {
+            color: #FFD700;
+            font-size: 1.2em;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .error-message {
+            color: #CCC;
+            font-size: 1.3em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Blinking cursor */
+        .cursor {
+            display: inline-block;
+            width: 15px;
+            height: 25px;
+            background: #FFD700;
+            margin-left: 5px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Malfunctioning bouncing balls */
+        .game-area {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .ball {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            box-shadow: 0 5px 20px rgba(255, 0, 0, 0.6);
+        }
+
+        .ball1 {
+            background: radial-gradient(circle at 30% 30%, #FF0000, #8B0000);
+            animation: malfunctionBall1 3s infinite;
+        }
+
+        .ball2 {
+            width: 35px;
+            height: 35px;
+            background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500);
+            animation: malfunctionBall2 2s infinite;
+        }
+
+        .ball3 {
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle at 30% 30%, #999, #666);
+            animation: malfunctionBall3 4s infinite;
+        }
+
+        @keyframes malfunctionBall1 {
+            0%, 100% { 
+                left: 10%;
+                top: 70%;
+                transform: scale(1) rotate(0deg);
+            }
+            25% {
+                left: 40%;
+                top: 30%;
+                transform: scale(0.5) rotate(180deg);
+            }
+            26% {
+                left: 70%;
+                top: 50%;
+                transform: scale(2) rotate(185deg);
+            }
+            50% {
+                left: 85%;
+                top: 70%;
+                transform: scale(1) rotate(360deg);
+            }
+            75% {
+                left: 60%;
+                top: 40%;
+                transform: scale(1.5) rotate(540deg);
+            }
+        }
+
+        @keyframes malfunctionBall2 {
+            0%, 100% {
+                right: 10%;
+                top: 30%;
+                opacity: 1;
+            }
+            33% {
+                right: 50%;
+                top: 60%;
+                opacity: 0;
+            }
+            34% {
+                right: 20%;
+                top: 80%;
+                opacity: 1;
+            }
+            66% {
+                right: 80%;
+                top: 40%;
+                opacity: 0.3;
+            }
+        }
+
+        @keyframes malfunctionBall3 {
+            0% {
+                left: 50%;
+                bottom: 10%;
+                transform: translateX(-50%);
+            }
+            20% {
+                left: 30%;
+                bottom: 50%;
+                transform: translateX(0) scaleX(3);
+            }
+            40% {
+                left: 70%;
+                bottom: 80%;
+                transform: translateX(0) scaleY(3);
+            }
+            60% {
+                left: 20%;
+                bottom: 30%;
+                transform: translateX(0) scale(0.3);
+            }
+            80% {
+                left: 80%;
+                bottom: 60%;
+                transform: translateX(0) scale(2);
+            }
+            100% {
+                left: 50%;
+                bottom: 10%;
+                transform: translateX(-50%);
+            }
+        }
+
+        /* Glitchy paddles */
+        .paddle {
+            position: absolute;
+            width: 25px;
+            background: linear-gradient(180deg, #FF0000, #FFD700, #666);
+            border-radius: 5px;
+            animation: paddleGlitch 2s infinite;
+        }
+
+        .paddle-left {
+            left: 5%;
+            height: 100px;
+            top: 40%;
+        }
+
+        .paddle-right {
+            right: 5%;
+            height: 150px;
+            top: 30%;
+        }
+
+        @keyframes paddleGlitch {
+            0%, 90%, 100% {
+                opacity: 1;
+                transform: scaleY(1);
+            }
+            92% {
+                opacity: 0.3;
+                transform: scaleY(0.5);
+            }
+            94% {
+                opacity: 1;
+                transform: scaleY(2);
+            }
+            96% {
+                opacity: 0.5;
+                transform: scaleY(0.8);
+            }
+        }
+
+        /* Warning indicators */
+        .warning-strip {
+            position: absolute;
+            width: 100%;
+            height: 50px;
+            background: repeating-linear-gradient(
+                45deg,
+                #FFD700,
+                #FFD700 20px,
+                #000 20px,
+                #000 40px
+            );
+            opacity: 0.3;
+            animation: warningMove 2s linear infinite;
+        }
+
+        .warning-strip.top {
+            top: 0;
+        }
+
+        .warning-strip.bottom {
+            bottom: 0;
+            animation-direction: reverse;
+        }
+
+        @keyframes warningMove {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(40px); }
+        }
+
+        /* Status messages */
+        .status-container {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Courier New', monospace;
+            color: #FFD700;
+            font-size: 1.1em;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px;
+            border: 1px solid #333;
+            min-width: 400px;
+        }
+
+        .status-line {
+            margin: 5px 0;
+            opacity: 0;
+            animation: typeIn 0.5s forwards;
+        }
+
+        @keyframes typeIn {
+            to { opacity: 1; }
+        }
+
+        /* Distortion effect overlay */
+        .distortion {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 0, 0, 0.5);
+            animation: distortionScan 3s infinite;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+        }
+
+        @keyframes distortionScan {
+            0%, 100% { top: -3px; }
+            50% { top: 100%; }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .error-title { font-size: 3em; }
+            .subtitle { font-size: 1.3em; }
+            .error-message { font-size: 1em; }
+            .status-container { 
+                min-width: 90%;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="static-noise"></div>
+    <div class="scanlines"></div>
+    <div class="distortion"></div>
+    
+    <!-- Warning strips -->
+    <div class="warning-strip top"></div>
+    <div class="warning-strip bottom"></div>
+    
+    <div class="container">
+        <h1 class="error-title">TECHNICAL ISSUES</h1>
+        <p class="subtitle">Please Stand By</p>
+        
+        <div class="error-box">
+            <div class="error-code">ERROR CODE: <span id="errorCode">0xFF1337</span></div>
+            <div class="error-message">
+                <span id="statusMessage">Attempting to reconnect</span><span class="cursor"></span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Malfunctioning balls and paddles -->
+    <div class="game-area">
+        <div class="paddle paddle-left"></div>
+        <div class="ball ball1"></div>
+        <div class="ball ball2"></div>
+        <div class="ball ball3"></div>
+        <div class="paddle paddle-right"></div>
+    </div>
+    
+    <!-- Status messages -->
+    <div class="status-container" id="statusContainer">
+        <div class="status-line" style="animation-delay: 0s">> Initializing recovery protocol...</div>
+        <div class="status-line" style="animation-delay: 0.5s">> Checking stream connection...</div>
+        <div class="status-line" style="animation-delay: 1s">> Debugging in progress...</div>
+        <div class="status-line" style="animation-delay: 1.5s" id="dynamicStatus">> Status: WORKING ON IT</div>
+    </div>
+
+    <script>
+        // Rotating error messages
+        const errorMessages = [
+            "Attempting to reconnect",
+            "Restarting stream services",
+            "Fixing the unfixable",
+            "Turning it off and on again",
+            "Percussive maintenance applied",
+            "Consulting the manual",
+            "Blaming the internet",
+            "Fighting with OBS",
+            "Negotiating with the stream gods",
+            "Loading emergency protocols"
+        ];
+        
+        const errorCodes = [
+            "0xFF1337",
+            "0xDEADBEEF",
+            "0xCAFEBABE",
+            "0xBADC0DE",
+            "0x8BADF00D",
+            "0xFEEDFACE",
+            "0xC0FFEE",
+            "0xDEFEC8ED"
+        ];
+        
+        let messageIndex = 0;
+        let codeIndex = 0;
+        
+        function rotateError() {
+            const messageElement = document.getElementById('statusMessage');
+            const codeElement = document.getElementById('errorCode');
+            
+            // Glitch transition effect
+            messageElement.style.opacity = '0';
+            codeElement.style.opacity = '0';
+            
+            setTimeout(() => {
+                messageIndex = (messageIndex + 1) % errorMessages.length;
+                codeIndex = (codeIndex + 1) % errorCodes.length;
+                messageElement.textContent = errorMessages[messageIndex];
+                codeElement.textContent = errorCodes[codeIndex];
+                messageElement.style.opacity = '1';
+                codeElement.style.opacity = '1';
+            }, 200);
+        }
+        
+        // Change message every 3 seconds
+        setInterval(rotateError, 3000);
+        
+        // Add CSS transition
+        document.getElementById('statusMessage').style.transition = 'opacity 0.2s';
+        document.getElementById('errorCode').style.transition = 'opacity 0.2s';
+        
+        // Dynamic status updates
+        const statusUpdates = [
+            "> Status: WORKING ON IT",
+            "> Status: ALMOST THERE",
+            "> Status: JUST A SEC",
+            "> Status: HOLD TIGHT",
+            "> Status: 99% COMPLETE",
+            "> Status: RETICULATING SPLINES",
+            "> Status: ENHANCING PIXELS",
+            "> Status: DEBUGGING REALITY"
+        ];
+        
+        let statusIndex = 0;
+        
+        function updateStatus() {
+            const statusElement = document.getElementById('dynamicStatus');
+            statusIndex = (statusIndex + 1) % statusUpdates.length;
+            statusElement.textContent = statusUpdates[statusIndex];
+            
+            // Re-trigger animation
+            statusElement.style.animation = 'none';
+            setTimeout(() => {
+                statusElement.style.animation = 'typeIn 0.5s forwards';
+            }, 10);
+        }
+        
+        setInterval(updateStatus, 2500);
+        
+        // Random screen interference
+        function createInterference() {
+            const interference = document.createElement('div');
+            interference.style.position = 'absolute';
+            interference.style.width = '100%';
+            interference.style.height = Math.random() * 50 + 10 + 'px';
+            interference.style.top = Math.random() * 100 + '%';
+            interference.style.left = '0';
+            interference.style.background = `rgba(255, 0, 0, ${Math.random() * 0.1})`;
+            interference.style.pointerEvents = 'none';
+            interference.style.zIndex = '50';
+            interference.style.mixBlendMode = 'multiply';
+            
+            document.body.appendChild(interference);
+            
+            setTimeout(() => interference.remove(), 100);
+        }
+        
+        // Create random interference
+        setInterval(() => {
+            if (Math.random() > 0.7) {
+                createInterference();
+            }
+        }, 500);
+        
+        // Heavy glitch effect periodically
+        function heavyGlitch() {
+            document.body.style.filter = 'invert(1)';
+            setTimeout(() => {
+                document.body.style.filter = 'invert(0)';
+            }, 50);
+        }
+        
+        setInterval(() => {
+            if (Math.random() > 0.9) {
+                heavyGlitch();
+            }
+        }, 5000);
+        
+        // RGB split effect on title occasionally
+        function rgbSplit() {
+            const title = document.querySelector('.error-title');
+            title.style.textShadow = '5px 0 0 rgba(255,0,0,0.8), -5px 0 0 rgba(0,255,255,0.8)';
+            
+            setTimeout(() => {
+                title.style.textShadow = '';
+            }, 200);
+        }
+        
+        setInterval(() => {
+            if (Math.random() > 0.8) {
+                rgbSplit();
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

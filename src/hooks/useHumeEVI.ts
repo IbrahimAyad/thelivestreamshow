@@ -143,7 +143,7 @@ export function useHumeEVI(): UseHumeEVI {
 
           // Add to history
           setConversationHistory(prev => [...prev, {
-            role: 'user',
+            role: 'user' as const,
             content: msg.message.content,
             emotions: msg.models.prosody?.scores
           }].slice(-20)); // Keep last 20
@@ -156,7 +156,7 @@ export function useHumeEVI(): UseHumeEVI {
 
           // Add to history
           setConversationHistory(prev => [...prev, {
-            role: 'assistant',
+            role: 'assistant' as const,
             content: msg.message.content
           }].slice(-20));
 

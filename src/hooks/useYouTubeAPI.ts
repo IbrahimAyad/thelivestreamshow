@@ -201,7 +201,7 @@ export function useYouTubeAPI(): UseYouTubeAPI {
     console.log(`🎯 Intent detected: ${intent.type}`);
     console.log(`📝 Enriched query: "${cleanQuery}"`);
 
-    return { type, channelId, sortBy, query: cleanQuery };
+    return { type, channelId, sortBy, query: cleanQuery, cleanQuery };
   }, []);
 
   const searchVideos = useCallback(async (

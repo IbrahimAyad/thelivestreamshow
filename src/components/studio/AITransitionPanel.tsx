@@ -125,9 +125,9 @@ export function AITransitionPanel({
                     <span className="text-xs font-medium text-neutral-300">FX Chain</span>
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {Array.from(new Set(transition.plan.fxTimeline.map(fx => fx.effect))).map(effect => (
-                      <span key={effect} className="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded text-xs">
-                        {effect}
+                    {Array.from(new Set(transition.plan.fxTimeline.map(fx => fx.effect))).map((effect, index) => (
+                      <span key={`effect-${index}`} className="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded text-xs">
+                        {String(effect)}
                       </span>
                     ))}
                   </div>

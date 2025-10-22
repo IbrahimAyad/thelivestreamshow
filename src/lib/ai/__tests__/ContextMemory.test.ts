@@ -58,7 +58,7 @@ describe('ContextMemory: Duplicate Detection', () => {
         created_at: new Date()
       };
 
-      await contextMemory.addQuestion(originalQuestion, 'test');
+      await contextMemory.addQuestion(originalQuestion, 'gpt-4o');
       console.log('   1️⃣ Original question added: "What is artificial intelligence?"');
 
       // Step 2: Check for near-identical question
@@ -97,7 +97,7 @@ describe('ContextMemory: Duplicate Detection', () => {
         created_at: new Date()
       };
 
-      await contextMemory.addQuestion(originalQuestion, 'test');
+      await contextMemory.addQuestion(originalQuestion, 'gpt-4o');
       console.log('   1️⃣ Original: "How does machine learning work?"');
 
       // Step 2: Check for semantically similar question
@@ -132,7 +132,7 @@ describe('ContextMemory: Duplicate Detection', () => {
         created_at: new Date()
       };
 
-      await contextMemory.addQuestion(originalQuestion, 'test');
+      await contextMemory.addQuestion(originalQuestion, 'gpt-4o');
       console.log('   1️⃣ Original: "What is quantum computing?"');
 
       // Step 2: Check completely different question
@@ -161,7 +161,7 @@ describe('ContextMemory: Duplicate Detection', () => {
         created_at: new Date()
       };
 
-      await contextMemory.addQuestion(techQuestion, 'test');
+      await contextMemory.addQuestion(techQuestion, 'gpt-4o');
       console.log('   1️⃣ Original: "What are the benefits of cloud computing?"');
 
       // Step 2: Check unrelated sports question
@@ -206,7 +206,7 @@ describe('ContextMemory: Duplicate Detection', () => {
         created_at: new Date()
       };
 
-      await strictMemory.addQuestion(originalQuestion, 'test');
+      await strictMemory.addQuestion(originalQuestion, 'gpt-4o');
       console.log('   1️⃣ Threshold set to 0.95 (strict)');
 
       // Check slightly different question

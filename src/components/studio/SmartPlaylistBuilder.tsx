@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Filter, X, Plus } from 'lucide-react'
-import type { SmartPlaylistFilter } from '@/types/database'
+import type { SmartPlaylistFilter } from "@/types/database"
 import { supabase } from '@/lib/supabase'
 
 interface SmartPlaylistBuilderProps {

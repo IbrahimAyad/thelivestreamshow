@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { AudioEffectsChain } from '@/utils/studio/audioEffects'
-import type { MusicTrack, AudioPlaybackState, AudioSettings, AudioEffectsConfig } from '@/types/database'
+import type { MusicTrack, AudioPlaybackState, AudioSettings, AudioEffectsConfig } from "@/types/database"
 
 export function useAudioPlayer() {
   const [currentTrack, setCurrentTrack] = useState<MusicTrack | null>(null)
@@ -31,6 +31,8 @@ export function useAudioPlayer() {
     const audio = new Audio()
     audio.crossOrigin = 'anonymous'
     audio.preload = 'metadata'
+    audio.volume = 1.0 // Set audio element volume to max (Web Audio API will control gain)
+    audio.muted = false // Ensure not muted
     audioRef.current = audio
 
     console.log('[AudioPlayer] Audio element created (AudioContext NOT created yet)')
@@ -129,8 +131,15 @@ export function useAudioPlayer() {
       analyserNodeRef.current = analyserNode
       setAnalyser(analyserNode)
 
-      gainNode.gain.value = 0.7
+      // Set initial gain values
+      gainNode.gain.value = volume // Use current volume state
       duckingGainNode.gain.value = 1.0
+      
+      // Ensure audio element is not muted
+      if (audioRef.current) {
+        audioRef.current.volume = 1.0
+        audioRef.current.muted = false
+      }
 
       setIsInitialized(true)
       console.log('[AudioPlayer] ✅ AudioContext initialized successfully')

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { AudioPlaybackState } from '@/types/database'
+import type { AudioPlaybackState } from "@/types/database"
 
 export function usePlaybackSync() {
   const [playbackState, setPlaybackState] = useState<AudioPlaybackState | null>(null)
