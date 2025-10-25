@@ -14,6 +14,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { AudioEffectsChain } from '@/utils/studio/audioEffects'
+import { GlobalAudioManager } from '@/utils/studio/globalAudioManager'
 import type { MusicTrack, AudioEffectsConfig } from "@/types/database"
 
 export type DeckId = 'A' | 'B'
@@ -94,16 +95,13 @@ export function useDeckAudioPlayer(options: DeckAudioPlayerOptions) {
   const outputNodeRef = useRef<GainNode | null>(null) // Connect to mixer
   const beatIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Initialize audio element
+  // Initialize audio element (persistent across component mounts)
   useEffect(() => {
-    const audio = new Audio()
-    audio.crossOrigin = 'anonymous'
-    audio.preload = 'metadata'
-    audio.preservesPitch = true
-    audio.playbackRate = 1.0
+    // Get persistent audio element from global manager
+    const audio = GlobalAudioManager.getAudioElement(deckId)
     audioRef.current = audio
 
-    console.log(`[Deck ${deckId}] Audio element created`)
+    console.log(`[Deck ${deckId}] Using persistent audio element`)
 
     // Event listeners
     const handleTimeUpdate = () => {
@@ -123,11 +121,13 @@ export function useDeckAudioPlayer(options: DeckAudioPlayerOptions) {
     audio.addEventListener('ended', handleEnded)
 
     return () => {
+      // IMPORTANT: Don't pause or cleanup audio element on unmount!
+      // Just remove event listeners
       audio.removeEventListener('timeupdate', handleTimeUpdate)
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
       audio.removeEventListener('ended', handleEnded)
-      audio.pause()
 
+      // Only cleanup audio context if we created it (not shared)
       if (audioContextRef.current && !sharedAudioContext) {
         audioContextRef.current.close()
       }
@@ -215,12 +215,64 @@ export function useDeckAudioPlayer(options: DeckAudioPlayerOptions) {
 
       setAnalyser(analyserNode)
 
-      console.log(`[Deck ${deckId}] AudioContext initialized`)
+      console.log(`[Deck ${deckId}] ✅ AudioContext initialized`)
+
+      // Verify audio graph connections
+      const connectionVerified = verifyAudioGraphConnections()
+      if (!connectionVerified) {
+        console.error(`[Deck ${deckId}] ⚠️ Audio graph connection verification failed`)
+      }
 
     } catch (error) {
-      console.error(`[Deck ${deckId}] Failed to initialize AudioContext:`, error)
+      console.error(`[Deck ${deckId}] ❌ Failed to initialize AudioContext:`, error)
+      throw error
     }
   }, [deckId, sharedAudioContext, trimGain, channelFader])
+
+  // Verify audio graph connections
+  const verifyAudioGraphConnections = useCallback((): boolean => {
+    console.log(`[Deck ${deckId}] Verifying audio graph connections...`)
+
+    const checks = [
+      { name: 'Source Node', node: sourceNodeRef.current },
+      { name: 'Trim Gain Node', node: trimGainNodeRef.current },
+      { name: 'EQ Low Node', node: eqLowNodeRef.current },
+      { name: 'EQ Mid Node', node: eqMidNodeRef.current },
+      { name: 'EQ High Node', node: eqHighNodeRef.current },
+      { name: 'Channel Fader Node', node: channelFaderNodeRef.current },
+      { name: 'Analyser Node', node: analyserNodeRef.current },
+      { name: 'Output Node', node: outputNodeRef.current },
+    ]
+
+    let allConnected = true
+    for (const check of checks) {
+      if (!check.node) {
+        console.error(`[Deck ${deckId}] ❌ ${check.name}: MISSING`)
+        allConnected = false
+      } else {
+        console.log(`[Deck ${deckId}] ✅ ${check.name}: Connected`)
+      }
+    }
+
+    // Check gain values
+    if (trimGainNodeRef.current) {
+      console.log(`[Deck ${deckId}] Trim Gain: ${trimGainNodeRef.current.gain.value.toFixed(2)}`)
+    }
+    if (channelFaderNodeRef.current) {
+      console.log(`[Deck ${deckId}] Channel Fader: ${channelFaderNodeRef.current.gain.value.toFixed(2)}`)
+    }
+    if (outputNodeRef.current) {
+      console.log(`[Deck ${deckId}] Output Gain: ${outputNodeRef.current.gain.value.toFixed(2)}`)
+    }
+
+    if (allConnected) {
+      console.log(`[Deck ${deckId}] ✅ Audio graph fully connected`)
+    } else {
+      console.error(`[Deck ${deckId}] ❌ Audio graph has missing nodes`)
+    }
+
+    return allConnected
+  }, [deckId])
 
   // Load track
   const loadTrack = useCallback(async (track: MusicTrack) => {
@@ -236,7 +288,32 @@ export function useDeckAudioPlayer(options: DeckAudioPlayerOptions) {
 
       // Set new source
       audioRef.current.src = track.file_url
-      await audioRef.current.load()
+      
+      // Wait for metadata to load with timeout
+      const metadataLoadPromise = new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Metadata load timeout (10s)'))
+        }, 10000)
+
+        const handleLoadedMetadata = () => {
+          clearTimeout(timeout)
+          audioRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata)
+          console.log(`[Deck ${deckId}] ✅ Metadata loaded - Duration: ${audioRef.current?.duration.toFixed(2)}s, ReadyState: ${audioRef.current?.readyState}`)
+          resolve()
+        }
+
+        if (audioRef.current!.readyState >= 2) {
+          // Already have metadata
+          clearTimeout(timeout)
+          console.log(`[Deck ${deckId}] ✅ Metadata already available`)
+          resolve()
+        } else {
+          audioRef.current!.addEventListener('loadedmetadata', handleLoadedMetadata)
+          audioRef.current!.load()
+        }
+      })
+
+      await metadataLoadPromise
 
       // Initialize AudioContext on first track load
       if (!audioContextRef.current) {
@@ -254,12 +331,58 @@ export function useDeckAudioPlayer(options: DeckAudioPlayerOptions) {
         startBeatCounter(track.bpm)
       }
 
-      console.log(`[Deck ${deckId}] Track loaded successfully`)
+      console.log(`[Deck ${deckId}] ✅ Track loaded successfully`)
 
     } catch (error) {
-      console.error(`[Deck ${deckId}] Failed to load track:`, error)
+      console.error(`[Deck ${deckId}] ❌ Failed to load track:`, error)
+      throw error // Re-throw for caller to handle
     }
   }, [deckId, initializeAudioContext])
+
+  // Pre-play validation gate
+  const validatePlayReadiness = useCallback((): { ready: boolean; error?: string } => {
+    // Check audio element exists
+    if (!audioRef.current) {
+      return { ready: false, error: 'Audio element not initialized' }
+    }
+
+    // Check audio element has valid src
+    if (!audioRef.current.src) {
+      return { ready: false, error: 'No audio source set' }
+    }
+
+    // Check audio element readyState
+    if (audioRef.current.readyState < 2) {
+      return { ready: false, error: `Audio not ready (readyState: ${audioRef.current.readyState})` }
+    }
+
+    // Check current track is loaded
+    if (!currentTrack) {
+      return { ready: false, error: 'No track loaded' }
+    }
+
+    // Check AudioContext exists
+    if (!audioContextRef.current) {
+      return { ready: false, error: 'AudioContext not initialized' }
+    }
+
+    // Check AudioContext state is running
+    if (audioContextRef.current.state !== 'running') {
+      return { ready: false, error: `AudioContext state: ${audioContextRef.current.state}` }
+    }
+
+    // Check source node exists
+    if (!sourceNodeRef.current) {
+      return { ready: false, error: 'Audio graph source node missing' }
+    }
+
+    // Check output node exists
+    if (!outputNodeRef.current) {
+      return { ready: false, error: 'Audio graph output node missing' }
+    }
+
+    return { ready: true }
+  }, [currentTrack])
 
   // Play
   const play = useCallback(async () => {
@@ -268,24 +391,56 @@ export function useDeckAudioPlayer(options: DeckAudioPlayerOptions) {
     try {
       // Initialize AudioContext if needed
       if (!audioContextRef.current) {
+        console.log(`[Deck ${deckId}] Initializing AudioContext before play...`)
         await initializeAudioContext()
+      }
+
+      // Handle closed AudioContext - must recreate
+      if (audioContextRef.current?.state === 'closed') {
+        console.log(`[Deck ${deckId}] ⚠️ AudioContext is CLOSED - recreating...`)
+        audioContextRef.current = null
+        await initializeAudioContext()
+        console.log(`[Deck ${deckId}] ✅ AudioContext recreated`)
       }
 
       // Resume AudioContext if suspended
       if (audioContextRef.current?.state === 'suspended') {
+        console.log(`[Deck ${deckId}] Resuming suspended AudioContext...`)
         await audioContextRef.current.resume()
+        console.log(`[Deck ${deckId}] AudioContext state after resume: ${audioContextRef.current.state}`)
       }
 
+      // Validate readiness before play
+      const validation = validatePlayReadiness()
+      if (!validation.ready) {
+        console.error(`[Deck ${deckId}] ❌ Play validation failed: ${validation.error}`)
+        throw new Error(validation.error)
+      }
+
+      console.log(`[Deck ${deckId}] ✅ Pre-play validation passed`)
+
+      // Attempt play
       await audioRef.current.play()
       setIsPlaying(true)
       setIsCued(false)
 
-      console.log(`[Deck ${deckId}] Playing`)
+      console.log(`[Deck ${deckId}] ✅ Playing successfully`)
+
+      // Verify playback actually started
+      setTimeout(() => {
+        if (audioRef.current && !audioRef.current.paused) {
+          console.log(`[Deck ${deckId}] ✅ Playback confirmed (currentTime: ${audioRef.current.currentTime.toFixed(2)}s)`)
+        } else {
+          console.error(`[Deck ${deckId}] ⚠️ Playback verification failed - audio element still paused`)
+        }
+      }, 100)
 
     } catch (error) {
-      console.error(`[Deck ${deckId}] Play failed:`, error)
+      console.error(`[Deck ${deckId}] ❌ Play failed:`, error)
+      setIsPlaying(false)
+      throw error // Re-throw for caller to handle
     }
-  }, [deckId, currentTrack, initializeAudioContext])
+  }, [deckId, currentTrack, initializeAudioContext, validatePlayReadiness])
 
   // Pause
   const pause = useCallback(() => {
@@ -492,6 +647,7 @@ export function useDeckAudioPlayer(options: DeckAudioPlayerOptions) {
     trimGain,
     analyser,
     audioContext: audioContextRef.current,
+    audioElement: audioRef.current, // Expose audio element for debugging
 
     // Actions
     loadTrack,

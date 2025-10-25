@@ -1,0 +1,122 @@
+{
+  "current_scene": "Split Screen",
+  "current_program_scene": "Split Screen",
+  "scene_order": [
+    {"name": "Split Screen"},
+    {"name": "Interviewer Focus"},
+    {"name": "Interviewee Focus"}
+  ],
+  "name": "Interview Setup",
+  "sources": [
+    {
+      "name": "Interviewer Camera",
+      "versioned_id": "dshow_input",
+      "settings": {},
+      "id": "dshow_input"
+    },
+    {
+      "name": "Interviewee Camera",
+      "versioned_id": "dshow_input",
+      "settings": {},
+      "id": "dshow_input"
+    },
+    {
+      "name": "Interviewer Mic",
+      "versioned_id": "wasapi_input_capture",
+      "settings": {},
+      "id": "wasapi_input_capture"
+    },
+    {
+      "name": "Interviewee Mic",
+      "versioned_id": "wasapi_input_capture",
+      "settings": {},
+      "id": "wasapi_input_capture"
+    },
+    {
+      "name": "LowerThird_Title",
+      "versioned_id": "text_gdiplus_v3",
+      "settings": {
+        "text": "Guest Name",
+        "font": {"face": "Arial", "size": 40, "flags": 1},
+        "color": 4294967295
+      },
+      "id": "text_gdiplus"
+    },
+    {
+      "name": "LowerThird_Subtitle",
+      "versioned_id": "text_gdiplus_v3",
+      "settings": {
+        "text": "Title/Role",
+        "font": {"face": "Arial", "size": 26, "flags": 0},
+        "color": 4291611852
+      },
+      "id": "text_gdiplus"
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Split Screen",
+      "settings": {},
+      "sources": [
+        {
+          "name": "Interviewer Camera",
+          "pos": {"x": 0, "y": 0},
+          "scale": {"x": 0.5, "y": 1.0},
+          "visible": true
+        },
+        {
+          "name": "Interviewee Camera",
+          "pos": {"x": 960, "y": 0},
+          "scale": {"x": 0.5, "y": 1.0},
+          "visible": true
+        },
+        {
+          "name": "LowerThird_Title",
+          "pos": {"x": 50, "y": 930},
+          "visible": false
+        },
+        {
+          "name": "LowerThird_Subtitle",
+          "pos": {"x": 50, "y": 975},
+          "visible": false
+        }
+      ]
+    },
+    {
+      "name": "Interviewer Focus",
+      "settings": {},
+      "sources": [
+        {
+          "name": "Interviewer Camera",
+          "pos": {"x": 0, "y": 0},
+          "scale": {"x": 0.8, "y": 0.8},
+          "visible": true
+        },
+        {
+          "name": "Interviewee Camera",
+          "pos": {"x": 1500, "y": 810},
+          "scale": {"x": 0.2, "y": 0.2},
+          "visible": true
+        }
+      ]
+    },
+    {
+      "name": "Interviewee Focus",
+      "settings": {},
+      "sources": [
+        {
+          "name": "Interviewee Camera",
+          "pos": {"x": 0, "y": 0},
+          "scale": {"x": 0.8, "y": 0.8},
+          "visible": true
+        },
+        {
+          "name": "Interviewer Camera",
+          "pos": {"x": 1500, "y": 810},
+          "scale": {"x": 0.2, "y": 0.2},
+          "visible": true
+        }
+      ]
+    }
+  ]
+}

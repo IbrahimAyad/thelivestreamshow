@@ -1,0 +1,182 @@
+{
+  "current_scene": "4-Panel Grid",
+  "current_program_scene": "4-Panel Grid",
+  "scene_order": [
+    {"name": "4-Panel Grid"},
+    {"name": "Moderator + 3 Guests"},
+    {"name": "Active Speaker"}
+  ],
+  "name": "Panel Discussion Setup",
+  "sources": [
+    {
+      "name": "Moderator Camera",
+      "versioned_id": "dshow_input",
+      "settings": {},
+      "id": "dshow_input"
+    },
+    {
+      "name": "Panelist 1 Camera",
+      "versioned_id": "dshow_input",
+      "settings": {},
+      "id": "dshow_input"
+    },
+    {
+      "name": "Panelist 2 Camera",
+      "versioned_id": "dshow_input",
+      "settings": {},
+      "id": "dshow_input"
+    },
+    {
+      "name": "Panelist 3 Camera",
+      "versioned_id": "dshow_input",
+      "settings": {},
+      "id": "dshow_input"
+    },
+    {
+      "name": "Moderator Mic",
+      "versioned_id": "wasapi_input_capture",
+      "settings": {},
+      "id": "wasapi_input_capture"
+    },
+    {
+      "name": "Panelist 1 Mic",
+      "versioned_id": "wasapi_input_capture",
+      "settings": {},
+      "id": "wasapi_input_capture"
+    },
+    {
+      "name": "Panelist 2 Mic",
+      "versioned_id": "wasapi_input_capture",
+      "settings": {},
+      "id": "wasapi_input_capture"
+    },
+    {
+      "name": "Panelist 3 Mic",
+      "versioned_id": "wasapi_input_capture",
+      "settings": {},
+      "id": "wasapi_input_capture"
+    },
+    {
+      "name": "LowerThird_Title",
+      "versioned_id": "text_gdiplus_v3",
+      "settings": {
+        "text": "Speaker Name",
+        "font": {"face": "Arial", "size": 42, "flags": 1},
+        "color": 4294967295
+      },
+      "id": "text_gdiplus"
+    },
+    {
+      "name": "LowerThird_Subtitle",
+      "versioned_id": "text_gdiplus_v3",
+      "settings": {
+        "text": "Role/Organization",
+        "font": {"face": "Arial", "size": 28, "flags": 0},
+        "color": 4291611852
+      },
+      "id": "text_gdiplus"
+    }
+  ],
+  "scenes": [
+    {
+      "name": "4-Panel Grid",
+      "settings": {},
+      "sources": [
+        {
+          "name": "Moderator Camera",
+          "pos": {"x": 0, "y": 0},
+          "scale": {"x": 0.5, "y": 0.5},
+          "visible": true
+        },
+        {
+          "name": "Panelist 1 Camera",
+          "pos": {"x": 960, "y": 0},
+          "scale": {"x": 0.5, "y": 0.5},
+          "visible": true
+        },
+        {
+          "name": "Panelist 2 Camera",
+          "pos": {"x": 0, "y": 540},
+          "scale": {"x": 0.5, "y": 0.5},
+          "visible": true
+        },
+        {
+          "name": "Panelist 3 Camera",
+          "pos": {"x": 960, "y": 540},
+          "scale": {"x": 0.5, "y": 0.5},
+          "visible": true
+        }
+      ]
+    },
+    {
+      "name": "Moderator + 3 Guests",
+      "settings": {},
+      "sources": [
+        {
+          "name": "Moderator Camera",
+          "pos": {"x": 0, "y": 0},
+          "scale": {"x": 0.7, "y": 0.7},
+          "visible": true
+        },
+        {
+          "name": "Panelist 1 Camera",
+          "pos": {"x": 1344, "y": 0},
+          "scale": {"x": 0.25, "y": 0.25},
+          "visible": true
+        },
+        {
+          "name": "Panelist 2 Camera",
+          "pos": {"x": 1344, "y": 360},
+          "scale": {"x": 0.25, "y": 0.25},
+          "visible": true
+        },
+        {
+          "name": "Panelist 3 Camera",
+          "pos": {"x": 1344, "y": 720},
+          "scale": {"x": 0.25, "y": 0.25},
+          "visible": true
+        }
+      ]
+    },
+    {
+      "name": "Active Speaker",
+      "settings": {},
+      "sources": [
+        {
+          "name": "Moderator Camera",
+          "pos": {"x": 0, "y": 0},
+          "scale": {"x": 1.0, "y": 1.0},
+          "visible": true
+        },
+        {
+          "name": "Panelist 1 Camera",
+          "pos": {"x": 1620, "y": 0},
+          "scale": {"x": 0.15, "y": 0.15},
+          "visible": true
+        },
+        {
+          "name": "Panelist 2 Camera",
+          "pos": {"x": 1620, "y": 360},
+          "scale": {"x": 0.15, "y": 0.15},
+          "visible": true
+        },
+        {
+          "name": "Panelist 3 Camera",
+          "pos": {"x": 1620, "y": 720},
+          "scale": {"x": 0.15, "y": 0.15},
+          "visible": true
+        },
+        {
+          "name": "LowerThird_Title",
+          "pos": {"x": 50, "y": 930},
+          "visible": false
+        },
+        {
+          "name": "LowerThird_Subtitle",
+          "pos": {"x": 50, "y": 975},
+          "visible": false
+        }
+      ]
+    }
+  ]
+}

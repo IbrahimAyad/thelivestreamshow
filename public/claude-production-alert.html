@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Production Alert</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: transparent;
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Terminal Container */
+        .terminal-container {
+            background: rgba(15, 15, 15, 0.95);
+            border: 2px solid #D97706;
+            border-radius: 8px;
+            box-shadow: 
+                0 0 30px rgba(217, 119, 6, 0.5),
+                inset 0 0 20px rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            width: 700px;
+            max-width: 90%;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Terminal Header */
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(217, 119, 6, 0.3);
+        }
+
+        .claude-logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #D97706, #F59E0B);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 900;
+            color: #FFF;
+            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.6);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                box-shadow: 0 4px 15px rgba(217, 119, 6, 0.6);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 4px 25px rgba(217, 119, 6, 0.9);
+                transform: scale(1.05);
+            }
+        }
+
+        .terminal-title {
+            flex: 1;
+        }
+
+        .terminal-title h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #D97706;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .terminal-title p {
+            font-size: 13px;
+            color: #999;
+            font-weight: 400;
+        }
+
+        /* Terminal Window Controls */
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #555;
+        }
+
+        .control-dot.close { background: #EF4444; }
+        .control-dot.minimize { background: #FCD34D; }
+        .control-dot.maximize { background: #10B981; }
+
+        /* Terminal Content */
+        .terminal-content {
+            color: #10B981;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .command-line {
+            margin-bottom: 8px;
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .prompt {
+            color: #D97706;
+            font-weight: 700;
+        }
+
+        .output {
+            color: #10B981;
+            margin-left: 20px;
+            font-weight: 400;
+        }
+
+        .output.warning {
+            color: #FCD34D;
+        }
+
+        .output.success {
+            color: #10B981;
+            font-weight: 700;
+        }
+
+        .output.info {
+            color: #3B82F6;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background: #D97706;
+            margin-left: 3px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Loading Bar */
+        .loading-bar {
+            background: rgba(217, 119, 6, 0.2);
+            height: 6px;
+            border-radius: 3px;
+            margin: 15px 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .loading-bar.active {
+            display: block;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #D97706, #F59E0B, #D97706);
+            background-size: 200% 100%;
+            animation: loading 2s linear;
+            border-radius: 3px;
+        }
+
+        @keyframes loading {
+            from {
+                width: 0;
+                background-position: 0 0;
+            }
+            to {
+                width: 100%;
+                background-position: 200% 0;
+            }
+        }
+
+        /* Scanlines effect */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                transparent 50%,
+                rgba(217, 119, 6, 0.02) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Auto-hide animation */
+        .terminal-container.hiding {
+            animation: slideOut 0.5s ease-in forwards;
+        }
+
+        @keyframes slideOut {
+            to {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+    
+    <div class="terminal-container" id="terminal">
+        <!-- Terminal Header -->
+        <div class="terminal-header">
+            <div class="claude-logo">⚡</div>
+            <div class="terminal-title">
+                <h1>Claude Production System</h1>
+                <p>AI-Assisted Production Control</p>
+            </div>
+            <div class="window-controls">
+                <div class="control-dot close"></div>
+                <div class="control-dot minimize"></div>
+                <div class="control-dot maximize"></div>
+            </div>
+        </div>
+
+        <!-- Terminal Content -->
+        <div class="terminal-content" id="output">
+            <!-- Commands will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        // Command sequence to display
+        const commands = [
+            { type: 'prompt', text: 'claude@production:~$', delay: 0 },
+            { type: 'command', text: 'detect-issue --source=transcript', delay: 300 },
+            { type: 'output', text: '⚠️  Production issue detected in conversation', style: 'warning', delay: 600 },
+            { type: 'output', text: '📊 Analyzing context...', style: 'info', delay: 900 },
+            { type: 'loading', delay: 1200 },
+            { type: 'output', text: '✓ Context analyzed', style: 'success', delay: 3200 },
+            { type: 'prompt', text: 'claude@production:~$', delay: 3500 },
+            { type: 'command', text: 'apply-fix --mode=auto', delay: 3800 },
+            { type: 'output', text: '🔧 Applying production fix...', style: 'info', delay: 4100 },
+            { type: 'output', text: '✓ Systems optimized', style: 'success', delay: 4600 },
+            { type: 'output', text: '✓ Stream quality restored', style: 'success', delay: 5000 },
+            { type: 'prompt', text: 'claude@production:~$', delay: 5300 },
+            { type: 'command', text: 'resume-normal-operations', delay: 5600 },
+            { type: 'output', text: '✅ All systems nominal', style: 'success', delay: 5900 },
+            { type: 'cursor', delay: 6200 }
+        ];
+
+        const outputElement = document.getElementById('output');
+        let currentLine = null;
+
+        // Execute command sequence
+        commands.forEach((cmd, index) => {
+            setTimeout(() => {
+                if (cmd.type === 'prompt') {
+                    const line = document.createElement('div');
+                    line.className = 'command-line';
+                    line.innerHTML = `<span class="prompt">${cmd.text}</span>`;
+                    outputElement.appendChild(line);
+                    currentLine = line;
+                } else if (cmd.type === 'command') {
+                    if (currentLine) {
+                        currentLine.innerHTML += ` ${cmd.text}`;
+                    }
+                } else if (cmd.type === 'output') {
+                    const line = document.createElement('div');
+                    line.className = 'command-line';
+                    line.innerHTML = `<span class="output ${cmd.style || ''}">${cmd.text}</span>`;
+                    outputElement.appendChild(line);
+                } else if (cmd.type === 'loading') {
+                    const loadingBar = document.createElement('div');
+                    loadingBar.className = 'loading-bar active';
+                    loadingBar.innerHTML = '<div class="loading-progress"></div>';
+                    outputElement.appendChild(loadingBar);
+                } else if (cmd.type === 'cursor') {
+                    if (currentLine) {
+                        currentLine.innerHTML += '<span class="cursor"></span>';
+                    }
+                }
+            }, cmd.delay);
+        });
+
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+            const terminal = document.getElementById('terminal');
+            terminal.classList.add('hiding');
+            
+            // Notify parent window to hide overlay (for Supabase integration)
+            setTimeout(() => {
+                if (window.parent !== window) {
+                    window.parent.postMessage({ type: 'CLAUDE_ALERT_COMPLETE' }, '*');
+                }
+            }, 500);
+        }, 10000);
+
+        // Listen for manual close signal
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'CLOSE_OVERLAY') {
+                const terminal = document.getElementById('terminal');
+                terminal.classList.add('hiding');
+            }
+        });
+    </script>
+</body>
+</html>

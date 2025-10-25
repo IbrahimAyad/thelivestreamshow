@@ -1,0 +1,187 @@
+{
+  "current_scene": "Reaction View",
+  "current_program_scene": "Reaction View",
+  "scene_order": [
+    {"name": "Reaction View"},
+    {"name": "Full Video"},
+    {"name": "Host Commentary"}
+  ],
+  "name": "Reaction Show Setup",
+  "sources": [
+    {
+      "name": "Host Webcam",
+      "versioned_id": "dshow_input",
+      "settings": {},
+      "id": "dshow_input",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 0.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 255
+    },
+    {
+      "name": "Video Player",
+      "versioned_id": "browser_source",
+      "settings": {
+        "url": "",
+        "width": 1920,
+        "height": 1080
+      },
+      "id": "browser_source",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 1.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 255
+    },
+    {
+      "name": "Host Mic",
+      "versioned_id": "wasapi_input_capture",
+      "settings": {},
+      "id": "wasapi_input_capture",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 1.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 255
+    },
+    {
+      "name": "LowerThird_Title",
+      "versioned_id": "text_gdiplus_v3",
+      "settings": {
+        "text": "Now Watching",
+        "font": {"face": "Arial", "size": 36, "flags": 1},
+        "color": 4294967295,
+        "opacity": 100,
+        "align": "left",
+        "valign": "center"
+      },
+      "id": "text_gdiplus",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 1.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 0
+    },
+    {
+      "name": "LowerThird_Subtitle",
+      "versioned_id": "text_gdiplus_v3",
+      "settings": {
+        "text": "Video Title",
+        "font": {"face": "Arial", "size": 24, "flags": 0},
+        "color": 4291611852,
+        "opacity": 100,
+        "align": "left",
+        "valign": "center"
+      },
+      "id": "text_gdiplus",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 1.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 0
+    }
+  ],
+  "current_transition": "Fade",
+  "transitions": [
+    {
+      "name": "Fade",
+      "id": "fade_transition",
+      "settings": {"duration": 300}
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Reaction View",
+      "settings": {},
+      "sources": [
+        {
+          "name": "Video Player",
+          "pos": {"x": 0, "y": 0},
+          "scale": {"x": 0.7, "y": 0.7},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": true,
+          "locked": false
+        },
+        {
+          "name": "Host Webcam",
+          "pos": {"x": 1344, "y": 756},
+          "scale": {"x": 0.3, "y": 0.3},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": true,
+          "locked": false
+        },
+        {
+          "name": "LowerThird_Title",
+          "pos": {"x": 50, "y": 930},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": false,
+          "locked": false
+        },
+        {
+          "name": "LowerThird_Subtitle",
+          "pos": {"x": 50, "y": 970},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": false,
+          "locked": false
+        }
+      ]
+    },
+    {
+      "name": "Full Video",
+      "settings": {},
+      "sources": [
+        {
+          "name": "Video Player",
+          "pos": {"x": 0, "y": 0},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": true,
+          "locked": false
+        }
+      ]
+    },
+    {
+      "name": "Host Commentary",
+      "settings": {},
+      "sources": [
+        {
+          "name": "Host Webcam",
+          "pos": {"x": 0, "y": 0},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": true,
+          "locked": false
+        },
+        {
+          "name": "LowerThird_Title",
+          "pos": {"x": 50, "y": 930},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": false,
+          "locked": false
+        },
+        {
+          "name": "LowerThird_Subtitle",
+          "pos": {"x": 50, "y": 970},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": false,
+          "locked": false
+        }
+      ]
+    }
+  ]
+}

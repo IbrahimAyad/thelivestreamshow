@@ -1,0 +1,18 @@
+LATEST WORKING VERSION
+======================
+
+Deployment URL: https://q1u0ulh31jw4.space.minimax.io
+Date: 2025-10-16 02:04:06
+
+Project Directory: /workspace/stream-overlay-dashboard/
+
+Full Documentation: /workspace/CURRENT_PROJECT_STATUS.md
+
+Recent Fixes:
+- Audio MIME type migration (audio/mp3 → audio/mpeg)
+- show_segments UUID query fix (integer → UUID string)
+- Real-time subscriptions enabled
+- Microsoft Edge TTS integrated
+- All RLS policies fixed
+
+Supabase Project ID: vcniezwtltraqramjlux

@@ -206,7 +206,7 @@ export function useSpeechRecognition(
   }, []);
 
   // Process transcript and check for triggers
-  const processTranscript = useCallback((text: string) => {
+  const processTranscript = useCallback(async (text: string) => {
     if (!text.trim()) return;
 
     setTranscript(text);
@@ -229,7 +229,8 @@ export function useSpeechRecognition(
       .join(' ');
     setConversationBuffer(bufferText);
 
-    // Check for wake phrase detection
+    // ✅ CRITICAL: Check for wake phrase detection FIRST (before validation)
+    // This ensures wake phrases are detected even in short transcripts
     const wakeEvent = detectWakePhrase(text);
     if (wakeEvent && options.onWakePhraseDetected) {
       console.log('Wake phrase detected:', wakeEvent);
@@ -241,6 +242,48 @@ export function useSpeechRecognition(
     if (visualSearchEvent && options.onVisualSearchDetected) {
       console.log('Visual search command detected:', visualSearchEvent);
       options.onVisualSearchDetected(visualSearchEvent);
+    }
+
+    // ✅ OPTIMIZED: Save to database with validation and deduplication
+    // Skip saving short/duplicate transcripts to DB, but wake phrase already checked above
+    try {
+      // Validate minimum text length (5+ characters)
+      const trimmedText = text.trim();
+      if (trimmedText.length < 5) {
+        console.log('⏭️ Skipping short transcript DB save (<5 chars):', trimmedText);
+        return; // Skip DB save but wake phrase was already checked
+      }
+
+      // Check for duplicate (skip if identical to last entry)
+      const lastText = bufferTimestampsRef.current[bufferTimestampsRef.current.length - 2]?.text;
+      if (lastText && lastText.trim() === trimmedText) {
+        console.log('⏭️ Skipping duplicate transcript DB save:', trimmedText.substring(0, 30) + '...');
+        return; // Skip DB save but wake phrase was already checked
+      }
+
+      const { supabase } = await import('../lib/supabase');
+      const { error } = await supabase.from('betabot_conversation_log').insert({
+        transcript_text: trimmedText,
+        speaker_type: 'user',
+        confidence: 1.0,
+        created_at: new Date().toISOString()
+        // session_id will be auto-linked by database trigger
+      });
+      
+      if (error) {
+        console.error('❌ Database save error:', error);
+        // Log the full error details for debugging
+        console.error('Error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
+      } else {
+        console.log('💾 Transcript saved to database:', trimmedText.substring(0, 50) + '...');
+      }
+    } catch (error) {
+      console.error('❌ Failed to save transcript to database:', error);
     }
   }, [detectWakePhrase, detectVisualSearch, options]);
 

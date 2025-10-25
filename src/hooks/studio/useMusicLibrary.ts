@@ -41,8 +41,8 @@ export function useMusicLibrary() {
         const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`
         const filePath = `${fileName}`
 
-        const { error: uploadError } = await supabase.storage
-          .from('music-audio')
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('music')
           .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false,
@@ -50,15 +50,20 @@ export function useMusicLibrary() {
 
         if (uploadError) throw uploadError
 
+        // Use the actual path returned by Supabase
+        const actualPath = uploadData?.path || filePath
+        console.log('[useMusicLibrary] File uploaded to storage:', actualPath)
+
         // Get public URL
         const { data: urlData } = supabase.storage
-          .from('music-audio')
-          .getPublicUrl(filePath)
+          .from('music')
+          .getPublicUrl(actualPath)
 
         // Get audio duration
         const duration = await getAudioDuration(file)
 
         // Insert into database
+        // Store the ACTUAL storage key returned by Supabase (not reconstructed)
         const { data: insertedTrack, error: dbError } = await supabase.from('music_library').insert({
           title: metadata.title || file.name.replace(/\.[^/.]+$/, ''),
           artist: metadata.artist || null,
@@ -66,7 +71,7 @@ export function useMusicLibrary() {
           duration: duration,
           file_size: file.size,
           file_url: urlData.publicUrl,
-          file_path: filePath,
+          file_path: actualPath, // Use actual path from Supabase, not derived path
           file_format: fileExt || null,
           category: metadata.category || 'music',
           jingle_type: metadata.jingle_type || null,
@@ -100,7 +105,7 @@ export function useMusicLibrary() {
       try {
         // Delete from storage
         const { error: storageError } = await supabase.storage
-          .from('music-audio')
+          .from('music')
           .remove([track.file_path])
 
         if (storageError) throw storageError

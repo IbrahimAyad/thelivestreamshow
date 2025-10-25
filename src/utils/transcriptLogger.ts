@@ -17,8 +17,22 @@ export class TranscriptLogger {
   async logTranscript(text: string): Promise<void> {
     if (!this.sessionId) return;
 
+    // Validate minimum text length (5+ characters)
+    const trimmedText = text.trim();
+    if (trimmedText.length < 5) {
+      console.log('⏭️ Skipping short transcript (<5 chars):', trimmedText);
+      return;
+    }
+
+    // Check for duplicate (skip if identical to last entry)
+    const lastEntry = this.transcripts[this.transcripts.length - 1];
+    if (lastEntry && lastEntry.text.trim() === trimmedText) {
+      console.log('⏭️ Skipping duplicate transcript:', trimmedText.substring(0, 30) + '...');
+      return;
+    }
+
     const entry: TranscriptEntry = {
-      text,
+      text: trimmedText,
       timestamp: new Date()
     };
 
@@ -27,7 +41,7 @@ export class TranscriptLogger {
     // Save to database
     try {
       await supabase.from('betabot_conversation_log').insert({
-        transcript_text: text,
+        transcript_text: trimmedText,
         audio_timestamp: entry.timestamp.toISOString(),
         session_id: this.sessionId,
         speaker_type: 'host'

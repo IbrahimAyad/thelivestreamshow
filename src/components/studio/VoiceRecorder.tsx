@@ -5,7 +5,6 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Mic, Square, Play, Save, Trash2 } from 'lucide-react'
-import * as Tone from '@/utils/tone'
 import { supabase } from '@/lib/supabase'
 
 interface VoicePreset {
@@ -44,6 +43,62 @@ const VOICE_PRESETS: VoicePreset[] = [
     reverb: 0.3,
     distortion: 0.05,
     description: 'Professional radio voice'
+  },
+  {
+    name: 'Cave Troll',
+    pitch: -8,
+    reverb: 0.8,
+    distortion: 0.2,
+    description: 'Deep monster voice in a cave'
+  },
+  {
+    name: 'Demon',
+    pitch: -7,
+    reverb: 0.6,
+    distortion: 0.4,
+    description: 'Evil demonic voice with distortion'
+  },
+  {
+    name: 'Telephone',
+    pitch: 0,
+    reverb: 0,
+    distortion: 0.15,
+    description: 'Old telephone/walkie-talkie sound'
+  },
+  {
+    name: 'Alien',
+    pitch: 4,
+    reverb: 0.4,
+    distortion: 0.2,
+    description: 'Otherworldly alien voice'
+  },
+  {
+    name: 'Deep Bass',
+    pitch: -10,
+    reverb: 0.3,
+    distortion: 0.05,
+    description: 'Ultra-deep bass voice'
+  },
+  {
+    name: 'Helium',
+    pitch: 8,
+    reverb: 0.1,
+    distortion: 0,
+    description: 'Extreme helium balloon voice'
+  },
+  {
+    name: 'Stadium PA',
+    pitch: 0,
+    reverb: 0.9,
+    distortion: 0.1,
+    description: 'Announcer in a huge stadium'
+  },
+  {
+    name: 'Underwater',
+    pitch: -3,
+    reverb: 0.7,
+    distortion: 0.05,
+    description: 'Muffled underwater sound'
   }
 ]
 
@@ -58,55 +113,24 @@ export function VoiceRecorder() {
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
-  const audioPlayerRef = useRef<Tone.Player | null>(null)
-  const pitchShiftRef = useRef<Tone.PitchShift | null>(null)
-  const reverbRef = useRef<Tone.Reverb | null>(null)
-  const distortionRef = useRef<Tone.Distortion | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const audioSourceRef = useRef<AudioBufferSourceNode | null>(null)
   const recordedBlobRef = useRef<Blob | null>(null)
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Initialize Tone.js effects
+  // Initialize Web Audio API context
   useEffect(() => {
-    const initEffects = async () => {
-      await Tone.start()
-
-      // Create effects chain
-      pitchShiftRef.current = new Tone.PitchShift(selectedPreset.pitch)
-      reverbRef.current = new Tone.Reverb({ decay: 2, wet: selectedPreset.reverb })
-      distortionRef.current = new Tone.Distortion(selectedPreset.distortion)
-
-      // Connect effects chain
-      pitchShiftRef.current.chain(
-        reverbRef.current,
-        distortionRef.current,
-        Tone.Destination
-      )
-
-      await reverbRef.current.generate()
-    }
-
-    initEffects()
+    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
 
     return () => {
-      pitchShiftRef.current?.dispose()
-      reverbRef.current?.dispose()
-      distortionRef.current?.dispose()
-      audioPlayerRef.current?.dispose()
+      if (audioSourceRef.current) {
+        audioSourceRef.current.stop()
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close()
+      }
     }
   }, [])
-
-  // Update effects when preset changes
-  useEffect(() => {
-    if (pitchShiftRef.current) {
-      pitchShiftRef.current.pitch = selectedPreset.pitch
-    }
-    if (reverbRef.current) {
-      reverbRef.current.wet.value = selectedPreset.reverb
-    }
-    if (distortionRef.current) {
-      distortionRef.current.distortion = selectedPreset.distortion
-    }
-  }, [selectedPreset])
 
   const startRecording = async () => {
     try {
@@ -169,34 +193,101 @@ export function VoiceRecorder() {
   }
 
   const playRecording = async () => {
-    if (!recordedBlobRef.current) return
+    if (!recordedBlobRef.current || !audioContextRef.current) return
 
     try {
-      // Convert blob to audio buffer and apply effects
+      // Stop any currently playing audio
+      if (audioSourceRef.current) {
+        audioSourceRef.current.stop()
+        audioSourceRef.current = null
+      }
+
+      // Convert blob to audio buffer
       const arrayBuffer = await recordedBlobRef.current.arrayBuffer()
-      const audioContext = Tone.getContext().rawContext as AudioContext
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
+      const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer)
 
-      // Dispose previous player
-      if (audioPlayerRef.current) {
-        audioPlayerRef.current.dispose()
-      }
+      // Create source node
+      const source = audioContextRef.current.createBufferSource()
+      source.buffer = audioBuffer
 
-      // Create new player with effects
-      audioPlayerRef.current = new Tone.Player(audioBuffer).connect(pitchShiftRef.current!)
+      // Apply pitch shift based on preset (semitones to playback rate)
+      const pitchShiftFactor = Math.pow(2, selectedPreset.pitch / 12)
+      source.playbackRate.value = pitchShiftFactor
 
-      audioPlayerRef.current.onstop = () => {
+      // Create reverb (convolver)
+      const convolver = audioContextRef.current.createConvolver()
+      const reverbBuffer = createReverbImpulse(audioContextRef.current, 2, selectedPreset.reverb)
+      convolver.buffer = reverbBuffer
+
+      // Create distortion (waveshaper)
+      const distortion = audioContextRef.current.createWaveShaper()
+      distortion.curve = makeDistortionCurve(selectedPreset.distortion * 400)
+
+      // Create gain nodes
+      const dryGain = audioContextRef.current.createGain()
+      const wetGain = audioContextRef.current.createGain()
+      const masterGain = audioContextRef.current.createGain()
+
+      dryGain.gain.value = 1 - selectedPreset.reverb
+      wetGain.gain.value = selectedPreset.reverb
+      masterGain.gain.value = 0.8
+
+      // Connect chain: source → distortion → [dry + wet(reverb)] → master → destination
+      source.connect(distortion)
+      distortion.connect(dryGain)
+      distortion.connect(convolver)
+      convolver.connect(wetGain)
+      dryGain.connect(masterGain)
+      wetGain.connect(masterGain)
+      masterGain.connect(audioContextRef.current.destination)
+
+      // Handle playback end
+      source.onended = () => {
         setIsPlaying(false)
+        audioSourceRef.current = null
       }
 
+      audioSourceRef.current = source
       setIsPlaying(true)
-      audioPlayerRef.current.start()
+      source.start(0)
 
-      console.log('▶️ Playing recording with effects')
+      console.log(`▶️ Playing with ${selectedPreset.name} effect`)
     } catch (error) {
       console.error('Failed to play recording:', error)
       alert('Failed to play recording')
+      setIsPlaying(false)
     }
+  }
+
+  // Create reverb impulse response
+  const createReverbImpulse = (audioContext: AudioContext, duration: number, decay: number) => {
+    const sampleRate = audioContext.sampleRate
+    const length = sampleRate * duration
+    const impulse = audioContext.createBuffer(2, length, sampleRate)
+    const left = impulse.getChannelData(0)
+    const right = impulse.getChannelData(1)
+
+    for (let i = 0; i < length; i++) {
+      const n = length - i
+      left[i] = (Math.random() * 2 - 1) * Math.pow(n / length, decay * 3)
+      right[i] = (Math.random() * 2 - 1) * Math.pow(n / length, decay * 3)
+    }
+
+    return impulse
+  }
+
+  // Create distortion curve
+  const makeDistortionCurve = (amount: number) => {
+    const samples = 44100
+    const curve = new Float32Array(samples)
+    const deg = Math.PI / 180
+
+    for (let i = 0; i < samples; i++) {
+      const x = (i * 2) / samples - 1
+      curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x))
+    }
+
+    return curve
   }
 
   const saveToSoundboard = async () => {
@@ -261,29 +352,55 @@ export function VoiceRecorder() {
     const audioContext = new AudioContext()
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
 
-    // Create offline context with same sample rate and length
+    // Calculate new length based on pitch shift
+    const pitchShiftFactor = Math.pow(2, selectedPreset.pitch / 12)
+    const newLength = Math.floor(audioBuffer.length / pitchShiftFactor)
+
+    // Create offline context with adjusted length
     const offlineContext = new OfflineAudioContext(
       audioBuffer.numberOfChannels,
-      audioBuffer.length,
+      newLength,
       audioBuffer.sampleRate
     )
 
-    // Create source
+    // Create source with pitch shift
     const source = offlineContext.createBufferSource()
     source.buffer = audioBuffer
+    source.playbackRate.value = pitchShiftFactor
 
-    // Create effects nodes (offline context doesn't support Tone.js directly)
+    // Create reverb
+    const convolver = offlineContext.createConvolver()
+    const reverbBuffer = createReverbImpulse(offlineContext, 2, selectedPreset.reverb)
+    convolver.buffer = reverbBuffer
+
+    // Create distortion
+    const distortion = offlineContext.createWaveShaper()
+    distortion.curve = makeDistortionCurve(selectedPreset.distortion * 400)
+
+    // Create gain nodes
+    const dryGain = offlineContext.createGain()
+    const wetGain = offlineContext.createGain()
     const compressor = offlineContext.createDynamicsCompressor()
-    compressor.threshold.value = -20
-    compressor.ratio.value = 12
 
-    // Connect: source -> compressor -> destination
-    source.connect(compressor)
+    dryGain.gain.value = 1 - selectedPreset.reverb
+    wetGain.gain.value = selectedPreset.reverb
+    compressor.threshold.value = -20
+    compressor.ratio.value = 4
+
+    // Connect: source → distortion → [dry + wet(reverb)] → compressor → destination
+    source.connect(distortion)
+    distortion.connect(dryGain)
+    distortion.connect(convolver)
+    convolver.connect(wetGain)
+    dryGain.connect(compressor)
+    wetGain.connect(compressor)
     compressor.connect(offlineContext.destination)
 
     // Render
     source.start()
     const renderedBuffer = await offlineContext.startRendering()
+
+    console.log(`✅ Applied ${selectedPreset.name} effect to recording`)
 
     // Convert to blob
     const wav = audioBufferToWav(renderedBuffer)
@@ -361,16 +478,16 @@ export function VoiceRecorder() {
 
       {/* Voice Preset Selector */}
       <div className="mb-4">
-        <label className="block text-xs font-medium text-zinc-400 mb-2">VOICE PRESET</label>
-        <div className="grid grid-cols-2 gap-2">
+        <label className="block text-xs font-medium text-zinc-400 mb-2">VOICE PRESET ({VOICE_PRESETS.length} effects)</label>
+        <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
           {VOICE_PRESETS.map((preset) => (
             <button
               key={preset.name}
               onClick={() => setSelectedPreset(preset)}
               disabled={isRecording}
-              className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+              className={`px-2 py-2 rounded text-xs font-medium transition-colors ${
                 selectedPreset.name === preset.name
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-purple-600 text-white ring-2 ring-purple-400'
                   : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
               } ${isRecording ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
@@ -378,7 +495,9 @@ export function VoiceRecorder() {
             </button>
           ))}
         </div>
-        <p className="text-xs text-zinc-500 mt-2">{selectedPreset.description}</p>
+        <p className="text-xs text-zinc-500 mt-2">
+          <span className="text-purple-400 font-semibold">{selectedPreset.name}:</span> {selectedPreset.description}
+        </p>
       </div>
 
       {/* Recording Controls */}

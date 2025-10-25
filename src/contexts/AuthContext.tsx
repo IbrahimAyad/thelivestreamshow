@@ -4,7 +4,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, ReactNode, Component, ErrorInfo } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 interface AuthContextValue {
   userId: string | null;
@@ -16,11 +16,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-// Initialize Supabase client
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL || '',
-  import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-);
+// Using singleton Supabase client from @/lib/supabase to avoid duplicate GoTrue instances
 
 interface AuthProviderProps {
   children: ReactNode;

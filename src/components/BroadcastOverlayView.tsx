@@ -5,8 +5,9 @@ import { BetaBotAvatar } from './BetaBotAvatar'
 import { VisualContentDisplay } from './VisualContentDisplay'
 import { MediaBrowserOverlay } from './MediaBrowserOverlay'
 import LowerThirdOverlay from './LowerThirdOverlay'
-import EpisodeInfoDisplay from './EpisodeInfoDisplay'
+import { PiNamecardOverlay } from './broadcast/PiNamecardOverlay'
 import { BroadcastGraphicsDisplay } from './BroadcastGraphicsDisplay'
+import { ShowIntroOverlay } from './ShowIntroOverlay'
 import { useTTS } from '../hooks/useTTS'
 import { useF5TTS } from '../hooks/useF5TTS'
 
@@ -818,11 +819,14 @@ export function BroadcastOverlayView() {
       {/* LOWER THIRD OVERLAY - Bottom center */}
       <LowerThirdOverlay />
 
-      {/* EPISODE INFO DISPLAY - Top right */}
-      <EpisodeInfoDisplay />
+      {/* PI NAMECARD OVERLAY - Universal Episode Info Display */}
+      <PiNamecardOverlay />
 
       {/* BROADCAST GRAPHICS DISPLAY - Various overlays */}
       <BroadcastGraphicsDisplay />
+
+      {/* SHOW INTRO OVERLAY - Automated intro sequence (DJ visualizer + game) */}
+      <ShowIntroOverlay />
 
       <style>{`
         /* Premium Color Palette */

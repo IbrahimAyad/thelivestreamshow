@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { FileText, Clock, Target, Calendar, CheckCircle, Loader2, Search, Filter } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { SavedShowPlan, PlanOption } from '../types/show-plan-import';
 
@@ -25,11 +25,7 @@ export function ShowPlanSelector({ selectedPlanId, onSelect, className = '' }: S
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'duration' | 'title'>('date');
 
-  // Initialize Supabase client
-  const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL || '',
-    import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-  );
+  // Using singleton Supabase client from @/lib/supabase
 
   /**
    * Load plans from Supabase

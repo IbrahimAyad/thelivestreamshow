@@ -1,9 +1,34 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://vcniezwtltraqramjlux.supabase.co'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbmllend0bHRyYXFyYW1qbHV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzMjQ1MTgsImV4cCI6MjA3NTkwMDUxOH0.5PDpv3-DVZzjOVFLdsWibzOk5A3-4PI1OthU1EQNhTQ'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// ✅ SINGLETON PATTERN: Ensure only one Supabase client instance
+let supabaseInstance: SupabaseClient | null = null;
+
+function getSupabaseClient(): SupabaseClient {
+  if (!supabaseInstance) {
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    });
+
+    // Diagnostic: Log Supabase configuration at startup (only once)
+    const projectRef = supabaseUrl?.match(/https:\/\/(.+)\.supabase\.co/)?.[1];
+    console.info('[SUPABASE] ✓ Client initialized (singleton)');
+    console.info('[SUPABASE] URL:', supabaseUrl);
+    console.info('[SUPABASE] PROJ REF:', projectRef);
+    console.info('[SUPABASE] MUSIC BUCKET:', 'music');
+  } else {
+    console.warn('[SUPABASE] ⚠️ Attempted to create multiple clients - using existing instance');
+  }
+
+  return supabaseInstance;
+}
+
+export const supabase = getSupabaseClient();
 
 // Database types
 export interface QuestionBanner {
@@ -120,6 +145,7 @@ export interface EpisodeInfo {
   episode_title: string
   episode_topic: string
   is_active: boolean
+  is_visible?: boolean  // ✅ Control broadcast visibility
   created_at: string
   updated_at: string
 }
@@ -162,6 +188,10 @@ export interface ShowMetadata {
   is_live: boolean
   is_rehearsal: boolean
   auto_advance_enabled: boolean
+  active_session_id: string | null
+  episode_number: number | null
+  episode_title: string | null
+  episode_topic: string | null
   created_at: string
   updated_at: string
 }
@@ -182,6 +212,24 @@ export interface BetaBotTranscript {
   confidence: number | null
   timestamp_seconds: number | null
   created_at: string
+}
+
+// Show Intro Sequence State Type
+export interface ShowIntroState {
+  id: string
+  current_step: 'idle' | 'song1_playing' | 'crossfading' | 'song2_playing' | 'game_active' | 'resuming' | 'song2_finishing' | 'complete'
+  is_running: boolean
+  is_paused: boolean
+  elapsed_time: number
+  show_dj_visualizer: boolean
+  show_tomato_game: boolean
+  song1_duration: number
+  crossfade_duration: number
+  song2_pause_point: number
+  transition_delay: number
+  error: string | null
+  created_at: string
+  updated_at: string
 }
 
 // StreamStudio Audio Sync Types

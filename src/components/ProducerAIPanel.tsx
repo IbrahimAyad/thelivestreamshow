@@ -3,7 +3,7 @@ import { useProducerAI } from '../hooks/useProducerAI';
 import { usePredictiveAI } from '../hooks/usePredictiveAI';
 import { useAuth } from '../contexts/AuthContext';
 import { useShow } from '../contexts/ShowContext';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase'; // Use shared singleton
 import { PredictionDashboard } from './PredictionDashboard';
 import { ImportPlanModal } from './ImportPlanModal';
 import { ShowPlanSelector } from './ShowPlanSelector';
@@ -32,12 +32,6 @@ export function ProducerAIPanel() {
   const [timerStartTimestamp, setTimerStartTimestamp] = useState<number | null>(null);
   const [accumulatedMinutes, setAccumulatedMinutes] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Initialize Supabase client for state syncing
-  const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL || '',
-    import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-  );
 
   // Phase 5: Predictive Intelligence
   const predictiveAI = usePredictiveAI({

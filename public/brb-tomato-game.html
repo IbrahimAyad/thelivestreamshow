@@ -989,10 +989,15 @@
         function showKO() {
             koScreen.style.display = 'flex';
             playKOSound();
+            
+            // Send boss defeated event to parent window (for show intro controller)
+            window.parent.postMessage({ type: 'BOSS_DEFEATED' }, '*');
+            
+            // Reset after 1 second (reduced from 3)
             setTimeout(() => {
                 resetGame();
                 koScreen.style.display = 'none';
-            }, 3000);
+            }, 1000);
         }
 
         // Reset game

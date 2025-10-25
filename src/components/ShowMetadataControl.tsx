@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { Radio, PlayCircle, StopCircle, RotateCcw, AlertTriangle } from 'lucide-react'
+import { Radio, PlayCircle, StopCircle, RotateCcw, AlertTriangle, Database, Clock } from 'lucide-react'
 import type { ShowMetadata } from '../lib/supabase'
 import { EndShowModal } from './EndShowModal'
 
@@ -15,6 +15,37 @@ export function ShowMetadataControl() {
     title: 'Episode 1',
     topic: 'Today\'s Show'
   })
+  const [sessionDuration, setSessionDuration] = useState<string>('00:00:00')
+
+  // Update session duration timer
+  useEffect(() => {
+    if (!metadata?.show_start_time) {
+      setSessionDuration('00:00:00')
+      return
+    }
+
+    const updateDuration = () => {
+      const startTime = new Date(metadata.show_start_time!)
+      const now = new Date()
+      const diffMs = now.getTime() - startTime.getTime()
+      const diffSeconds = Math.floor(diffMs / 1000)
+      
+      const hours = Math.floor(diffSeconds / 3600)
+      const minutes = Math.floor((diffSeconds % 3600) / 60)
+      const seconds = diffSeconds % 60
+      
+      const formatted = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+      setSessionDuration(formatted)
+    }
+
+    // Update immediately
+    updateDuration()
+
+    // Then update every second
+    const interval = setInterval(updateDuration, 1000)
+
+    return () => clearInterval(interval)
+  }, [metadata?.show_start_time])
 
   useEffect(() => {
     loadMetadata()
@@ -41,7 +72,49 @@ export function ShowMetadataControl() {
       .select('*')
       .single()
     
-    if (data) setMetadata(data)
+    if (data) {
+      setMetadata(data)
+      
+      // If there's an active session, recover it
+      if (data.active_session_id) {
+        console.log('[ShowMetadataControl] Recovering active session:', data.active_session_id)
+        
+        const { data: session, error: sessionError } = await supabase
+          .from('show_sessions')
+          .select('id, episode_number, episode_title, episode_topic, status')
+          .eq('id', data.active_session_id)
+          .single()
+        
+        if (sessionError) {
+          console.error('[ShowMetadataControl] ⚠️ Error fetching active session:', sessionError)
+          // Clear the orphaned reference
+          await supabase
+            .from('show_metadata')
+            .update({ active_session_id: null })
+            .eq('id', data.id)
+          console.log('[ShowMetadataControl] ⚠️ Orphaned session reference cleared')
+        } else if (session) {
+          // Check if session is actually live
+          if (session.status === 'live') {
+            setSessionId(session.id)
+            setEpisodeInfo({
+              number: session.episode_number || 1,
+              title: session.episode_title || 'Episode',
+              topic: session.episode_topic || 'Today\'s Show'
+            })
+            console.log('[ShowMetadataControl] ✅ Session recovered:', session.id)
+          } else {
+            // Session exists but is not live - clear the reference
+            console.warn('[ShowMetadataControl] ⚠️ Orphaned session detected (status: ' + session.status + ')')
+            await supabase
+              .from('show_metadata')
+              .update({ active_session_id: null })
+              .eq('id', data.id)
+            console.log('[ShowMetadataControl] ⚠️ Orphaned session cleared')
+          }
+        }
+      }
+    }
   }
 
   const toggleLive = async () => {
@@ -143,19 +216,24 @@ export function ShowMetadataControl() {
         .single()
 
       if (sessionError) {
-        console.error('Error creating session:', sessionError)
-        // Continue anyway - session is optional
-      } else if (newSession) {
-        setSessionId(newSession.id)
-        console.log('✅ Session created:', newSession.id)
+        console.error('[ShowMetadataControl] Error creating session:', sessionError)
+        throw sessionError
       }
+      
+      if (!newSession) {
+        throw new Error('Session creation returned no data')
+      }
+      
+      setSessionId(newSession.id)
+      console.log('[ShowMetadataControl] ✅ Session created:', newSession.id)
 
-      // 3. Update show metadata
+      // 3. Update show metadata with active session link
       const { error } = await supabase
         .from('show_metadata')
         .update({
           show_start_time: new Date().toISOString(),
           is_live: true,
+          active_session_id: newSession.id,
           updated_at: new Date().toISOString()
         })
         .eq('id', metadata.id)
@@ -165,8 +243,8 @@ export function ShowMetadataControl() {
       setShowStartConfirm(false)
       loadMetadata()
     } catch (err) {
-      console.error('Error starting show:', err)
-      alert('Failed to start show')
+      console.error('[ShowMetadataControl] Error starting show:', err)
+      alert('Failed to start show: ' + (err as Error).message)
     }
   }
 
@@ -193,12 +271,27 @@ export function ShowMetadataControl() {
   const resetShow = async () => {
     if (!metadata) return
 
+    // Check if there's an active session
+    if (metadata.active_session_id) {
+      const confirmMessage = 'Active session detected! Do you want to archive it first?\n\nYes = Archive & Reset\nNo = Discard Session & Reset (destructive)'
+      const shouldArchive = confirm(confirmMessage)
+      
+      if (shouldArchive) {
+        // Open the End Show modal instead
+        setShowEndModal(true)
+        setShowResetConfirm(false)
+        return
+      }
+      // User chose to discard - continue with reset
+    }
+
     const { error } = await supabase
       .from('show_metadata')
       .update({
         show_start_time: null,
         total_elapsed_seconds: 0,
         is_live: false,
+        active_session_id: null,
         updated_at: new Date().toISOString()
       })
       .eq('id', metadata.id)
@@ -208,6 +301,7 @@ export function ShowMetadataControl() {
       alert('Failed to reset show')
     } else {
       setShowResetConfirm(false)
+      setSessionId(undefined)
       loadMetadata() // Immediately reload to update UI
     }
   }
@@ -268,6 +362,32 @@ export function ShowMetadataControl() {
               {formatDateTime(metadata.show_start_time)}
             </span>
           </div>
+          
+          {/* Active Session Indicator */}
+          {metadata.active_session_id && (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-white font-semibold flex items-center gap-2">
+                  <Database className="w-4 h-4 text-blue-400" />
+                  Active Session:
+                </span>
+                <span className="px-3 py-1 rounded-full font-bold text-xs bg-blue-600/40 border border-blue-400 text-blue-300">
+                  Episode #{episodeInfo.number} - {episodeInfo.title}
+                </span>
+              </div>
+              
+              {/* Session Duration Timer */}
+              <div className="flex items-center justify-between">
+                <span className="text-white font-semibold flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-green-400" />
+                  Duration:
+                </span>
+                <span className="text-green-400 text-sm font-mono font-bold">
+                  {sessionDuration}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -379,7 +499,7 @@ export function ShowMetadataControl() {
         {/* End Show Button */}
         <button
           onClick={() => setShowEndModal(true)}
-          disabled={!metadata.is_live}
+          disabled={!metadata.is_live && !metadata.active_session_id}
           className="w-full py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2"
         >
           <StopCircle className="w-5 h-5" />

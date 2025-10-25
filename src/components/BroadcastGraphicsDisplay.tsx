@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { audioLayerManager } from '../utils/audio/audioLayerManager'
 
 interface BroadcastGraphic {
   id: string
@@ -8,10 +9,79 @@ interface BroadcastGraphic {
   position: string
   config: any
   html_file?: string | null
+  display_mode?: string | null
+  z_index?: number | null
+  sound_drop_id?: string | null
+  auto_play_sound?: boolean | null
 }
 
 export function BroadcastGraphicsDisplay() {
   const [activeGraphics, setActiveGraphics] = useState<BroadcastGraphic[]>([])
+  const previousGraphicsRef = useRef<Set<string>>(new Set())
+
+  // Initialize audio layer manager
+  useEffect(() => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    if (supabaseUrl && supabaseKey) {
+      audioLayerManager.initialize(supabaseUrl, supabaseKey);
+    }
+  }, []);
+
+  /**
+   * Sort graphics by z-index and handle exclusive mode
+   */
+  const sortGraphicsByLayer = (graphics: BroadcastGraphic[]): BroadcastGraphic[] => {
+    if (!graphics || graphics.length === 0) return [];
+    
+    // Check if any exclusive mode overlay is active
+    const exclusiveOverlay = graphics.find(g => g.display_mode === 'exclusive');
+    
+    if (exclusiveOverlay) {
+      // If exclusive overlay exists, return only that one
+      return [exclusiveOverlay];
+    }
+    
+    // Otherwise, sort by z-index ascending (lower z-index renders first/bottom)
+    return graphics.sort((a, b) => {
+      const zIndexA = a.z_index || 1000;
+      const zIndexB = b.z_index || 1000;
+      return zIndexA - zIndexB;
+    });
+  };
+
+  /**
+   * Check for newly visible graphics and play their sounds
+   */
+  const checkAndPlaySounds = (graphics: BroadcastGraphic[]) => {
+    const currentGraphicIds = new Set(graphics.map(g => g.id));
+    
+    graphics.forEach(graphic => {
+      // Check if this is a newly visible graphic
+      const isNew = !previousGraphicsRef.current.has(graphic.id);
+      
+      if (isNew && graphic.auto_play_sound && graphic.sound_drop_id) {
+        // Get audio config from graphic config
+        const audioConfig = graphic.config?.audio || {};
+        
+        // Play sound
+        audioLayerManager.playOverlaySound(
+          graphic.sound_drop_id,
+          {
+            volume: audioConfig.volume ?? 0.8,
+            enable_ducking: audioConfig.enable_ducking ?? false,
+            ducking_level: audioConfig.ducking_level ?? 0.3,
+          }
+        );
+        
+        console.log(`🔊 [BroadcastGraphicsDisplay] Playing sound for ${graphic.graphic_type}`);
+      }
+    });
+    
+    // Update the previous graphics set
+    previousGraphicsRef.current = currentGraphicIds;
+  };
 
   useEffect(() => {
     console.log('🔵 [BroadcastGraphicsDisplay] Component mounted')
@@ -23,12 +93,17 @@ export function BroadcastGraphicsDisplay() {
         .from('broadcast_graphics')
         .select('*')
         .eq('is_visible', true)
+        .order('z_index', { ascending: true }) // Sort by z_index for layering
 
       console.log('🔵 [BroadcastGraphicsDisplay] Loaded graphics:', data)
 
       if (data) {
-        setActiveGraphics(data as BroadcastGraphic[])
-        console.log('✅ [BroadcastGraphicsDisplay] Set active graphics count:', data.length)
+        const sortedGraphics = sortGraphicsByLayer(data as BroadcastGraphic[])
+        setActiveGraphics(sortedGraphics)
+        console.log('✅ [BroadcastGraphicsDisplay] Set active graphics count:', sortedGraphics.length)
+        
+        // Check for newly visible graphics and play sounds
+        checkAndPlaySounds(sortedGraphics)
       }
     }
 
@@ -51,12 +126,17 @@ export function BroadcastGraphicsDisplay() {
             .from('broadcast_graphics')
             .select('*')
             .eq('is_visible', true)
+            .order('z_index', { ascending: true })
 
           console.log('🔵 [BroadcastGraphicsDisplay] Reloaded graphics after change:', data)
 
           if (data) {
-            setActiveGraphics(data as BroadcastGraphic[])
-            console.log('✅ [BroadcastGraphicsDisplay] Updated active graphics count:', data.length)
+            const sortedGraphics = sortGraphicsByLayer(data as BroadcastGraphic[])
+            setActiveGraphics(sortedGraphics)
+            console.log('✅ [BroadcastGraphicsDisplay] Updated active graphics count:', sortedGraphics.length)
+            
+            // Check for newly visible graphics and play sounds
+            checkAndPlaySounds(sortedGraphics)
           }
         }
       )
@@ -75,21 +155,30 @@ export function BroadcastGraphicsDisplay() {
   }
 
   const renderGraphic = (graphic: BroadcastGraphic) => {
-    // If this graphic has an HTML file, display it as a full-screen iframe overlay
+    const zIndex = graphic.z_index || 1000;
+    const isExclusive = graphic.display_mode === 'exclusive';
+    
+    // If this graphic has an HTML file, display it as an iframe overlay
     if (graphic.html_file) {
       return (
         <div
           key={graphic.id}
           className="fullscreen-html-overlay"
-          onClick={() => hideGraphic(graphic.id)}
-          style={{ cursor: 'pointer' }}
+          onClick={isExclusive ? () => hideGraphic(graphic.id) : undefined}
+          style={{ 
+            zIndex,
+            cursor: isExclusive ? 'pointer' : 'default',
+            pointerEvents: graphic.display_mode === 'overlay' ? 'none' : 'auto'
+          }}
         >
           <iframe
             src={graphic.html_file}
             className="fullscreen-iframe"
             title={graphic.graphic_type}
           />
-          <div className="click-to-close-hint">Click anywhere to close</div>
+          {isExclusive && (
+            <div className="click-to-close-hint">Click anywhere to close</div>
+          )}
           <style>{`
             .fullscreen-html-overlay {
               position: fixed;
@@ -97,7 +186,6 @@ export function BroadcastGraphicsDisplay() {
               left: 0;
               width: 100vw;
               height: 100vh;
-              z-index: 9999;
               animation: fadeIn 300ms ease-out;
             }
 

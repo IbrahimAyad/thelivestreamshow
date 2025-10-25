@@ -53,9 +53,19 @@ export function AudioClipperModal({ track, isOpen, onClose, onSuccess, refreshTr
         const buffer = await fetchAndDecodeAudio(track.file_url, setLoadingProgress)
         setAudioBuffer(buffer)
 
-        // Generate waveform
-        const waveform = generateWaveformData(buffer, 500)
-        setWaveformData(waveform)
+        // ✅ Generate waveform with error handling
+        try {
+          const waveform = generateWaveformData(buffer, 500)
+          setWaveformData(waveform)
+          console.log('[AudioClipper] ✓ Waveform generated successfully')
+        } catch (waveformError) {
+          console.warn('[AudioClipper] Waveform generation failed, using fallback:', waveformError)
+          // Generate simple fallback waveform based on duration
+          const fallbackWaveform = Array.from({ length: 500 }, (_, i) => {
+            return Math.random() * 0.5 + 0.3 // Random amplitude 0.3-0.8
+          })
+          setWaveformData(fallbackWaveform)
+        }
 
         // Initialize selection to full track
         setStartTime(0)

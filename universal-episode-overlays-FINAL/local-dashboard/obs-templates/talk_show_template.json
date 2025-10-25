@@ -1,0 +1,322 @@
+{
+  "current_scene": "Main - Host + Guests",
+  "current_program_scene": "Main - Host + Guests",
+  "scene_order": [
+    {"name": "Main - Host + Guests"},
+    {"name": "Host Solo"},
+    {"name": "Guest Spotlight"},
+    {"name": "Intermission"}
+  ],
+  "name": "Talk Show Setup",
+  "sources": [
+    {
+      "name": "Host Camera",
+      "versioned_id": "dshow_input",
+      "settings": {},
+      "id": "dshow_input",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 0.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 255
+    },
+    {
+      "name": "Guest 1 Camera",
+      "versioned_id": "dshow_input",
+      "settings": {},
+      "id": "dshow_input",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 0.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 255
+    },
+    {
+      "name": "Guest 2 Camera",
+      "versioned_id": "dshow_input",
+      "settings": {},
+      "id": "dshow_input",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 0.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 255
+    },
+    {
+      "name": "Lower Third Background",
+      "versioned_id": "color_source_v3",
+      "settings": {
+        "color": 4278190080,
+        "width": 800,
+        "height": 100
+      },
+      "id": "color_source",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 1.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 0
+    },
+    {
+      "name": "LowerThird_Title",
+      "versioned_id": "text_gdiplus_v3",
+      "settings": {
+        "text": "Guest Name",
+        "font": {"face": "Arial", "size": 48, "flags": 1},
+        "color": 4294967295,
+        "opacity": 100,
+        "align": "left",
+        "valign": "center"
+      },
+      "id": "text_gdiplus",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 1.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 0
+    },
+    {
+      "name": "LowerThird_Subtitle",
+      "versioned_id": "text_gdiplus_v3",
+      "settings": {
+        "text": "Guest Title",
+        "font": {"face": "Arial", "size": 28, "flags": 0},
+        "color": 4291611852,
+        "opacity": 100,
+        "align": "left",
+        "valign": "center"
+      },
+      "id": "text_gdiplus",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 1.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 0
+    },
+    {
+      "name": "Host Mic",
+      "versioned_id": "wasapi_input_capture",
+      "settings": {},
+      "id": "wasapi_input_capture",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 1.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 255
+    },
+    {
+      "name": "Guest 1 Mic",
+      "versioned_id": "wasapi_input_capture",
+      "settings": {},
+      "id": "wasapi_input_capture",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 1.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 255
+    },
+    {
+      "name": "Guest 2 Mic",
+      "versioned_id": "wasapi_input_capture",
+      "settings": {},
+      "id": "wasapi_input_capture",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 1.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 255
+    },
+    {
+      "name": "Show Logo",
+      "versioned_id": "image_source",
+      "settings": {
+        "file": ""
+      },
+      "id": "image_source",
+      "hotkeys": {},
+      "sync": 0,
+      "flags": 0,
+      "volume": 1.0,
+      "balance": 0.5,
+      "muted": false,
+      "mixers": 0
+    }
+  ],
+  "current_transition": "Fade",
+  "transitions": [
+    {
+      "name": "Fade",
+      "id": "fade_transition",
+      "settings": {"duration": 300}
+    },
+    {
+      "name": "Cut",
+      "id": "cut_transition",
+      "settings": {}
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Main - Host + Guests",
+      "settings": {},
+      "sources": [
+        {
+          "name": "Host Camera",
+          "pos": {"x": 0, "y": 0},
+          "scale": {"x": 0.6, "y": 0.6},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": true,
+          "locked": false
+        },
+        {
+          "name": "Guest 1 Camera",
+          "pos": {"x": 1152, "y": 0},
+          "scale": {"x": 0.2, "y": 0.2},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": true,
+          "locked": false
+        },
+        {
+          "name": "Guest 2 Camera",
+          "pos": {"x": 1152, "y": 540},
+          "scale": {"x": 0.2, "y": 0.2},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": true,
+          "locked": false
+        },
+        {
+          "name": "Lower Third Background",
+          "pos": {"x": 50, "y": 920},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": false,
+          "locked": false
+        },
+        {
+          "name": "LowerThird_Title",
+          "pos": {"x": 70, "y": 930},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": false,
+          "locked": false
+        },
+        {
+          "name": "LowerThird_Subtitle",
+          "pos": {"x": 70, "y": 980},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": false,
+          "locked": false
+        }
+      ]
+    },
+    {
+      "name": "Host Solo",
+      "settings": {},
+      "sources": [
+        {
+          "name": "Host Camera",
+          "pos": {"x": 0, "y": 0},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": true,
+          "locked": false
+        },
+        {
+          "name": "Lower Third Background",
+          "pos": {"x": 50, "y": 920},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": false,
+          "locked": false
+        },
+        {
+          "name": "LowerThird_Title",
+          "pos": {"x": 70, "y": 930},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": false,
+          "locked": false
+        },
+        {
+          "name": "LowerThird_Subtitle",
+          "pos": {"x": 70, "y": 980},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": false,
+          "locked": false
+        }
+      ]
+    },
+    {
+      "name": "Guest Spotlight",
+      "settings": {},
+      "sources": [
+        {
+          "name": "Guest 1 Camera",
+          "pos": {"x": 0, "y": 0},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": true,
+          "locked": false
+        },
+        {
+          "name": "Lower Third Background",
+          "pos": {"x": 50, "y": 920},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": false,
+          "locked": false
+        },
+        {
+          "name": "LowerThird_Title",
+          "pos": {"x": 70, "y": 930},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": false,
+          "locked": false
+        },
+        {
+          "name": "LowerThird_Subtitle",
+          "pos": {"x": 70, "y": 980},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": false,
+          "locked": false
+        }
+      ]
+    },
+    {
+      "name": "Intermission",
+      "settings": {},
+      "sources": [
+        {
+          "name": "Show Logo",
+          "pos": {"x": 560, "y": 340},
+          "scale": {"x": 1.0, "y": 1.0},
+          "crop": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+          "visible": true,
+          "locked": false
+        }
+      ]
+    }
+  ]
+}

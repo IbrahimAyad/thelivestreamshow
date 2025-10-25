@@ -3,6 +3,7 @@ import { AuthProviderWithBoundary } from './contexts/AuthContext'
 import { ShowProviderWithBoundary } from './contexts/ShowContext'
 import { QuestionBannerControl } from './components/QuestionBannerControl'
 import { GraphicsGallery } from './components/GraphicsGallery'
+import OverlayGrid from './components/OverlayGrid'
 import { LowerThirdControl } from './components/LowerThirdControl'
 import { BetaBotDirectorPanel } from './components/BetaBotDirectorPanel'
 import { QuickActions } from './components/QuickActions'
@@ -35,14 +36,19 @@ import { AIAnalysisPanel } from './components/AIAnalysisPanel'
 import { SuggestionApprovalPanel } from './components/SuggestionApprovalPanel'
 import { ExecutionHistoryPanel } from './components/ExecutionHistoryPanel'
 import { AnalyticsDashboard } from './components/AnalyticsDashboard'
+import { MusicPlayerControls } from './components/studio/MusicPlayerControls'
 import { ControlPanel as StudioControlPanel } from './pages/studio/StudioControlPanel'
 import { VideoPlayerControl } from './pages/media/VideoPlayerControl'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { useDualDeckAudioPlayer } from './hooks/studio/useDualDeckAudioPlayer'
+import { useProductionAlertHotkey } from './hooks/useProductionAlertHotkey'
+import { ShowIntroController } from './components/ShowIntroController'
 import { supabase } from './lib/supabase'
-import { Monitor, ExternalLink, Keyboard, Home, Music2, Image as ImageIcon } from 'lucide-react'
+import { Monitor, ExternalLink, Keyboard, Home, Music2, Image as ImageIcon, Sparkles } from 'lucide-react'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { AITab } from './components/AITab'
 
-type Tab = 'dashboard' | 'studio' | 'media'
+type Tab = 'dashboard' | 'studio' | 'media' | 'ai'
 
 function App() {
   const broadcastUrl = window.location.origin + '/broadcast'
@@ -52,6 +58,26 @@ function App() {
   const [showTemplateCreator, setShowTemplateCreator] = useState(false)
   const soundboardRef = useRef<any>(null)
   const segmentRef = useRef<any>(null)
+  
+  // Initialize dual deck audio player at app level
+  // This allows music to play across all tabs
+  const dualDeck = useDualDeckAudioPlayer()
+
+  // Track audio playback state for visual indicator
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false)
+  
+  // Enable Production Alert hotkey (Press "P" to trigger)
+  useProductionAlertHotkey()
+  
+  useEffect(() => {
+    const checkAudioState = setInterval(() => {
+      const deckAPlaying = dualDeck.deckA.getDeckState().isPlaying
+      const deckBPlaying = dualDeck.deckB.getDeckState().isPlaying
+      setIsAudioPlaying(deckAPlaying || deckBPlaying)
+    }, 500)
+
+    return () => clearInterval(checkAudioState)
+  }, [dualDeck])
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -125,6 +151,15 @@ function App() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {/* Audio Playing Indicator */}
+              {isAudioPlaying && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-purple-900/50 border border-purple-500/50 rounded-lg">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
+                  <Music2 className="w-4 h-4 text-purple-400" />
+                  <span className="text-xs font-semibold text-purple-300">Audio Playing</span>
+                </div>
+              )}
+              
               <ShowSelector onManageShows={() => setShowManagement(true)} />
               <SystemHealthMonitor />
               <button
@@ -182,6 +217,20 @@ function App() {
               <ImageIcon className="w-5 h-5" />
               Media
             </button>
+            {import.meta.env.VITE_ENABLE_AI_TAB !== 'false' && (
+              <button
+                onClick={() => setActiveTab('ai')}
+                className={`flex items-center gap-2 px-6 py-3 font-semibold transition-all ${
+                  activeTab === 'ai'
+                    ? 'bg-gradient-to-r from-yellow-600 to-amber-600 text-white border-b-2 border-amber-400'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                <Sparkles className="w-5 h-5" />
+                AI
+                <span className="text-xs px-2 py-0.5 bg-yellow-500/20 text-yellow-300 rounded">BETA</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -247,6 +296,18 @@ function App() {
       <main className="max-w-7xl mx-auto px-6 py-8">
         {activeTab === 'dashboard' && (
           <>
+            {/* 🎵 GLOBAL MUSIC PLAYER */}
+            <div className="mb-6">
+              <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-600/30 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Music2 className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-lg font-bold text-purple-300">Background Music</h3>
+                  <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded">Plays across all tabs</span>
+                </div>
+                <MusicPlayerControls />
+              </div>
+            </div>
+            
             {/* 🎬 SHOW START - Start Show Controls */}
             <ErrorBoundary sectionName="Show Start Controls">
               <div className="mb-8">
@@ -254,10 +315,20 @@ function App() {
                   ▶️ Show Start
                   <span className="text-xs px-2 py-1 bg-green-500 text-white rounded-full font-bold">START HERE</span>
                 </h3>
+                
+                {/* Show Intro Automation Controller */}
+                <div className="mb-6">
+                  <ShowIntroController dualDeck={dualDeck} className="max-w-5xl mx-auto" />
+                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div><ShowMetadataControl /></div>
                   <div><EpisodeInfoPanel /></div>
-                  <div><GraphicsGallery /></div>
+                  <div className="lg:col-span-2">
+                    <OverlayGrid onOverlaySelect={(overlayId) => {
+                      console.log('Overlay selected:', overlayId);
+                      // Future: Activate overlay in broadcast view
+                    }} />
+                  </div>
                   <div><BetaBotDirectorPanel /></div>
                   <div className="lg:col-span-2"><SegmentControlPanel /></div>
                   <div className="lg:col-span-2"><PopupQueuePanel /></div>
@@ -290,7 +361,9 @@ function App() {
                 <h3 className="text-xl font-bold text-purple-400 mb-4 uppercase tracking-wide">🎬 Show Management</h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="lg:col-span-2"><ShowPrepPanel /></div>
-                  <div className="lg:col-span-2"><ProducerAIPanel /></div>
+                  {import.meta.env.VITE_ENABLE_AI_TAB === 'false' && (
+                    <div className="lg:col-span-2"><ProducerAIPanel /></div>
+                  )}
                   <div className="lg:col-span-2"><BroadcastSettingsPanel /></div>
                   <div className="lg:col-span-2"><OperatorNotesPanel /></div>
                   <div><BookmarkPanel /></div>
@@ -311,27 +384,29 @@ function App() {
               onTemplateCreated={() => console.log('Template created')}
             />
 
-            {/* ⚡ AI AUTO-DIRECTOR */}
-            <ErrorBoundary sectionName="AI Auto-Director System">
-              <div className="mb-8">
-                <h3 className="text-xl font-bold text-yellow-400 mb-4 uppercase tracking-wide flex items-center gap-2">
-                  ⚡ AI Auto-Director & Automation
-                  <span className="text-xs px-2 py-1 bg-yellow-500 text-black rounded-full font-bold">BETA</span>
-                </h3>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="lg:col-span-2"><AutomationConfigPanel /></div>
-                  <div className="lg:col-span-2"><OBSConnectionPanel /></div>
-                  <div className="lg:col-span-2"><TranscriptionPanel /></div>
-                  <div className="lg:col-span-2"><AIAnalysisPanel /></div>
-                  <div className="lg:col-span-2"><SuggestionApprovalPanel /></div>
-                  <div className="lg:col-span-2"><ExecutionHistoryPanel /></div>
-                  <div className="lg:col-span-2"><AnalyticsDashboard /></div>
-                  <div className="lg:col-span-2"><ManualTriggerPanel /></div>
-                  <div className="lg:col-span-2"><TriggerRulesPanel /></div>
-                  <div className="lg:col-span-2"><AutomationFeedPanel /></div>
+            {/* ⚡ AI AUTO-DIRECTOR - Only show if AI tab is disabled */}
+            {import.meta.env.VITE_ENABLE_AI_TAB === 'false' && (
+              <ErrorBoundary sectionName="AI Auto-Director System">
+                <div className="mb-8">
+                  <h3 className="text-xl font-bold text-yellow-400 mb-4 uppercase tracking-wide flex items-center gap-2">
+                    ⚡ AI Auto-Director & Automation
+                    <span className="text-xs px-2 py-1 bg-yellow-500 text-black rounded-full font-bold">BETA</span>
+                  </h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="lg:col-span-2"><AutomationConfigPanel /></div>
+                    <div className="lg:col-span-2"><OBSConnectionPanel /></div>
+                    <div className="lg:col-span-2"><TranscriptionPanel /></div>
+                    <div className="lg:col-span-2"><AIAnalysisPanel /></div>
+                    <div className="lg:col-span-2"><SuggestionApprovalPanel /></div>
+                    <div className="lg:col-span-2"><ExecutionHistoryPanel /></div>
+                    <div className="lg:col-span-2"><AnalyticsDashboard /></div>
+                    <div className="lg:col-span-2"><ManualTriggerPanel /></div>
+                    <div className="lg:col-span-2"><TriggerRulesPanel /></div>
+                    <div className="lg:col-span-2"><AutomationFeedPanel /></div>
+                  </div>
                 </div>
-              </div>
-            </ErrorBoundary>
+              </ErrorBoundary>
+            )}
 
             {/* Broadcast Preview */}
             <div className="mt-8 bg-black border-2 border-gray-700 rounded-lg p-6">
@@ -374,6 +449,16 @@ function App() {
 
         {activeTab === 'media' && (
           <div className="space-y-6">
+            {/* 🎵 GLOBAL MUSIC PLAYER */}
+            <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-600/30 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Music2 className="w-5 h-5 text-purple-400" />
+                <h3 className="text-lg font-bold text-purple-300">Background Music</h3>
+                <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded">Plays across all tabs</span>
+              </div>
+              <MusicPlayerControls />
+            </div>
+            
             <div className="bg-gradient-to-r from-blue-900/50 to-cyan-900/50 border-2 border-blue-600/30 rounded-lg p-6">
               <h2 className="text-2xl font-bold text-white mb-2">📺 Media Manager</h2>
               <p className="text-gray-300">YouTube video queue, image gallery, and stream monitoring</p>
@@ -382,6 +467,12 @@ function App() {
               <VideoPlayerControl />
             </ErrorBoundary>
           </div>
+        )}
+
+        {activeTab === 'ai' && import.meta.env.VITE_ENABLE_AI_TAB !== 'false' && (
+          <ErrorBoundary sectionName="AI Tab">
+            <AITab />
+          </ErrorBoundary>
         )}
       </main>
         </div>

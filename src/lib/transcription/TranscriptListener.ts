@@ -187,17 +187,18 @@ export class TranscriptListener {
    * Handle recognition errors
    */
   private handleError(event: any): void {
-    console.error('[TranscriptListener] Error:', event.error)
-
-    // Don't treat 'no-speech' as a critical error
+    // ✅ EMERGENCY FIX: Silence 'no-speech' spam completely
     if (event.error === 'no-speech') {
-      console.log('[TranscriptListener] No speech detected, continuing...')
-      return
+      // Don't log - this is normal and spams the console
+      return;
     }
 
-    // Handle other errors
+    // ✅ REDUCED LOGGING: Only log critical errors
     if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-      console.error('[TranscriptListener] Microphone permission denied')
+      console.error('[TranscriptListener] CRITICAL: Microphone permission denied');
+    } else if (event.error !== 'aborted' && event.error !== 'network') {
+      // Only log unexpected errors
+      console.error('[TranscriptListener] Error:', event.error);
     }
   }
 

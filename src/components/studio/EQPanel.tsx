@@ -5,14 +5,31 @@
 
 import React from 'react';
 import { useEQSystem } from '@/hooks/studio/useEQSystem';
+import { useMusic } from '@/contexts/MusicProvider';
 
 interface EQPanelProps {
-  audioContext: AudioContext | null;
+  audioContext?: AudioContext | null; // Optional prop for backward compatibility
   className?: string;
 }
 
-export function EQPanel({ audioContext, className = '' }: EQPanelProps) {
-  const eq = useEQSystem({ audioContext: audioContext || undefined });
+export function EQPanel({ audioContext: propAudioContext, className = '' }: EQPanelProps) {
+  const { audioContext: globalAudioContext, ready } = useMusic();
+  
+  // Use prop audioContext if provided, otherwise use global
+  const audioContext = propAudioContext || globalAudioContext;
+  
+  // Guard: don't render until ready
+  if (!ready || !audioContext) {
+    return (
+      <div className={`bg-neutral-900 border border-neutral-700 rounded-lg p-4 ${className}`}>
+        <div className="flex items-center justify-center py-8">
+          <div className="text-sm text-neutral-400">EQ initializing...</div>
+        </div>
+      </div>
+    );
+  }
+  
+  const eq = useEQSystem({ audioContext });
 
   const presets = [
     { id: 'flat' as const, name: 'Flat', icon: '━' },

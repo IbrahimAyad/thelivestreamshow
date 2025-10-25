@@ -799,8 +799,10 @@ export type Database = {
       }
       broadcast_graphics: {
         Row: {
+          auto_play_sound: boolean | null
           config: Json | null
           created_at: string | null
+          display_mode: string | null
           graphic_type: string
           html_file: string | null
           id: string
@@ -808,11 +810,15 @@ export type Database = {
           is_visible: boolean | null
           position: string | null
           show_id: string | null
+          sound_drop_id: string | null
           updated_at: string | null
+          z_index: number | null
         }
         Insert: {
+          auto_play_sound?: boolean | null
           config?: Json | null
           created_at?: string | null
+          display_mode?: string | null
           graphic_type: string
           html_file?: string | null
           id?: string
@@ -820,11 +826,15 @@ export type Database = {
           is_visible?: boolean | null
           position?: string | null
           show_id?: string | null
+          sound_drop_id?: string | null
           updated_at?: string | null
+          z_index?: number | null
         }
         Update: {
+          auto_play_sound?: boolean | null
           config?: Json | null
           created_at?: string | null
+          display_mode?: string | null
           graphic_type?: string
           html_file?: string | null
           id?: string
@@ -832,7 +842,9 @@ export type Database = {
           is_visible?: boolean | null
           position?: string | null
           show_id?: string | null
+          sound_drop_id?: string | null
           updated_at?: string | null
+          z_index?: number | null
         }
         Relationships: [
           {
@@ -2691,6 +2703,7 @@ export type Database = {
       }
       show_metadata: {
         Row: {
+          active_session_id: string | null
           auto_advance_enabled: boolean | null
           created_at: string | null
           id: string
@@ -2701,6 +2714,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          active_session_id?: string | null
           auto_advance_enabled?: boolean | null
           created_at?: string | null
           id?: string
@@ -2711,6 +2725,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          active_session_id?: string | null
           auto_advance_enabled?: boolean | null
           created_at?: string | null
           id?: string

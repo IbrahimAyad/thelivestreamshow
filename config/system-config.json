@@ -1,0 +1,122 @@
+{
+  "version": "4.0.0",
+  "lastUpdated": "2025-01-22T20:00:00Z",
+  "description": "The Live Stream Show - Season 4 Configuration",
+  
+  "services": {
+    "backend": {
+      "port": 3001,
+      "status": "required",
+      "startCommand": "cd backend && node server.js",
+      "healthCheck": "http://localhost:3001/api/health",
+      "dependencies": ["scarlett-manager", "audio-manager", "obs-controller"]
+    },
+    "piperTTS": {
+      "port": 8000,
+      "status": "required",
+      "startCommand": "docker-compose -f docker-compose.piper.yml up -d",
+      "healthCheck": "http://localhost:8000/health",
+      "voices": {
+        "required": ["danny-low"],
+        "optional": ["lessac-medium", "ryan-high"]
+      },
+      "binaryPath": "/app/piper/piper/piper"
+    },
+    "frontend": {
+      "port": 5173,
+      "status": "required",
+      "startCommand": "npm run dev",
+      "healthCheck": "http://localhost:5173",
+      "framework": "vite"
+    }
+  },
+  
+  "audio": {
+    "description": "Simplified Loopback-only configuration",
+    "systemOutput": "Loopback Audio",
+    "systemInput": "Scarlett Solo 4th Gen",
+    "loopback": {
+      "sources": [
+        {
+          "name": "Scarlett Solo 4th Gen",
+          "type": "hardware",
+          "purpose": "Capture microphone input"
+        },
+        {
+          "name": "System Audio",
+          "type": "system",
+          "purpose": "Capture BetaBot TTS and browser audio"
+        },
+        {
+          "name": "Discord",
+          "type": "application",
+          "purpose": "Capture Discord panel voices"
+        }
+      ],
+      "monitors": [
+        {
+          "name": "External Headphones",
+          "volume": "0 dB",
+          "purpose": "User hears all audio"
+        },
+        {
+          "name": "BlackHole 2ch",
+          "volume": "0 dB",
+          "purpose": "Route to OBS for streaming"
+        }
+      ]
+    },
+    "discord": {
+      "inputDevice": "Loopback Audio",
+      "outputDevice": "Loopback Audio",
+      "voiceProcessing": {
+        "echoCancellation": false,
+        "noiseSuppression": false,
+        "noiseReduction": false,
+        "automaticGainControl": false,
+        "voiceActivity": true
+      }
+    }
+  },
+  
+  "features": {
+    "betabot": {
+      "enabled": true,
+      "voice": "danny-low",
+      "backend": "piper-tts",
+      "playbackMethod": "backend-afplay",
+      "websocketNotifications": true
+    },
+    "automation": {
+      "enabled": true,
+      "aiCoordinator": true,
+      "eventListener": true
+    },
+    "graphics": {
+      "obs": true,
+      "overlays": ["LIVE", "BRB", "Starting Soon", "Technical Difficulties"]
+    }
+  },
+  
+  "database": {
+    "provider": "supabase",
+    "requiredTables": [
+      "shows",
+      "show_segments",
+      "broadcast_graphics",
+      "betabot_moods",
+      "betabot_conversation_log"
+    ]
+  },
+  
+  "knownIssues": [
+    {
+      "issue": "Loopback monitors must be configured manually",
+      "workaround": "Follow CURRENT_SETUP.md Step 1",
+      "priority": "medium",
+      "tracking": "TODO: Automate via Loopback CLI"
+    }
+  ],
+  
+  "lastStableSnapshot": "config/snapshots/2025-01-22-working.json"
+}

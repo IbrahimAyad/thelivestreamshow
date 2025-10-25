@@ -7,6 +7,7 @@ interface EpisodeInfo {
   episode_date: string;
   episode_title: string;
   is_active: boolean;
+  is_visible?: boolean; // ✅ Control broadcast visibility
 }
 
 export default function EpisodeInfoDisplay() {
@@ -57,7 +58,7 @@ export default function EpisodeInfoDisplay() {
     };
   }, []);
 
-  if (!episodeInfo) return null;
+  if (!episodeInfo || episodeInfo.is_visible === false) return null;
 
   const formattedDate = new Date(episodeInfo.episode_date).toLocaleDateString('en-US', {
     month: 'short',

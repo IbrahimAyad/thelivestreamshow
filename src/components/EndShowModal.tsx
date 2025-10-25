@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -19,36 +19,83 @@ export function EndShowModal({ isOpen, onClose, sessionId, episodeInfo }: EndSho
   const [isArchiving, setIsArchiving] = useState(false)
   const [showNotes, setShowNotes] = useState('')
   const [archived, setArchived] = useState(false)
+  const [activeSessionId, setActiveSessionId] = useState<string | undefined>(sessionId)
+
+  // When modal opens, fetch active_session_id from metadata if sessionId prop is undefined
+  useEffect(() => {
+    if (isOpen && !sessionId) {
+      console.log('[EndShowModal] No sessionId prop provided, fetching from metadata...')
+      fetchActiveSession()
+    } else if (sessionId) {
+      setActiveSessionId(sessionId)
+    }
+  }, [isOpen, sessionId])
+
+  const fetchActiveSession = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('show_metadata')
+        .select('active_session_id')
+        .single()
+
+      if (error) {
+        console.error('[EndShowModal] Error fetching metadata:', error)
+        return
+      }
+
+      if (data?.active_session_id) {
+        console.log('[EndShowModal] ✅ Retrieved active session from database:', data.active_session_id)
+        setActiveSessionId(data.active_session_id)
+      } else {
+        console.warn('[EndShowModal] ⚠️ No active_session_id found in metadata')
+      }
+    } catch (err) {
+      console.error('[EndShowModal] Error:', err)
+    }
+  }
 
   const handleEndShow = async () => {
     setIsArchiving(true)
 
     try {
+      const sessionToArchive = activeSessionId || sessionId
+      
       // 1. Archive the session if we have a session ID
-      if (sessionId) {
+      if (sessionToArchive) {
+        console.log('[EndShowModal] Archiving session:', sessionToArchive)
         const { data, error } = await supabase.rpc('archive_current_session', {
-          p_session_id: sessionId
+          p_session_id: sessionToArchive
         })
 
-        if (error) throw error
+        if (error) {
+          console.error('[EndShowModal] ❌ Archive RPC error:', error)
+          throw error
+        }
 
-        console.log('Session archived:', data)
+        console.log('[EndShowModal] ✅ Session archived:', data)
+      } else {
+        console.warn('[EndShowModal] ⚠️ No session ID available, skipping archival')
       }
 
       // 2. Save show notes if provided
-      if (showNotes && sessionId) {
+      if (showNotes && sessionToArchive) {
         await supabase
           .from('show_sessions')
           .update({ show_notes: showNotes })
-          .eq('id', sessionId)
+          .eq('id', sessionToArchive)
       }
 
-      // 3. Mark show as not live
+      // 3. Mark show as not live and clear active_session_id
       await supabase
         .from('show_metadata')
-        .update({ is_live: false, is_rehearsal: false })
+        .update({ 
+          is_live: false, 
+          is_rehearsal: false,
+          active_session_id: null
+        })
         .limit(1)
 
+      console.log('[EndShowModal] ✅ Show ended successfully')
       setArchived(true)
 
       // Auto-close after 2 seconds
@@ -56,10 +103,11 @@ export function EndShowModal({ isOpen, onClose, sessionId, episodeInfo }: EndSho
         onClose()
         setArchived(false)
         setShowNotes('')
+        setActiveSessionId(undefined)
       }, 2000)
 
     } catch (err) {
-      console.error('Failed to archive show:', err)
+      console.error('[EndShowModal] Failed to archive show:', err)
       alert('Failed to archive show. Check console for details.')
     } finally {
       setIsArchiving(false)

@@ -7,10 +7,22 @@
 
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true
-})
+// Lazy initialize OpenAI client only when needed
+let openaiClient: OpenAI | null = null
+
+function getOpenAIClient(): OpenAI {
+  if (!openaiClient) {
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY
+    if (!apiKey) {
+      throw new Error('OpenAI API key not configured. Set VITE_OPENAI_API_KEY in .env.local')
+    }
+    openaiClient = new OpenAI({
+      apiKey,
+      dangerouslyAllowBrowser: true
+    })
+  }
+  return openaiClient
+}
 
 export interface TemplateSegment {
   name: string
@@ -78,6 +90,7 @@ Format as JSON:
 Make it professional, engaging, and well-structured for ${showType} about ${showTopic}.`
 
   try {
+    const openai = getOpenAIClient()
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [

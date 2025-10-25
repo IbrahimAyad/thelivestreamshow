@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Upload, X, CheckCircle, AlertTriangle, FileText, Clock, Target, Users } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase'; // Use shared singleton
 import { useAuth } from '../contexts/AuthContext';
 import type {
   AbeStreamExport,
@@ -36,12 +36,6 @@ export function ImportPlanModal({ isOpen, onClose, onSuccess }: ImportPlanModalP
 
   // Ref to prevent race condition on rapid button clicks
   const isImportingRef = useRef(false);
-
-  // Initialize Supabase client
-  const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL || '',
-    import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-  );
 
   // Keyboard shortcuts: Esc to close, Cmd/Ctrl+Enter to import
   useEffect(() => {

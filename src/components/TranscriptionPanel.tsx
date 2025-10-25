@@ -54,9 +54,16 @@ export function TranscriptionPanel() {
     return () => clearInterval(interval)
   }, [transcriptListener])
 
-  // Auto-scroll to bottom when new segments arrive
+  // Auto-scroll to bottom when new segments arrive - only within container
   useEffect(() => {
-    transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (transcriptEndRef.current) {
+      // Get the scrollable parent container
+      const container = transcriptEndRef.current.closest('.overflow-y-auto')
+      if (container) {
+        // Scroll within the container, not the whole page
+        container.scrollTop = container.scrollHeight
+      }
+    }
   }, [segments])
 
   const handleStartListening = async () => {

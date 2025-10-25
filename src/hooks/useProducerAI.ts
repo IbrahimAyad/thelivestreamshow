@@ -546,7 +546,7 @@ Generate 2-4 questions maximum. Prioritize quality over quantity.`;
         body: JSON.stringify({
           model: 'gpt-4o',
           messages: [
-            { role: 'system', content: systemPrompt },
+            { role: 'system', content: systemPrompt + '\n\nYou must respond in JSON format.' },
             { role: 'user', content: `Analyze this transcript:\n\n${transcriptText}` }
           ],
           temperature: 0.7,

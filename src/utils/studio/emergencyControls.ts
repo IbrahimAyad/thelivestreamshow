@@ -122,13 +122,12 @@ export async function recoverFromEmergency(
  */
 export async function getEmergencyState(): Promise<EmergencyState | null> {
   try {
-    const { data, error } = await supabase
-      .from('audio_playback_state')
-      .select('emergency_mode, emergency_previous_state')
-      .eq('id', 1)
-      .single();
+    // ✅ BACKEND FIX: Use RPC function instead of direct table query
+    const { data, error } = await supabase.rpc('get_emergency_state');
 
     if (error) throw error;
+
+    if (!data) return null;
 
     return {
       mode: (data.emergency_mode as EmergencyMode) || 'normal',

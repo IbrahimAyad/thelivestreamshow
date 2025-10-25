@@ -8,6 +8,7 @@ import { AutomationEngine } from '../lib/automation/AutomationEngine'
 import { EventListener } from '../lib/automation/EventListener'
 import { ObsController } from '../lib/obs/ObsController'
 import { TranscriptListener } from '../lib/transcription/TranscriptListener'
+import { TranscriptAutomationBridge } from '../lib/automation/TranscriptAutomationBridge'
 import { AIContextAnalyzer } from '../lib/ai/AIContextAnalyzer'
 import { AICoordinator } from '../lib/ai/AICoordinator'
 import type {
@@ -25,11 +26,22 @@ export function useAutomationEngine(): UseAutomationEngineReturn {
   const eventListenerRef = useRef<EventListener | null>(null)
   const obsControllerRef = useRef<ObsController | null>(null)
   const transcriptListenerRef = useRef<TranscriptListener | null>(null)
+  const transcriptBridgeRef = useRef<TranscriptAutomationBridge | null>(null)
   const aiAnalyzerRef = useRef<AIContextAnalyzer | null>(null)
   const aiCoordinatorRef = useRef<AICoordinator | null>(null)
+  const initializingRef = useRef(false) // ✅ Guard against double initialization
 
-  // Initialize engine on mount
+  // Initialize engine on mount (ONCE ONLY)
   useEffect(() => {
+    // ✅ GUARD: Prevent double initialization in React StrictMode
+    if (engineRef.current || initializingRef.current) {
+      console.log('[useAutomationEngine] ⚠️ Skipping re-initialization (already initialized or initializing)');
+      return;
+    }
+
+    initializingRef.current = true;
+    console.log('[useAutomationEngine] 🚀 Initializing automation engine (first time)');
+
     const engine = new AutomationEngine()
     engine.initialize()
     engineRef.current = engine
@@ -44,6 +56,12 @@ export function useAutomationEngine(): UseAutomationEngineReturn {
     const transcriptListener = new TranscriptListener(engine)
     transcriptListenerRef.current = transcriptListener
     console.log('[useAutomationEngine] TranscriptListener created and injected')
+
+    // Create transcript automation bridge (for Producer AI transcripts)
+    const transcriptBridge = new TranscriptAutomationBridge(engine)
+    transcriptBridge.start()
+    transcriptBridgeRef.current = transcriptBridge
+    console.log('[useAutomationEngine] TranscriptAutomationBridge created and started')
 
     // Create AI Coordinator
     const aiCoordinator = new AICoordinator({
@@ -98,9 +116,21 @@ export function useAutomationEngine(): UseAutomationEngineReturn {
       .subscribe()
 
     return () => {
-      configSubscription.unsubscribe()
-      eventsSubscription.unsubscribe()
-      eventListenerRef.current?.stop()
+      console.log('[useAutomationEngine] 🛑 Cleaning up automation engine');
+      configSubscription.unsubscribe();
+      eventsSubscription.unsubscribe();
+      eventListenerRef.current?.stop();
+      transcriptBridgeRef.current?.stop();
+      
+      // ✅ CLEANUP: Clear all refs to allow proper re-initialization
+      engineRef.current = null;
+      obsControllerRef.current = null;
+      transcriptListenerRef.current = null;
+      transcriptBridgeRef.current = null;
+      aiCoordinatorRef.current = null;
+      aiAnalyzerRef.current = null;
+      eventListenerRef.current = null;
+      initializingRef.current = false; // Reset initialization flag
     }
   }, [])
 

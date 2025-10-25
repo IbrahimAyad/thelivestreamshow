@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { Film, Clock, Play, Pause, RotateCcw, Save } from 'lucide-react'
+import { Film, Clock, Play, Pause, RotateCcw, Save, Trash2, XCircle, Plus } from 'lucide-react'
 
 interface ShowSegment {
   id: string
@@ -26,6 +26,8 @@ export function SegmentControlPanel() {
   const [editingQuestion, setEditingQuestion] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null)
+  const [newSegmentName, setNewSegmentName] = useState('')
+  const [showAddSegment, setShowAddSegment] = useState(false)
 
   useEffect(() => {
     loadSegments()
@@ -185,6 +187,134 @@ export function SegmentControlPanel() {
     setSaveTimeout(timeout)
   }
 
+  const clearTopicAndQuestion = async () => {
+    if (!activeSegment) return
+    
+    if (!confirm('Clear topic and question for this segment?')) return
+    
+    try {
+      setIsSaving(true)
+      const { error } = await supabase
+        .from('show_segments')
+        .update({ 
+          segment_topic: null,
+          segment_question: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', activeSegment.id)
+
+      if (error) throw error
+      
+      setEditingTopic('')
+      setEditingQuestion('')
+    } catch (error) {
+      console.error('Error clearing segment content:', error)
+      alert('Failed to clear topic and question')
+    } finally {
+      setTimeout(() => setIsSaving(false), 300)
+    }
+  }
+
+  const clearAllTopicsAndQuestions = async () => {
+    if (!confirm('Clear ALL topics and questions from ALL segments? This cannot be undone.')) return
+    
+    try {
+      setIsSaving(true)
+      const { error } = await supabase
+        .from('show_segments')
+        .update({ 
+          segment_topic: null,
+          segment_question: null,
+          updated_at: new Date().toISOString()
+        })
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+
+      if (error) throw error
+      
+      setEditingTopic('')
+      setEditingQuestion('')
+      await loadSegments()
+      
+      alert('All topics and questions have been cleared')
+    } catch (error) {
+      console.error('Error clearing all segment content:', error)
+      alert('Failed to clear all topics and questions')
+    } finally {
+      setTimeout(() => setIsSaving(false), 300)
+    }
+  }
+
+  const deleteAllSegments = async () => {
+    if (!confirm('⚠️ DELETE ALL SEGMENTS? This will remove all segments and their content. You will need to recreate segments for your next show. This cannot be undone!')) return
+    
+    // Double confirmation for destructive action
+    if (!confirm('Are you absolutely sure? This will delete ALL segment structure, topics, and questions.')) return
+    
+    try {
+      setIsSaving(true)
+      
+      // Use the new SQL function from Supabase
+      const { data, error } = await supabase.rpc('safe_delete_segments')
+
+      if (error) throw error
+      
+      setEditingTopic('')
+      setEditingQuestion('')
+      setElapsedTime(0)
+      setIsRunning(false)
+      await loadSegments()
+      
+      // Show detailed results
+      if (data) {
+        console.log('Delete results:', data)
+        alert(`✓ Successfully deleted:
+- ${data.operator_notes_deleted || 0} operator notes
+- ${data.bookmarks_deleted || 0} bookmarks
+- ${data.segments_deleted || 0} segments
+
+You can now add fresh segments for your next show.`)
+      } else {
+        alert('✓ All segments have been deleted. You can now add fresh segments for your next show.')
+      }
+    } catch (error) {
+      console.error('Error deleting all segments:', error)
+      alert('Failed to delete segments. Error: ' + (error as any)?.message || 'Unknown error')
+    } finally {
+      setTimeout(() => setIsSaving(false), 300)
+    }
+  }
+
+  const addNewSegment = async () => {
+    if (!newSegmentName.trim()) {
+      alert('Please enter a segment name')
+      return
+    }
+    
+    try {
+      setIsSaving(true)
+      const { error } = await supabase
+        .from('show_segments')
+        .insert({
+          segment_name: newSegmentName.trim(),
+          segment_order: segments.length + 1,
+          timer_seconds: 600, // Default 10 minutes
+          is_active: false,
+          timer_running: false
+        })
+
+      if (error) throw error
+      
+      setNewSegmentName('')
+      setShowAddSegment(false)
+      await loadSegments()
+    } catch (error) {
+      console.error('Error adding segment:', error)
+      alert('Failed to add segment')
+    } finally {
+      setTimeout(() => setIsSaving(false), 300)
+    }
+  }
+
   const activeSegment = segments.find(s => s.is_active)
 
   const getSegmentColor = (name: string) => {
@@ -206,7 +336,7 @@ export function SegmentControlPanel() {
       </h2>
 
       {/* Current Segment Display with Timer */}
-      {activeSegment && (
+      {activeSegment ? (
         <div className="mb-4 p-4 bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border-2 border-indigo-400 rounded-lg">
           <div className="flex items-center justify-between mb-3">
             <div className="flex-1">
@@ -239,7 +369,17 @@ export function SegmentControlPanel() {
 
           {/* Question Textarea */}
           <div className="mb-3">
-            <label className="block text-xs text-indigo-300 font-semibold mb-1">QUESTION</label>
+            <label className="block text-xs text-indigo-300 font-semibold mb-1 flex items-center justify-between">
+              <span>QUESTION</span>
+              <button
+                onClick={clearTopicAndQuestion}
+                className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors"
+                title="Clear topic and question"
+              >
+                <Trash2 className="w-3 h-3" />
+                Clear
+              </button>
+            </label>
             <textarea
               value={editingQuestion}
               onChange={(e) => handleQuestionChange(e.target.value)}
@@ -284,6 +424,16 @@ export function SegmentControlPanel() {
             </button>
           </div>
         </div>
+      ) : (
+        <div className="mb-4 p-4 bg-gray-800/40 border-2 border-gray-600 rounded-lg">
+          <div className="flex items-center justify-center gap-3 py-8">
+            <Film className="w-8 h-8 text-gray-500" />
+            <div className="text-center">
+              <p className="text-lg font-semibold text-gray-400">No Active Segment</p>
+              <p className="text-sm text-gray-500 mt-1">Click a segment button below to begin</p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Segment Buttons */}
@@ -310,14 +460,74 @@ export function SegmentControlPanel() {
             </div>
           </button>
         ))}
+        
+        {/* Add Segment Button */}
+        {showAddSegment ? (
+          <div className="h-20 rounded-lg bg-gray-800 border-2 border-blue-500 p-2 flex flex-col justify-center gap-1">
+            <input
+              type="text"
+              value={newSegmentName}
+              onChange={(e) => setNewSegmentName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addNewSegment()}
+              placeholder="Segment name..."
+              className="w-full bg-black/50 border border-blue-500/30 rounded px-2 py-1 text-white text-sm focus:outline-none focus:border-blue-400"
+              autoFocus
+            />
+            <div className="flex gap-1">
+              <button
+                onClick={addNewSegment}
+                className="flex-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded transition-colors"
+              >
+                Add
+              </button>
+              <button
+                onClick={() => {
+                  setShowAddSegment(false)
+                  setNewSegmentName('')
+                }}
+                className="flex-1 px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs font-semibold rounded transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowAddSegment(true)}
+            className="h-20 rounded-lg bg-gray-800 border-2 border-dashed border-gray-600 hover:border-blue-500 hover:bg-gray-750 text-gray-400 hover:text-blue-400 font-semibold transition-all flex items-center justify-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Add Segment
+          </button>
+        )}
       </div>
 
-      {/* Clear Button */}
+      {/* Clear Buttons */}
+      <div className="grid grid-cols-2 gap-2 mb-2">
+        <button
+          onClick={clearSegment}
+          className="py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+        >
+          Clear Segment
+        </button>
+        <button
+          onClick={clearAllTopicsAndQuestions}
+          className="py-3 bg-red-700 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+          title="Clear all topics and questions from all segments"
+        >
+          <Trash2 className="w-4 h-4" />
+          Clear All Topics
+        </button>
+      </div>
+
+      {/* Delete All Segments Button */}
       <button
-        onClick={clearSegment}
-        className="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+        onClick={deleteAllSegments}
+        className="w-full py-3 bg-red-900 hover:bg-red-800 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 border-2 border-red-500"
+        title="Delete ALL segments - Fresh start for new show"
       >
-        Clear Segment
+        <XCircle className="w-5 h-5" />
+        Delete All Segments (Fresh Start)
       </button>
 
       <div className="mt-4 p-3 bg-indigo-900/20 border border-indigo-500/30 rounded text-sm text-indigo-300">

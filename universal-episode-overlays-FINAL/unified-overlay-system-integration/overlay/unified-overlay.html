@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Live Stream Show - Unified Overlay</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
+            background: transparent;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Dynamic Variables - Updated via JavaScript */
+        :root {
+            --season-text: 'Season 4';
+            --episode-text: 'Episode 31';
+            --show-name: 'THE LIVE STREAM SHOW';
+            --episode-title: 'Purposeful Illusion';
+            --social-handle: '@abelivestream';
+            --status-color: #FF0000;
+            --background-gradient: radial-gradient(ellipse at top right, rgba(255, 0, 0, 0.05) 0%, transparent 40%),
+                                 radial-gradient(ellipse at bottom left, rgba(255, 215, 0, 0.05) 0%, transparent 40%);
+        }
+
+        /* Top Bar */
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 100;
+        }
+
+        /* Season/Episode Info */
+        .episode-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .season-badge {
+            background: #FFD700;
+            color: #000;
+            padding: 5px 15px;
+            font-size: 0.85em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-radius: 3px;
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+            animation: seasonPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes seasonPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .episode-number {
+            color: #999;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Status Indicator */
+        .status-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px currentColor;
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        .status-dot.live {
+            background: #FF0000;
+            color: #FF0000;
+        }
+
+        .status-dot.offline {
+            background: #666;
+            color: #666;
+            animation: none;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.6;
+                transform: scale(1.2);
+            }
+        }
+
+        .status-text {
+            color: #FFF;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Bottom Bar */
+        .bottom-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 30px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
+            z-index: 100;
+        }
+
+        .show-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .show-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .show-subtitle {
+            color: #FFD700;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            opacity: 0.9;
+        }
+
+        .show-title {
+            color: #FFF;
+            font-size: 2.5em;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            text-shadow: 2px 2px 20px rgba(0, 0, 0, 0.8);
+            line-height: 1;
+        }
+
+        /* Social/Links Section */
+        .social-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .social-handle {
+            color: #999;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .social-handle:hover {
+            color: #FFD700;
+        }
+
+        /* Corner Accents */
+        .corner-accent {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            pointer-events: none;
+        }
+
+        .corner-accent.top-left {
+            top: 80px;
+            left: 20px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .corner-accent.top-right {
+            top: 80px;
+            right: 20px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .corner-accent.bottom-left {
+            bottom: 100px;
+            left: 20px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .corner-accent.bottom-right {
+            bottom: 100px;
+            right: 20px;
+            border-left: none;
+            border-top: none;
+        }
+
+        /* Viewer Count */
+        .viewer-count {
+            position: absolute;
+            top: 80px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .viewer-icon {
+            width: 16px;
+            height: 16px;
+            background: #FF0000;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .viewer-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 6px;
+            height: 6px;
+            background: #FFF;
+            border-radius: 50%;
+        }
+
+        .viewer-number {
+            color: #FFF;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        /* Time Display */
+        .stream-time {
+            position: absolute;
+            top: 80px;
+            left: 30px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 5px;
+            color: #FFF;
+            font-size: 0.9em;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Notification Area */
+        .notification-area {
+            position: absolute;
+            top: 140px;
+            right: 30px;
+            width: 300px;
+            pointer-events: none;
+        }
+
+        .notification {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 0, 0, 0.1));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            color: #FFF;
+            font-size: 0.9em;
+            animation: slideInRight 0.5s ease-out;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes slideInRight {
+            0% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInLeft {
+            0% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+                transform: translate3d(0,0,0);
+            }
+            40%, 43% {
+                animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+                transform: translate3d(0, -10px, 0);
+            }
+            70% {
+                animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+                transform: translate3d(0, -5px, 0);
+            }
+            90% {
+                transform: translate3d(0,-2px,0);
+            }
+        }
+
+        .notification-title {
+            font-weight: 700;
+            color: #FFD700;
+            margin-bottom: 4px;
+        }
+
+        /* Chat activity indicator */
+        .chat-activity {
+            position: absolute;
+            bottom: 100px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-wave {
+            display: flex;
+            gap: 3px;
+        }
+
+        .chat-bar {
+            width: 3px;
+            height: 16px;
+            background: #FFD700;
+            border-radius: 3px;
+            animation: wave 1s ease-in-out infinite;
+        }
+
+        .chat-bar:nth-child(2) { animation-delay: 0.1s; }
+        .chat-bar:nth-child(3) { animation-delay: 0.2s; }
+
+        @keyframes wave {
+            0%, 100% { 
+                transform: scaleY(0.5);
+                opacity: 0.5;
+            }
+            50% { 
+                transform: scaleY(1);
+                opacity: 1;
+            }
+        }
+
+        .chat-label {
+            color: #999;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* OBS WebSocket Camera Section */
+        .camera-section {
+            position: absolute;
+            bottom: 120px;
+            left: 30px;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            display: none;
+            z-index: 150;
+        }
+
+        .camera-section.active {
+            display: block;
+        }
+
+        .camera-header {
+            color: #FFD700;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .camera-viewport {
+            width: 100%;
+            height: 200px;
+            background: #000;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .camera-btn {
+            flex: 1;
+            padding: 8px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            color: #FFD700;
+            border-radius: 3px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .camera-btn:hover {
+            background: rgba(255, 215, 0, 0.3);
+        }
+
+        .camera-btn.active {
+            background: #FFD700;
+            color: #000;
+        }
+
+        /* Connection Status */
+        .connection-status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px 12px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 200;
+            font-size: 0.75em;
+        }
+
+        .connection-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #666;
+            transition: all 0.3s ease;
+        }
+
+        .connection-dot.connected {
+            background: #00FF00;
+            box-shadow: 0 0 5px #00FF00;
+        }
+
+        .connection-text {
+            color: #999;
+            font-weight: 600;
+        }
+
+        /* Subtle animated background gradient */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--background-gradient);
+            pointer-events: none;
+            z-index: 0;
+            animation: bgShift 20s ease-in-out infinite;
+        }
+
+        @keyframes bgShift {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.1; }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .show-title { font-size: 1.8em; }
+            .notification-area { display: none; }
+            .viewer-count,
+            .stream-time,
+            .chat-activity,
+            .camera-section { display: none; }
+            .corner-accent { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    
+    <!-- Connection Status -->
+    <div class="connection-status">
+        <div class="connection-dot" id="connectionDot"></div>
+        <span class="connection-text" id="connectionText">Camera Ready</span>
+    </div>
+    
+    <!-- Corner Accents -->
+    <div class="corner-accent top-left"></div>
+    <div class="corner-accent top-right"></div>
+    <div class="corner-accent bottom-left"></div>
+    <div class="corner-accent bottom-right"></div>
+    
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="episode-info">
+            <div class="season-badge" id="seasonBadge">Season 4</div>
+            <div class="episode-number" id="episodeNumber">Episode 31</div>
+        </div>
+        
+        <div class="status-container">
+            <div class="status-indicator">
+                <div class="status-dot live" id="statusDot"></div>
+                <span class="status-text" id="statusText">LIVE</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stream Time -->
+    <div class="stream-time" id="streamTime">00:00:00</div>
+    
+    <!-- Viewer Count -->
+    <div class="viewer-count">
+        <div class="viewer-icon"></div>
+        <span class="viewer-number" id="viewerCount">0</span>
+    </div>
+    
+    <!-- Camera Section -->
+    <div class="camera-section" id="cameraSection">
+        <div class="camera-header">Camera Controls</div>
+        <div class="camera-viewport" id="cameraViewport">
+            Camera View
+        </div>
+        <div class="camera-controls">
+            <button class="camera-btn active" data-mode="wide">Wide</button>
+            <button class="camera-btn" data-mode="medium">Medium</button>
+            <button class="camera-btn" data-mode="close">Close</button>
+        </div>
+    </div>
+    
+    <!-- Notification Area -->
+    <div class="notification-area" id="notificationArea">
+        <!-- Notifications will appear here -->
+    </div>
+    
+    <!-- Chat Activity Indicator -->
+    <div class="chat-activity">
+        <div class="chat-wave">
+            <div class="chat-bar"></div>
+            <div class="chat-bar"></div>
+            <div class="chat-bar"></div>
+        </div>
+        <span class="chat-label">Chat Active</span>
+    </div>
+    
+    <!-- Bottom Bar -->
+    <div class="bottom-bar">
+        <div class="show-info">
+            <div class="show-title-group">
+                <div class="show-subtitle" id="showSubtitle">The Live Stream Show</div>
+                <div class="show-title" id="showTitle">Purposeful Illusion</div>
+            </div>
+            
+            <div class="social-links">
+                <span class="social-handle" id="socialHandle">@abelivestream</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include OBS WebSocket Library -->
+    <script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.2/dist/obs-websocket.min.js"></script>
+    
+    <script>
+        // Global variables
+        let obs = null;
+        let isConnected = false;
+        let streamStartTime = null;
+        let chatMessages = [];
+        let currentChatIndex = 0;
+        let chatInterval = null;
+        
+        // Configuration
+        const CONFIG = {
+            supabaseUrl: 'https://vcniezwtltraqramjlux.supabase.co',
+            supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbmllend0bHRyYXFyYW1qbHV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzMjQ1MTgsImV4cCI6MjA3NTkwMDUxOH0.5PDpv3-DVZzjOVFLdsWibzOk5A3-4PI1OthU1EQNhTQ',
+            overlayId: null // Set this to your overlay ID
+        };
+
+        // Default content
+        const DEFAULT_CONTENT = {
+            season: 'Season 4',
+            episode: 'Episode 31',
+            show_name: 'THE LIVE STREAM SHOW',
+            episode_title: 'Purposeful Illusion',
+            social_handle: '@abelivestream',
+            status_text: 'LIVE'
+        };
+
+        // Default chat messages
+        const DEFAULT_CHAT_MESSAGES = [
+            { message_type: 'follower', message_text: 'Rattlesnake just followed!' },
+            { message_type: 'subscriber', message_text: 'Jags subscribed for 3 months!' },
+            { message_type: 'donation', message_text: 'El Garza donated $5.00' },
+            { message_type: 'host', message_text: 'Austin is hosting with 25 viewers' },
+            { message_type: 'raid', message_text: 'Babs raided with 50 viewers!' },
+            { message_type: 'chat', message_text: 'Welcome to the stream!' },
+            { message_type: 'chat', message_text: 'Great show tonight!' },
+            { message_type: 'chat', message_text: 'Love this episode' },
+            { message_type: 'chat', message_text: 'When is the next episode?' },
+            { message_type: 'chat', message_text: 'Amazing content as always' },
+            { message_type: 'chat', message_text: 'Follow for more great content!' },
+            { message_type: 'chat', message_text: 'Keep it up!' },
+            { message_type: 'chat', message_text: 'You rock!' },
+            { message_type: 'subscriber', message_text: 'New subscriber alert!' },
+            { message_type: 'follower', message_text: 'Thanks for the follow!' },
+            { message_type: 'chat', message_text: 'This is so cool!' },
+            { message_type: 'chat', message_text: 'Donation incoming!' },
+            { message_type: 'chat', message_text: 'Best stream ever!' },
+            { message_type: 'chat', message_text: 'Can\'t wait for next week' },
+            { message_type: 'subscriber', message_text: 'Subscribed to the channel!' },
+            { message_type: 'chat', message_text: 'Awesome show!' },
+            { message_type: 'chat', message_text: 'Keep it going!' },
+            { message_type: 'chat', message_text: 'Another great episode' },
+            { message_type: 'chat', message_text: 'Thank you for the content!' },
+            { message_type: 'chat', message_text: 'Love the energy!' },
+            { message_type: 'subscriber', message_text: 'Subscribed and following!' },
+            { message_type: 'donation', message_text: 'Donation of $10 received!' },
+            { message_type: 'chat', message_text: 'This is amazing!' },
+            { message_type: 'chat', message_text: 'Best content creator!' },
+            { message_type: 'chat', message_text: 'Can\'t stop watching!' },
+            { message_type: 'chat', message_text: 'New viewer here!' },
+            { message_type: 'subscriber', message_text: 'Subscribed for life!' },
+            { message_type: 'follower', message_text: 'Followed the channel!' },
+            { message_type: 'donation', message_text: 'Donation alert!' },
+            { message_type: 'chat', message_text: 'This episode rocks!' },
+            { message_type: 'chat', message_text: 'Love this show!' },
+            { message_type: 'chat', message_text: 'Amazing work!' },
+            { message_type: 'chat', message_text: 'Keep creating!' },
+            { message_type: 'subscriber', message_text: 'Another subscriber!' },
+            { message_type: 'chat', message_text: 'Great energy tonight!' },
+            { message_type: 'donation', message_text: 'Donation of $25!' },
+            { message_type: 'chat', message_text: 'This is so good!' },
+            { message_type: 'follower', message_text: 'Following and subscribed!' },
+            { message_type: 'chat', message_text: 'Best stream!' },
+            { message_type: 'chat', message_text: 'Thanks for the amazing show!' },
+            { message_type: 'chat', message_text: 'Can\'t wait for tomorrow' },
+            { message_type: 'subscriber', message_text: 'Subscribed to all notifications!' },
+            { message_type: 'donation', message_text: 'Huge donation received!' },
+            { message_type: 'chat', message_text: 'This is incredible!' },
+            { message_type: 'chat', message_text: 'Amazing episode!' }
+        ];
+
+        // Initialize overlay
+        async function initializeOverlay() {
+            await loadOverlayData();
+            updateUI();
+            startStreamTimer();
+            updateViewerCount();
+            startChatAnimation();
+            setupCameraControls();
+        }
+
+        // Load overlay data from Supabase
+        async function loadOverlayData() {
+            if (!CONFIG.overlayId) {
+                // Use default content if no overlay ID specified
+                updateContent(DEFAULT_CONTENT);
+                chatMessages = [...DEFAULT_CHAT_MESSAGES];
+                return;
+            }
+
+            try {
+                const response = await fetch(`${CONFIG.supabaseUrl}/functions/v1/get-overlays`, {
+                    headers: {
+                        'Authorization': `Bearer ${CONFIG.supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                const overlay = data.data.find(o => o.id === CONFIG.overlayId);
+                
+                if (overlay) {
+                    updateContent(overlay.content || DEFAULT_CONTENT);
+                    chatMessages = overlay.chatMessages?.length > 0 ? overlay.chatMessages : DEFAULT_CHAT_MESSAGES;
+                } else {
+                    updateContent(DEFAULT_CONTENT);
+                    chatMessages = [...DEFAULT_CHAT_MESSAGES];
+                }
+            } catch (error) {
+                console.error('Error loading overlay data:', error);
+                updateContent(DEFAULT_CONTENT);
+                chatMessages = [...DEFAULT_CHAT_MESSAGES];
+            }
+        }
+
+        // Update content in UI
+        function updateContent(content) {
+            document.getElementById('seasonBadge').textContent = content.season || DEFAULT_CONTENT.season;
+            document.getElementById('episodeNumber').textContent = content.episode || DEFAULT_CONTENT.episode;
+            document.getElementById('showSubtitle').textContent = content.show_name || DEFAULT_CONTENT.show_name;
+            document.getElementById('showTitle').textContent = content.episode_title || DEFAULT_CONTENT.episode_title;
+            document.getElementById('socialHandle').textContent = content.social_handle || DEFAULT_CONTENT.social_handle;
+            document.getElementById('statusText').textContent = content.status_text || DEFAULT_CONTENT.status_text;
+
+            // Update CSS variables
+            document.documentElement.style.setProperty('--season-text', `'${content.season || DEFAULT_CONTENT.season}'`);
+            document.documentElement.style.setProperty('--episode-text', `'${content.episode || DEFAULT_CONTENT.episode}'`);
+            document.documentElement.style.setProperty('--show-name', `'${content.show_name || DEFAULT_CONTENT.show_name}'`);
+            document.documentElement.style.setProperty('--episode-title', `'${content.episode_title || DEFAULT_CONTENT.episode_title}'`);
+            document.documentElement.style.setProperty('--social-handle', `'${content.social_handle || DEFAULT_CONTENT.social_handle}'`);
+        }
+
+        // Update UI elements
+        function updateUI() {
+            // Set status dot color based on status
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            
+            if (statusText.textContent === 'LIVE') {
+                statusDot.className = 'status-dot live';
+            } else {
+                statusDot.className = 'status-dot offline';
+            }
+        }
+
+        // Stream timer
+        function startStreamTimer() {
+            let seconds = 0;
+            
+            setInterval(() => {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = seconds % 60;
+                
+                const display = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                document.getElementById('streamTime').textContent = display;
+                seconds++;
+            }, 1000);
+        }
+
+        // Update viewer count
+        function updateViewerCount() {
+            let viewerCount = 0;
+            let targetViewers = Math.floor(Math.random() * 50) + 10;
+            
+            setInterval(() => {
+                if (viewerCount < targetViewers) {
+                    viewerCount += Math.floor(Math.random() * 3) + 1;
+                } else if (viewerCount > targetViewers) {
+                    viewerCount -= Math.floor(Math.random() * 2) + 1;
+                }
+                
+                // Occasionally change target
+                if (Math.random() > 0.9) {
+                    targetViewers = Math.floor(Math.random() * 50) + 10;
+                }
+                
+                document.getElementById('viewerCount').textContent = viewerCount;
+            }, 3000);
+        }
+
+        // Chat message animation
+        function startChatAnimation() {
+            if (chatMessages.length === 0) return;
+
+            setInterval(() => {
+                const message = chatMessages[currentChatIndex];
+                showChatNotification(message);
+                currentChatIndex = (currentChatIndex + 1) % chatMessages.length;
+            }, 8000 + Math.random() * 4000); // Random interval between 8-12 seconds
+        }
+
+        // Show chat notification
+        function showChatNotification(message) {
+            const notificationArea = document.getElementById('notificationArea');
+            const notification = document.createElement('div');
+            
+            const titles = {
+                'follower': 'New Follower',
+                'subscriber': 'Subscriber',
+                'donation': 'Donation',
+                'host': 'Host',
+                'raid': 'Raid',
+                'chat': 'Chat'
+            };
+
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <div class="notification-title">${titles[message.message_type] || 'Chat'}</div>
+                <div>${message.message_text}</div>
+            `;
+
+            // Add animation class based on message
+            if (message.animation_type === 'slideInLeft') {
+                notification.style.animation = 'slideInLeft 0.5s ease-out';
+            } else if (message.animation_type === 'fadeIn') {
+                notification.style.animation = 'fadeIn 0.5s ease-out';
+            } else if (message.animation_type === 'bounce') {
+                notification.style.animation = 'bounce 1s ease-out';
+            } else {
+                notification.style.animation = 'slideInRight 0.5s ease-out';
+            }
+
+            notificationArea.appendChild(notification);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                notification.style.animation = notification.style.animation.replace('ease-out', 'ease-in reverse');
+                setTimeout(() => notification.remove(), 500);
+            }, 5000);
+        }
+
+        // Camera controls
+        function setupCameraControls() {
+            const cameraSection = document.getElementById('cameraSection');
+            const cameraBtns = document.querySelectorAll('.camera-btn');
+            
+            // Show camera section if connected to OBS
+            cameraSection.classList.add('active');
+            
+            cameraBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Remove active class from all buttons
+                    cameraBtns.forEach(b => b.classList.remove('active'));
+                    // Add active class to clicked button
+                    btn.classList.add('active');
+                    
+                    // Simulate camera mode change
+                    const mode = btn.dataset.mode;
+                    const viewport = document.getElementById('cameraViewport');
+                    viewport.textContent = `Camera View - ${mode.charAt(0).toUpperCase() + mode.slice(1)} Shot`;
+                });
+            });
+        }
+
+        // Initialize everything when page loads
+        window.addEventListener('load', initializeOverlay);
+
+        // Update content dynamically (for real-time updates)
+        function updateOverlayContent(newContent) {
+            updateContent(newContent);
+        }
+
+        // Auto-reload content every 30 seconds
+        setInterval(async () => {
+            if (CONFIG.overlayId) {
+                await loadOverlayData();
+            }
+        }, 30000);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Press 'C' to toggle camera section
+            if (e.key === 'c' || e.key === 'C') {
+                const cameraSection = document.getElementById('cameraSection');
+                cameraSection.classList.toggle('active');
+            }
+            
+            // Press 'H' to toggle help
+            if (e.key === 'h' || e.key === 'H') {
+                showHelp();
+            }
+        });
+
+        function showHelp() {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <div class="notification-title">Keyboard Shortcuts</div>
+                <div>C - Toggle Camera Section</div>
+                <div>H - Show This Help</div>
+            `;
+            
+            notificationArea.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

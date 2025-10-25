@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Wednesday - Universal Episode System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            background: transparent;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated Smoke Background */
+        .smoke-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.5;
+        }
+
+        .smoke {
+            position: absolute;
+            bottom: -100px;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(255, 0, 0, 0.4) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(30px);
+            animation: smokeRise 12s infinite;
+        }
+
+        .smoke:nth-child(1) { left: 5%; animation-delay: 0s; }
+        .smoke:nth-child(2) { left: 25%; animation-delay: 3s; }
+        .smoke:nth-child(3) { left: 45%; animation-delay: 6s; }
+        .smoke:nth-child(4) { left: 65%; animation-delay: 9s; }
+        .smoke:nth-child(5) { left: 85%; animation-delay: 12s; }
+
+        @keyframes smokeRise {
+            0% {
+                bottom: -100px;
+                transform: translateX(0) scale(1);
+                opacity: 0;
+            }
+            10% { opacity: 0.5; }
+            50% { transform: translateX(30px) scale(1.5); }
+            90% { opacity: 0.1; }
+            100% {
+                bottom: 110%;
+                transform: translateX(-30px) scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* Top Bar */
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to bottom, 
+                rgba(0, 0, 0, 0.95), 
+                rgba(0, 0, 0, 0.7),
+                rgba(0, 0, 0, 0));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 100;
+            border-bottom: 2px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .episode-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .season-badge {
+            background: linear-gradient(135deg, #FF0000, #8B0000);
+            color: #FFF;
+            padding: 6px 16px;
+            font-size: 0.85em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-radius: 3px;
+            box-shadow: 0 2px 15px rgba(255, 0, 0, 0.5);
+        }
+
+        .episode-number {
+            color: #FF6B6B;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Status Section */
+        .status-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .obs-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #666;
+            transition: all 0.3s ease;
+        }
+
+        .status-dot.connected {
+            background: #00FF00;
+            box-shadow: 0 0 10px #00FF00;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.streaming {
+            background: #FF0000;
+            box-shadow: 0 0 10px #FF0000;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Bottom Bar */
+        .bottom-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 120px;
+            background: linear-gradient(to top, 
+                rgba(0, 0, 0, 0.95), 
+                rgba(0, 0, 0, 0.7),
+                rgba(0, 0, 0, 0));
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 20px 30px;
+            z-index: 100;
+            border-top: 2px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .show-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .show-titles {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .show-day {
+            color: #FF0000;
+            font-size: 0.8em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            opacity: 0.9;
+        }
+
+        .show-title {
+            color: #FFF;
+            font-size: 2.8em;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+            line-height: 0.9;
+        }
+
+        .show-tagline {
+            color: #FF6B6B;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.8;
+        }
+
+        /* Control Panel */
+        .obs-control-panel {
+            position: absolute;
+            top: 70px;
+            right: 30px;
+            width: 350px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid rgba(255, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 200;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .obs-control-panel.show {
+            display: block;
+        }
+
+        .panel-title {
+            color: #FF0000;
+            font-size: 1.2em;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #FFF;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: #FFF;
+            font-size: 0.9em;
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .connect-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #FF0000, #8B0000);
+            border: none;
+            border-radius: 5px;
+            color: #FFF;
+            font-size: 1em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
+        }
+
+        .connect-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Message Display */
+        .message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #FFF;
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-align: center;
+            z-index: 1000;
+            max-width: 400px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .message.show {
+            opacity: 1;
+        }
+
+        .message.success {
+            border: 2px solid #00FF00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .message.error {
+            border: 2px solid #FF0000;
+            background: rgba(255, 0, 0, 0.1);
+        }
+
+        /* Episode Data Status */
+        .episode-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            font-size: 0.8em;
+        }
+
+        .episode-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #666;
+        }
+
+        .episode-status-dot.loaded {
+            background: #00FF00;
+            box-shadow: 0 0 5px #00FF00;
+        }
+
+        .episode-status-dot.error {
+            background: #FF0000;
+            box-shadow: 0 0 5px #FF0000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Smoke Effect -->
+    <div class="smoke-container">
+        <div class="smoke"></div>
+        <div class="smoke"></div>
+        <div class="smoke"></div>
+        <div class="smoke"></div>
+        <div class="smoke"></div>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="episode-info">
+            <div class="season-badge" id="seasonBadge">SEASON 4</div>
+            <div class="episode-number" id="episodeNumber">EPISODE 32</div>
+            <div class="episode-status">
+                <div class="episode-status-dot" id="episodeStatusDot"></div>
+                <span id="episodeStatus">Loading...</span>
+            </div>
+        </div>
+        
+        <div class="status-section">
+            <div class="obs-status">
+                <div class="status-dot" id="obsStatusDot"></div>
+                <span id="obsStatus">Not Connected</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="bottom-bar">
+        <div class="show-info">
+            <div class="show-titles">
+                <div class="show-day">WEDNESDAY NIGHTS</div>
+                <div class="show-title" id="showTitle">ALPHA WEDNESDAY</div>
+                <div class="show-tagline" id="showTagline">ADDRESS ALL THE SMOKE</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OBS Control Panel (hidden by default) -->
+    <div class="obs-control-panel" id="controlPanel">
+        <div class="panel-title">OBS WebSocket Setup</div>
+        
+        <div class="form-group">
+            <label for="serverIP">Server IP:</label>
+            <input type="text" id="serverIP" value="localhost" placeholder="localhost">
+        </div>
+        
+        <div class="form-group">
+            <label for="serverPort">Port:</label>
+            <input type="text" id="serverPort" value="4455" placeholder="4455">
+        </div>
+        
+        <div class="form-group">
+            <label for="serverPassword">Password:</label>
+            <input type="password" id="serverPassword" placeholder="OBS WebSocket Password">
+        </div>
+        
+        <button class="connect-btn" id="connectBtn">CONNECT TO OBS</button>
+    </div>
+
+    <!-- Message Display -->
+    <div class="message" id="messageDisplay"></div>
+
+    <script>
+        // Universal Episode System Configuration
+        const SUPABASE_URL = 'https://vcniezwtltraqramjlux.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbmllend0bHRyYXFyYW1qbHV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzMjQ1MTgsImV4cCI6MjA3NTkwMDUxOH0.5PDpv3-DVZzjOVFLdsWibzOk5A3-4PI1OthU1EQNhTQ';
+
+        // Episode data storage
+        let currentEpisode = null;
+        let isEpisodeLoaded = false;
+
+        // OBS WebSocket connection
+        let obs = null;
+        let isConnected = false;
+
+        // Initialize Universal Episode System
+        async function initializeEpisodeSystem() {
+            try {
+                updateEpisodeStatus('Connecting...', 'loading');
+                await loadEpisodeData();
+                await setupRealtimeSubscription();
+                updateEpisodeStatus('Episode Data Loaded', 'loaded');
+            } catch (error) {
+                console.error('Failed to initialize episode system:', error);
+                updateEpisodeStatus('Connection Error', 'error');
+                showMessage(`❌ Episode System Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Load episode data from Supabase
+        async function loadEpisodeData() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/episode_info?is_active=eq.true&is_visible=eq.true&order=updated_at.desc&limit=1`, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    currentEpisode = data[0];
+                    updateEpisodeDisplay();
+                    isEpisodeLoaded = true;
+                } else {
+                    throw new Error('No active episode data found');
+                }
+            } catch (error) {
+                console.error('Failed to load episode data:', error);
+                throw error;
+            }
+        }
+
+        // Setup real-time subscription to episode updates
+        async function setupRealtimeSubscription() {
+            // For simplicity, we'll poll for updates every 30 seconds
+            // In a production environment, you'd use Supabase realtime
+            setInterval(async () => {
+                if (isEpisodeLoaded) {
+                    await loadEpisodeData();
+                }
+            }, 30000); // Check every 30 seconds
+        }
+
+        // Update episode display with current data
+        function updateEpisodeDisplay() {
+            if (!currentEpisode) return;
+
+            // Update season badge
+            const seasonBadge = document.getElementById('seasonBadge');
+            seasonBadge.textContent = `SEASON ${currentEpisode.season_number}`;
+
+            // Update episode number
+            const episodeNumber = document.getElementById('episodeNumber');
+            episodeNumber.textContent = `EPISODE ${currentEpisode.episode_number}`;
+
+            // Update show title and tagline
+            const showTitle = document.getElementById('showTitle');
+            const showTagline = document.getElementById('showTagline');
+            
+            showTitle.textContent = currentEpisode.show_name?.toUpperCase() || 'ALPHA WEDNESDAY';
+            showTagline.textContent = currentEpisode.episode_topic?.toUpperCase() || 'ADDRESS ALL THE SMOKE';
+
+            console.log('Episode display updated:', currentEpisode);
+        }
+
+        // Update episode status indicator
+        function updateEpisodeStatus(text, status) {
+            const statusElement = document.getElementById('episodeStatus');
+            const statusDot = document.getElementById('episodeStatusDot');
+            
+            statusElement.textContent = text;
+            statusDot.className = `episode-status-dot ${status}`;
+        }
+
+        // Show message to user
+        function showMessage(text, type = '') {
+            const message = document.getElementById('messageDisplay');
+            message.textContent = text;
+            message.className = `message show ${type}`;
+            
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeEpisodeSystem();
+            
+            // Show message about universal episode system
+            setTimeout(() => {
+                showMessage('🔥 Universal Episode System Active', 'success');
+            }, 1000);
+        });
+
+        // Auto-refresh episode data every 2 minutes
+        setInterval(async () => {
+            if (isEpisodeLoaded) {
+                try {
+                    await loadEpisodeData();
+                    console.log('Episode data refreshed');
+                } catch (error) {
+                    console.error('Failed to refresh episode data:', error);
+                    updateEpisodeStatus('Update Failed', 'error');
+                }
+            }
+        }, 120000); // Every 2 minutes
+    </script>
+</body>
+</html>

@@ -238,9 +238,12 @@ export class TriggerDetector {
     // Check if rule is enabled
     if (!rule.enabled) return false
 
-    // Check active days
-    const currentDay = currentTime.getDay() // 0=Sunday, 6=Saturday
-    if (!rule.active_days.includes(currentDay)) return false
+    // Check active days (handle null/undefined)
+    if (rule.active_days && Array.isArray(rule.active_days) && rule.active_days.length > 0) {
+      const currentDay = currentTime.getDay() // 0=Sunday, 6=Saturday
+      if (!rule.active_days.includes(currentDay)) return false
+    }
+    // If active_days is null/undefined/empty, assume rule is active all days
 
     // Check active time range
     if (rule.active_time_start && rule.active_time_end) {

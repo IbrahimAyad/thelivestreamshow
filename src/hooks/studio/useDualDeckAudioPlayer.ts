@@ -90,7 +90,9 @@ export function useDualDeckAudioPlayer() {
 
         setMasterAnalyser(masterAnalyserNode)
 
-        console.log('[DualDeck] AudioContext initialized')
+        console.log('[DualDeck] ✅ AudioContext initialized')
+        console.log('[DualDeck] Master chain created: Gain → Limiter → Analyser → Destination')
+        console.log('[DualDeck] Waiting for decks to connect...')
 
       } catch (error) {
         console.error('[DualDeck] Failed to initialize AudioContext:', error)
@@ -125,7 +127,10 @@ export function useDualDeckAudioPlayer() {
 
   // Connect deck outputs to mixer when they become available
   useEffect(() => {
-    if (!masterGainNodeRef.current) return
+    if (!masterGainNodeRef.current) {
+      console.log('[DualDeck] Master gain not ready yet')
+      return
+    }
 
     const deckAOutput = deckA.getOutputNode()
     const deckBOutput = deckB.getOutputNode()
@@ -146,9 +151,12 @@ export function useDualDeckAudioPlayer() {
       deckAOutput.connect(masterGainNodeRef.current)
       deckBOutput.connect(masterGainNodeRef.current)
 
-      console.log('[DualDeck] Decks connected to mixer')
+      console.log('[DualDeck] ✅ Decks connected to mixer')
+      console.log('[DualDeck] Master chain: Deck Outputs → Master Gain → Limiter → Analyser → Speakers')
+    } else {
+      console.log('[DualDeck] Deck outputs not ready yet - A:', !!deckAOutput, 'B:', !!deckBOutput)
     }
-  }, [deckA.audioContext, deckB.audioContext])
+  }, [deckA.audioContext, deckB.audioContext, masterGainNodeRef.current])
 
   // Calculate crossfader gain based on position and curve
   const calculateCrossfaderGain = useCallback((

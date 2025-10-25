@@ -8,49 +8,18 @@ import {
   Square,
 } from 'lucide-react'
 import { VolumeSlider } from './VolumeSlider'
-import type { MusicTrack } from "@/types/database"
+import { AudioVisualizer } from './AudioVisualizer'
+import { useMusic } from '@/contexts/MusicProvider'
 
-interface MusicPlayerControlsProps {
-  currentTrack: MusicTrack | null
-  isPlaying: boolean
-  playbackPosition: number
-  duration: number
-  volume: number
-  isMuted: boolean
-  isLooping: boolean
-  isShuffling: boolean
-  onPlay: () => void
-  onPause: () => void
-  onStop: () => void
-  onPrevious: () => void
-  onNext: () => void
-  onSeek: (time: number) => void
-  onVolumeChange: (volume: number) => void
-  onToggleMute: () => void
-  onToggleLoop: () => void
-  onToggleShuffle: () => void
-}
+/**
+ * MusicPlayerControls - Transport controls for global music playback
+ * 
+ * Uses the global MusicProvider context for persistent playback across route changes.
+ * This is separate from the DJ Dual Deck system which handles professional mixing.
+ */
+export function MusicPlayerControls() {
+  const music = useMusic()
 
-export function MusicPlayerControls({
-  currentTrack,
-  isPlaying,
-  playbackPosition,
-  duration,
-  volume,
-  isMuted,
-  isLooping,
-  isShuffling,
-  onPlay,
-  onPause,
-  onStop,
-  onPrevious,
-  onNext,
-  onSeek,
-  onVolumeChange,
-  onToggleMute,
-  onToggleLoop,
-  onToggleShuffle,
-}: MusicPlayerControlsProps) {
   const formatTime = (seconds: number) => {
     if (!isFinite(seconds)) return '0:00'
     const mins = Math.floor(seconds / 60)
@@ -62,14 +31,14 @@ export function MusicPlayerControls({
     <div className="bg-neutral-900 border border-neutral-700 rounded-lg p-4">
       {/* Current track info */}
       <div className="mb-4">
-        {currentTrack ? (
+        {music.current ? (
           <>
             <h3 className="text-lg font-semibold text-neutral-100 truncate">
-              {currentTrack.title}
+              {music.current.title || 'Unknown Track'}
             </h3>
-            {currentTrack.artist && (
+            {music.current.artist && (
               <p className="text-sm text-neutral-400 truncate">
-                {currentTrack.artist}
+                {music.current.artist}
               </p>
             )}
           </>
@@ -78,14 +47,28 @@ export function MusicPlayerControls({
         )}
       </div>
 
+      {/* Error display */}
+      {music.hasError && music.error && (
+        <div className="mb-4 p-2 bg-red-900/20 border border-red-500/30 rounded text-sm text-red-400">
+          {music.error}
+        </div>
+      )}
+
+      {/* Audio Visualization */}
+      {music.analyserNode && (
+        <div className="mb-4">
+          <AudioVisualizer analyser={music.analyserNode} height={60} />
+        </div>
+      )}
+
       {/* Progress bar */}
       <div className="mb-4">
         <input
           type="range"
           min="0"
-          max={duration || 100}
-          value={playbackPosition}
-          onChange={(e) => onSeek(Number(e.target.value))}
+          max={music.duration || 100}
+          value={music.currentTime}
+          onChange={(e) => music.seek(Number(e.target.value))}
           className="w-full h-1 bg-neutral-700 rounded-full appearance-none cursor-pointer
             [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 
             [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary-500 
@@ -93,15 +76,15 @@ export function MusicPlayerControls({
             [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full 
             [&::-moz-range-thumb]:bg-primary-500 [&::-moz-range-thumb]:border-0"
           style={{
-            background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${(playbackPosition / (duration || 100)) * 100}%, #3F3F46 ${(playbackPosition / (duration || 100)) * 100}%, #3F3F46 100%)`,
+            background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${(music.currentTime / (music.duration || 100)) * 100}%, #3F3F46 ${(music.currentTime / (music.duration || 100)) * 100}%, #3F3F46 100%)`,
           }}
         />
         <div className="flex justify-between mt-1">
           <span className="text-xs font-mono text-neutral-400">
-            {formatTime(playbackPosition)}
+            {formatTime(music.currentTime)}
           </span>
           <span className="text-xs font-mono text-neutral-400">
-            {formatTime(duration)}
+            {formatTime(music.duration)}
           </span>
         </div>
       </div>
@@ -109,32 +92,21 @@ export function MusicPlayerControls({
       {/* Playback controls */}
       <div className="flex items-center justify-center gap-2 mb-4">
         <button
-          onClick={onToggleShuffle}
-          className={`p-2 rounded transition-colors duration-150 ${
-            isShuffling
-              ? 'bg-primary-600 text-neutral-100'
-              : 'hover:bg-neutral-800 text-neutral-400'
-          }`}
-          title="Shuffle"
-        >
-          <Shuffle className="w-4 h-4" />
-        </button>
-
-        <button
-          onClick={onPrevious}
+          onClick={music.previous}
           className="p-2 rounded hover:bg-neutral-800 transition-colors duration-150"
           title="Previous"
+          disabled={music.queue.length === 0}
         >
           <SkipBack className="w-5 h-5 text-neutral-100" />
         </button>
 
         <button
-          onClick={isPlaying ? onPause : onPlay}
+          onClick={music.isPlaying ? music.pause : () => music.current ? music.resume() : undefined}
           className="p-3 bg-primary-600 rounded-full hover:bg-primary-700 transition-colors duration-150"
-          title={isPlaying ? 'Pause' : 'Play'}
-          disabled={!currentTrack}
+          title={music.isPlaying ? 'Pause' : 'Play'}
+          disabled={!music.current}
         >
-          {isPlaying ? (
+          {music.isPlaying ? (
             <Pause className="w-6 h-6 text-neutral-100" />
           ) : (
             <Play className="w-6 h-6 text-neutral-100" />
@@ -142,7 +114,7 @@ export function MusicPlayerControls({
         </button>
 
         <button
-          onClick={onStop}
+          onClick={music.stop}
           className="p-2 rounded hover:bg-neutral-800 transition-colors duration-150"
           title="Stop"
         >
@@ -150,33 +122,34 @@ export function MusicPlayerControls({
         </button>
 
         <button
-          onClick={onNext}
+          onClick={music.next}
           className="p-2 rounded hover:bg-neutral-800 transition-colors duration-150"
           title="Next"
+          disabled={music.queue.length === 0}
         >
           <SkipForward className="w-5 h-5 text-neutral-100" />
-        </button>
-
-        <button
-          onClick={onToggleLoop}
-          className={`p-2 rounded transition-colors duration-150 ${
-            isLooping
-              ? 'bg-primary-600 text-neutral-100'
-              : 'hover:bg-neutral-800 text-neutral-400'
-          }`}
-          title="Loop"
-        >
-          <Repeat className="w-4 h-4" />
         </button>
       </div>
 
       {/* Volume control */}
       <VolumeSlider
-        value={volume}
-        onChange={onVolumeChange}
-        onToggleMute={onToggleMute}
-        isMuted={isMuted}
+        value={music.volume}
+        onChange={music.setVolume}
+        onToggleMute={() => music.setVolume(music.volume === 0 ? 0.7 : 0)}
+        isMuted={music.volume === 0}
       />
+
+      {/* Queue info - hidden for now as new provider doesn't expose queue */}
+      {/* Uncomment when queue functionality is added to MusicProvider */}
+      {/*
+      {music.queue?.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-neutral-700">
+          <p className="text-xs text-neutral-400">
+            Queue: {music.queue.length} track{music.queue.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+      )}
+      */}
     </div>
   )
 }

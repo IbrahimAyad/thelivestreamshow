@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Search, Settings, Music2, Mic2, Download, Filter, Plus, Bot, BarChart3, Clock, Radio, Shield, Palette, Save, Music, Activity } from 'lucide-react'
 import { useAudioPlayer } from '@/hooks/studio/useAudioPlayer'
+import { useMusic, musicTrackToTrack } from '@/contexts/MusicProvider'
 import { useMusicLibrary } from '@/hooks/studio/useMusicLibrary'
 import { usePlaylists } from '@/hooks/studio/usePlaylists'
 import { useAudioSettings } from '@/hooks/studio/useAudioSettings'
@@ -55,6 +56,8 @@ import { QuantizeControls } from '@/components/studio/QuantizeControls'
 import { LoopRollControls } from '@/components/studio/LoopRollControls'
 import { DualDeckPanel } from '@/components/studio/DualDeckPanel'
 import { VoiceRecorder } from '@/components/studio/VoiceRecorder'
+import { LiveVoiceEffects } from '@/components/studio/LiveVoiceEffects'
+import { AudioMixer } from '@/components/studio/AudioMixer'
 import { HotCuesPanel } from '@/components/studio/HotCuesPanel'
 import { LoopControlsPanel } from '@/components/studio/LoopControlsPanel'
 import { HeadphoneCuePanel } from '@/components/studio/HeadphoneCuePanel'
@@ -71,6 +74,7 @@ import type { MusicTrack, AudioEffectsConfig, AutoDJSettings } from '@/types/dat
 import type { ScoredTrack } from '@/utils/trackScorer'
 
 export function ControlPanel() {
+  const music = useMusic()
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'music' | 'jingle'>('all')
   const [hotCues, setHotCues] = useState<any[]>([])
@@ -279,10 +283,15 @@ export function ControlPanel() {
     setShowUploadDialog(false)
   }
 
-  // Play track
+  // Play track - wire to global music provider
   const handlePlayTrack = async (track: MusicTrack) => {
+    // Play on local player (for Studio-specific features)
     await audioPlayer.loadTrack(track)
     await audioPlayer.play()
+    
+    // ALSO play on global music provider (for cross-route persistence)
+    const globalTrack = musicTrackToTrack(track)
+    await music.play(globalTrack)
     
     // Sync to database
     await updatePlaybackState({
@@ -662,26 +671,7 @@ export function ControlPanel() {
             onReorderTracks={reorderPlaylistTracks}
           />
 
-          <MusicPlayerControls
-            currentTrack={audioPlayer.currentTrack}
-            isPlaying={audioPlayer.isPlaying}
-            playbackPosition={audioPlayer.playbackPosition}
-            duration={audioPlayer.duration}
-            volume={audioPlayer.volume}
-            isMuted={audioPlayer.isMuted}
-            isLooping={audioPlayer.isLooping}
-            isShuffling={audioPlayer.isShuffling}
-            onPlay={audioPlayer.play}
-            onPause={handlePause}
-            onStop={handleStop}
-            onPrevious={handlePrevious}
-            onNext={handleNext}
-            onSeek={audioPlayer.seek}
-            onVolumeChange={audioPlayer.changeVolume}
-            onToggleMute={audioPlayer.toggleMute}
-            onToggleLoop={audioPlayer.toggleLoop}
-            onToggleShuffle={audioPlayer.toggleShuffle}
-          />
+          <MusicPlayerControls />
 
           {/* Audio visualization */}
           <div className="bg-neutral-900 border border-neutral-700 rounded-lg p-4">
@@ -998,6 +988,12 @@ export function ControlPanel() {
 
                     {/* Voice Recorder - MIC FILTER RECORDER for Sound Drops! */}
                     <VoiceRecorder />
+
+                    {/* Live Voice Effects - REAL-TIME MIC PROCESSING */}
+                    <LiveVoiceEffects />
+
+                    {/* Audio Mixer - MIX & EDIT TRACKS */}
+                    <AudioMixer />
 
                     {/* Sound Effects Panel */}
                     <SoundEffectsPanel />

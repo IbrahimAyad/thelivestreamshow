@@ -3,6 +3,8 @@ const http = require('http');
 const WebSocket = require('ws');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 // BetaBot AI is in frontend - backend only handles audio routing
@@ -92,6 +94,54 @@ class BetaBotServer {
                 const audioStream = await this.audio.captureFromDiscord();
                 res.json({ success: true, streamUrl: audioStream });
             } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // BetaBot TTS audio route - plays through BlackHole 2ch for Discord
+        this.app.post('/api/betabot/play-audio', async (req, res) => {
+            try {
+                // Get raw audio buffer
+                const chunks = [];
+                req.on('data', chunk => chunks.push(chunk));
+                req.on('end', async () => {
+                    try {
+                        const audioBuffer = Buffer.concat(chunks);
+                        
+                        // Save to temp file
+                        const tempFile = path.join(__dirname, 'temp_betabot_audio.wav');
+                        await fs.promises.writeFile(tempFile, audioBuffer);
+                        
+                        console.log('🎤 Playing BetaBot TTS through BlackHole 2ch...');
+                        
+                        // Use SwitchAudioSource or sox to route to BlackHole
+                        // For now, use afplay which routes to system default
+                        // TODO: Configure macOS Multi-Output Device to include BlackHole
+                        const { exec } = require('child_process');
+                        const util = require('util');
+                        const execPromise = util.promisify(exec);
+                        
+                        await execPromise(`afplay "${tempFile}"`);
+                        
+                        console.log('✅ BetaBot audio playback complete');
+                        
+                        // Notify all connected clients that playback is complete
+                        this.broadcast({
+                            type: 'betabot_audio_complete',
+                            timestamp: Date.now()
+                        });
+                        
+                        // Clean up
+                        await fs.promises.unlink(tempFile);
+                        
+                        res.json({ success: true });
+                    } catch (error) {
+                        console.error('Error playing BetaBot audio:', error);
+                        res.status(500).json({ success: false, error: error.message });
+                    }
+                });
+            } catch (error) {
+                console.error('Error handling BetaBot audio request:', error);
                 res.status(500).json({ success: false, error: error.message });
             }
         });

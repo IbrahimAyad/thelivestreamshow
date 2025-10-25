@@ -37,6 +37,7 @@ export function useF5TTS(): UseF5TTS {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const onStateChangeRef = useRef<((state: 'speaking' | 'idle') => void) | undefined>();
+  const wsRef = useRef<WebSocket | null>(null);
   const apiUrl = import.meta.env.VITE_F5_TTS_API_URL || DEFAULT_API_URL;
 
   // Check connection on mount
@@ -44,6 +45,83 @@ export function useF5TTS(): UseF5TTS {
     checkConnection();
     const interval = setInterval(checkConnection, 30000); // Check every 30 seconds
     return () => clearInterval(interval);
+  }, []);
+
+  // WebSocket connection for backend audio completion notifications
+  useEffect(() => {
+    // ✅ EMERGENCY FIX: Add connection retry limit and error throttling
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 3;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let hasLoggedError = false;
+    
+    const connect = () => {
+      if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        if (!hasLoggedError) {
+          console.warn('F5-TTS: Max WebSocket reconnect attempts reached, stopping');
+          hasLoggedError = true;
+        }
+        return;
+      }
+      
+      try {
+        const ws = new WebSocket('ws://localhost:3001');
+        
+        ws.onopen = () => {
+          console.log('F5-TTS: Connected to backend WebSocket');
+          reconnectAttempts = 0; // Reset on successful connection
+          hasLoggedError = false; // Reset error flag
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'betabot_audio_complete') {
+              console.log('F5-TTS: Backend notified audio playback complete');
+              setIsSpeaking(false);
+              onStateChangeRef.current?.('idle');
+            }
+          } catch (error) {
+            // Silently handle parse errors to prevent log spam
+          }
+        };
+        
+        ws.onerror = () => {
+          // ✅ REDUCED LOGGING: Only log on first error
+          if (!hasLoggedError) {
+            console.warn('F5-TTS: WebSocket connection error (will retry with backoff)');
+            hasLoggedError = true;
+          }
+        };
+        
+        ws.onclose = () => {
+          // ✅ THROTTLED RECONNECTION: Exponential backoff
+          reconnectAttempts++;
+          if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+            reconnectTimeout = setTimeout(connect, delay);
+          }
+        };
+        
+        wsRef.current = ws;
+      } catch (error) {
+        // ✅ Handle WebSocket constructor errors silently
+        if (!hasLoggedError) {
+          console.warn('F5-TTS: Failed to create WebSocket (backend likely not running)');
+          hasLoggedError = true;
+        }
+      }
+    };
+    
+    connect();
+    
+    return () => {
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
   }, []);
 
   const checkConnection = useCallback(async (): Promise<boolean> => {
@@ -153,42 +231,27 @@ export function useF5TTS(): UseF5TTS {
 
       console.log('F5-TTS: Received audio response');
       const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      // Send audio to backend to play through BlackHole 2ch
+      console.log('F5-TTS: Sending audio to backend for BlackHole routing...');
+      const backendResponse = await fetch('http://localhost:3001/api/betabot/play-audio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/octet-stream',
+        },
+        body: audioBlob
+      });
 
-      // Create and configure audio element
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
+      if (!backendResponse.ok) {
+        throw new Error(`Backend audio playback failed: ${backendResponse.status}`);
+      }
 
-      audio.onloadeddata = () => {
-        console.log('F5-TTS: Audio loaded, duration:', audio.duration, 'seconds');
-      };
-
-      audio.onplay = () => {
-        console.log('F5-TTS: Started playing audio');
-        setIsSpeaking(true);
-        onStateChangeRef.current?.('speaking');
-      };
-
-      audio.onended = () => {
-        console.log('F5-TTS: Finished playing audio');
-        setIsSpeaking(false);
-        onStateChangeRef.current?.('idle');
-        URL.revokeObjectURL(audioUrl);
-        audioRef.current = null;
-      };
-
-      audio.onerror = (event) => {
-        console.error('F5-TTS: Audio playback error:', event);
-        setError('Audio playback failed');
-        setIsSpeaking(false);
-        onStateChangeRef.current?.('idle');
-        URL.revokeObjectURL(audioUrl);
-        audioRef.current = null;
-      };
-
-      // Play the audio
-      console.log('F5-TTS: Starting audio playback');
-      await audio.play();
+      console.log('F5-TTS: Audio sent to backend successfully');
+      setIsSpeaking(true);
+      onStateChangeRef.current?.('speaking');
+      
+      // WebSocket will notify when playback is complete
+      // No need for estimated duration anymore!
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
