@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase, ShowQuestion, ShowSegment } from '../lib/supabase'
 import { BetaBotPopup } from './BetaBotPopup'
+import { BetaBotPopupEnhanced } from './BetaBotPopupEnhanced'
 import { BetaBotAvatar } from './BetaBotAvatar'
 import { VisualContentDisplay } from './VisualContentDisplay'
 import { MediaBrowserOverlay } from './MediaBrowserOverlay'
@@ -24,21 +25,21 @@ export function BroadcastOverlayView() {
   const [timelineTimeout, setTimelineTimeout] = useState<NodeJS.Timeout | null>(null)
   const [nextSegment, setNextSegment] = useState<ShowSegment | null>(null)
   const [showNextUp, setShowNextUp] = useState(false)
-  const audioRef = useRef<HTMLAudioElement>(null)
-  const prevSegmentIdRef = useRef<string | null>(null)
-  
+
   // BetaBot Popup state
   const [popupVisible, setPopupVisible] = useState(false)
   const [popupQuestion, setPopupQuestion] = useState<ShowQuestion | null>(null)
   const [popupDuration, setPopupDuration] = useState(15)
-  
+  const [popupAutoReadTTS, setPopupAutoReadTTS] = useState(false)
+  const [popupNotificationSound, setPopupNotificationSound] = useState(true)
+
   // Beta Bot Avatar state
   const [betaBotState, setBetaBotState] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle')
   const [betaBotMood, setBetaBotMood] = useState<'neutral' | 'bored' | 'amused' | 'spicy'>('neutral')
   const [betaBotMovement, setBetaBotMovement] = useState<'home' | 'run_left' | 'run_right' | 'bounce' | 'hide'>('home')
   const [showIncoming, setShowIncoming] = useState(false)
   const [incomingCount, setIncomingCount] = useState(0)
-  
+
   // Visual Content state (legacy - keeping for backward compatibility)
   const [visualContent, setVisualContent] = useState<{images?: string[]; searchQuery?: string} | null>(null)
 
@@ -52,6 +53,10 @@ export function BroadcastOverlayView() {
       model?: 'sonar' | 'sonar-pro';
     };
   } | null>(null)
+
+  // Refs (must come after all useState)
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const prevSegmentIdRef = useRef<string | null>(null)
 
   // Apply broadcast mode styles and load voices
   useEffect(() => {
@@ -84,6 +89,35 @@ export function BroadcastOverlayView() {
     return () => {
       segmentsChannel.unsubscribe()
       metadataChannel.unsubscribe()
+    }
+  }, [])
+
+  // Load popup settings from localStorage and listen for changes
+  useEffect(() => {
+    const loadSettings = () => {
+      const saved = localStorage.getItem('popup_settings')
+      if (saved) {
+        const settings = JSON.parse(saved)
+        setPopupDuration(settings.duration || 15)
+        setPopupAutoReadTTS(settings.auto_read_tts || false)
+        setPopupNotificationSound(settings.notification_sound_enabled !== false)
+      }
+    }
+
+    loadSettings()
+
+    // Listen for settings changes from PopupQueuePanel
+    const handleSettingsChange = (event: CustomEvent) => {
+      const settings = event.detail
+      setPopupDuration(settings.duration || 15)
+      setPopupAutoReadTTS(settings.auto_read_tts || false)
+      setPopupNotificationSound(settings.notification_sound_enabled !== false)
+    }
+
+    window.addEventListener('popup-settings-changed', handleSettingsChange as EventListener)
+
+    return () => {
+      window.removeEventListener('popup-settings-changed', handleSettingsChange as EventListener)
     }
   }, [])
 
@@ -806,12 +840,13 @@ export function BroadcastOverlayView() {
         />
       )}
 
-      {/* BETABOT POPUP - Chat-style question popup */}
-      <BetaBotPopup
+      {/* BETABOT POPUP - Enhanced with TTS and character system */}
+      <BetaBotPopupEnhanced
         question={popupQuestion}
         visible={popupVisible}
         duration={popupDuration}
-        onPlay={handlePopupPlay}
+        autoReadTTS={popupAutoReadTTS}
+        notificationSoundEnabled={popupNotificationSound}
         onNext={handlePopupNext}
         onDismiss={handlePopupDismiss}
       />

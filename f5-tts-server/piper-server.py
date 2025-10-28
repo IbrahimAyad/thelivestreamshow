@@ -31,8 +31,9 @@ app.add_middleware(
 )
 
 # Piper configuration
-PIPER_BIN = "/app/piper/piper/piper"
-VOICES_DIR = "/app/voices"
+SCRIPT_DIR = Path(__file__).parent.resolve()
+PIPER_BIN = str(SCRIPT_DIR / "piper" / "piper" / "piper")
+VOICES_DIR = str(SCRIPT_DIR / "voices")
 
 # Available Piper voices
 AVAILABLE_VOICES = {

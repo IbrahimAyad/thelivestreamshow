@@ -111,7 +111,14 @@ export function useDiscordAudio() {
    */
   const checkConnection = useCallback(async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/health`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
+      const response = await fetch(`${BACKEND_URL}/health`, {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
       const data = await response.json();
 
       setState(prev => ({
@@ -119,16 +126,47 @@ export function useDiscordAudio() {
         connected: data.status === 'healthy'
       }));
     } catch (error) {
+      // Silently fail - backend is optional for Discord audio
       setState(prev => ({ ...prev, connected: false }));
     }
   }, []);
 
-  // Check connection on mount
+  // Check connection on mount with retry limit
   useEffect(() => {
-    checkConnection();
-    const interval = setInterval(checkConnection, 5000);
+    const backendEnabled = import.meta.env.VITE_ENABLE_BACKEND !== 'false';
 
-    return () => clearInterval(interval);
+    if (!backendEnabled) {
+      console.info('Discord Audio: Backend disabled via VITE_ENABLE_BACKEND=false');
+      setState(prev => ({ ...prev, connected: false }));
+      return;
+    }
+
+    let failedAttempts = 0;
+    const MAX_FAILED_ATTEMPTS = 3;
+    let intervalId: NodeJS.Timeout | null = null;
+
+    const checkWithLimit = async () => {
+      try {
+        await checkConnection();
+        failedAttempts = 0; // Reset on success
+      } catch {
+        failedAttempts++;
+        if (failedAttempts >= MAX_FAILED_ATTEMPTS) {
+          // Stop polling after 3 consecutive failures
+          if (intervalId) {
+            clearInterval(intervalId);
+            console.warn('Discord Audio: Backend offline, stopped health checks');
+          }
+        }
+      }
+    };
+
+    checkWithLimit(); // Initial check
+    intervalId = setInterval(checkWithLimit, 30000); // Check every 30 seconds instead of 5
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [checkConnection]);
 
   return {

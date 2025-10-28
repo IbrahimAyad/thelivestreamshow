@@ -40,21 +40,65 @@ export function useF5TTS(): UseF5TTS {
   const wsRef = useRef<WebSocket | null>(null);
   const apiUrl = import.meta.env.VITE_F5_TTS_API_URL || DEFAULT_API_URL;
 
-  // Check connection on mount
+  const checkConnection = useCallback(async (): Promise<boolean> => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(`${apiUrl}/health`, {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+      const connected = response.ok;
+      setIsConnected(connected);
+
+      if (connected) {
+        console.log('F5-TTS: Server connected at', apiUrl);
+        setError(null);
+      } else {
+        console.warn('F5-TTS: Server returned non-OK status');
+        setError('Server not healthy');
+      }
+
+      return connected;
+    } catch (err) {
+      console.error('F5-TTS: Connection check failed:', err);
+      setIsConnected(false);
+      setError(err instanceof Error ? err.message : 'Connection failed');
+      return false;
+    }
+  }, [apiUrl]);
+
+  // Check connection on mount (only if TTS is enabled)
   useEffect(() => {
+    const ttsEnabled = import.meta.env.VITE_ENABLE_TTS !== 'false';
+
+    if (!ttsEnabled) {
+      console.info('F5-TTS: Disabled via VITE_ENABLE_TTS=false');
+      setIsConnected(false);
+      return;
+    }
+
     checkConnection();
     const interval = setInterval(checkConnection, 30000); // Check every 30 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [checkConnection]);
 
   // WebSocket connection for backend audio completion notifications
   useEffect(() => {
+    const ttsEnabled = import.meta.env.VITE_ENABLE_TTS !== 'false';
+
+    if (!ttsEnabled) {
+      return; // Skip WebSocket if TTS is disabled
+    }
+
     // ✅ EMERGENCY FIX: Add connection retry limit and error throttling
     let reconnectAttempts = 0;
     const MAX_RECONNECT_ATTEMPTS = 3;
     let reconnectTimeout: NodeJS.Timeout | null = null;
     let hasLoggedError = false;
-    
+
     const connect = () => {
       if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
         if (!hasLoggedError) {
@@ -124,36 +168,6 @@ export function useF5TTS(): UseF5TTS {
     };
   }, []);
 
-  const checkConnection = useCallback(async (): Promise<boolean> => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      const response = await fetch(`${apiUrl}/health`, {
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-      const connected = response.ok;
-      setIsConnected(connected);
-
-      if (connected) {
-        console.log('F5-TTS: Server connected at', apiUrl);
-        setError(null);
-      } else {
-        console.warn('F5-TTS: Server returned non-OK status');
-        setError('Server not healthy');
-      }
-
-      return connected;
-    } catch (err) {
-      console.error('F5-TTS: Connection check failed:', err);
-      setIsConnected(false);
-      setError(err instanceof Error ? err.message : 'Connection failed');
-      return false;
-    }
-  }, [apiUrl]);
-
   const loadVoices = useCallback(async (): Promise<void> => {
     try {
       console.log('F5-TTS: Loading available voices...');
@@ -176,11 +190,24 @@ export function useF5TTS(): UseF5TTS {
       console.log('F5-TTS: Loaded voices:', availableVoices);
       setVoices(availableVoices);
 
+      // Check for saved voice preference first
+      const savedVoiceName = localStorage.getItem('f5tts_preferred_voice');
+      if (savedVoiceName) {
+        const savedVoice = availableVoices.find((v: PiperVoice) => v.name === savedVoiceName);
+        if (savedVoice) {
+          setSelectedVoice(savedVoice);
+          console.log('✅ F5-TTS: Loaded saved voice preference:', savedVoiceName);
+          return;
+        }
+      }
+
       // Set default voice if none selected (prefer danny-low)
       if (!selectedVoice && availableVoices.length > 0) {
         const dannyVoice = availableVoices.find((v: PiperVoice) => v.name === 'danny-low');
-        setSelectedVoice(dannyVoice || availableVoices[0]);
-        console.log('F5-TTS: Set default voice to', dannyVoice ? 'danny-low' : availableVoices[0].name);
+        const defaultVoice = dannyVoice || availableVoices[0];
+        setSelectedVoice(defaultVoice);
+        localStorage.setItem('f5tts_preferred_voice', defaultVoice.name);
+        console.log('F5-TTS: Set default voice to', defaultVoice.name);
       }
     } catch (err) {
       console.error('F5-TTS: Failed to load voices:', err);
@@ -208,6 +235,10 @@ export function useF5TTS(): UseF5TTS {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
+      // Force danny-low voice
+      const voiceToUse = selectedVoice?.name || 'danny-low';
+      console.log('🎤 F5-TTS: Using voice:', voiceToUse);
+
       const response = await fetch(`${apiUrl}/generate-speech`, {
         method: 'POST',
         headers: {
@@ -217,7 +248,7 @@ export function useF5TTS(): UseF5TTS {
           text: text,
           reference_audio: null,
           reference_text: null,
-          voice: selectedVoice?.name || 'lessac-medium'
+          voice: voiceToUse
         }),
         signal: controller.signal
       });
@@ -276,6 +307,14 @@ export function useF5TTS(): UseF5TTS {
     }
   }, []);
 
+  // Persist voice selection to localStorage
+  const setSelectedVoiceWithPersistence = useCallback((voice: PiperVoice) => {
+    console.log('🔄 F5-TTS VOICE CHANGE: User selected:', voice.name);
+    setSelectedVoice(voice);
+    localStorage.setItem('f5tts_preferred_voice', voice.name);
+    console.log('💾 F5-TTS: Saved voice preference to localStorage:', voice.name);
+  }, []);
+
   return {
     speak,
     stop,
@@ -285,7 +324,7 @@ export function useF5TTS(): UseF5TTS {
     checkConnection,
     voices,
     selectedVoice,
-    setSelectedVoice,
+    setSelectedVoice: setSelectedVoiceWithPersistence,
     loadVoices
   };
 }

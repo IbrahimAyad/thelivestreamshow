@@ -102,8 +102,11 @@ export function useDualDeckAudioPlayer() {
     initAudioContext()
 
     return () => {
-      if (audioContextRef.current) {
-        audioContextRef.current.close()
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close().catch((err) => {
+          // Silently handle close errors (context may already be closed)
+          console.debug('[DualDeck] AudioContext cleanup:', err.message)
+        })
       }
     }
   }, [])

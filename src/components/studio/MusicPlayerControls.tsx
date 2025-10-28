@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { VolumeSlider } from './VolumeSlider'
 import { AudioVisualizer } from './AudioVisualizer'
+import { QuickCuesPanel } from './QuickCuesPanel'
 import { useMusic } from '@/contexts/MusicProvider'
 
 /**
@@ -87,6 +88,13 @@ export function MusicPlayerControls() {
             {formatTime(music.duration)}
           </span>
         </div>
+      </div>
+
+      {/* Quick Cues Panel - 1 Hot Cue + 7 Sound Drops */}
+      <div className="mb-4">
+        <QuickCuesPanel
+          onJumpToCue={(time) => music.seek(time)}
+        />
       </div>
 
       {/* Playback controls */}

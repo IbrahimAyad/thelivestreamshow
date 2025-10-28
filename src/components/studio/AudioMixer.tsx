@@ -310,11 +310,7 @@ export function AudioMixer() {
           file_path: filePath,
           file_url: publicUrlData.publicUrl,
           duration: mixDuration,
-          category: 'music',
-          bpm: null,
-          musical_key: null,
-          energy_level: null,
-          created_at: new Date().toISOString()
+          category: 'music'
         })
 
         if (insertError) {

@@ -138,7 +138,7 @@ function App() {
       <ShowProviderWithBoundary>
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Header */}
-      <header className="border-b-2 border-gray-800 bg-black/50 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b-2 border-gray-800 bg-gray-950 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -301,8 +301,7 @@ function App() {
               <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-600/30 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Music2 className="w-5 h-5 text-purple-400" />
-                  <h3 className="text-lg font-bold text-purple-300">Background Music</h3>
-                  <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded">Plays across all tabs</span>
+                  <h3 className="text-lg font-bold text-purple-300">DJ Fernando</h3>
                 </div>
                 <MusicPlayerControls />
               </div>
@@ -315,11 +314,6 @@ function App() {
                   ▶️ Show Start
                   <span className="text-xs px-2 py-1 bg-green-500 text-white rounded-full font-bold">START HERE</span>
                 </h3>
-                
-                {/* Show Intro Automation Controller */}
-                <div className="mb-6">
-                  <ShowIntroController dualDeck={dualDeck} className="max-w-5xl mx-auto" />
-                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div><ShowMetadataControl /></div>
                   <div><EpisodeInfoPanel /></div>

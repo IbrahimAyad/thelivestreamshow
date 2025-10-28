@@ -54,6 +54,14 @@ export function useScarlettAudio() {
 
   // ✅ EMERGENCY FIX: Connect to backend WebSocket with retry limits
   useEffect(() => {
+    const backendEnabled = import.meta.env.VITE_ENABLE_BACKEND !== 'false';
+
+    if (!backendEnabled) {
+      console.info('Scarlett Audio: Backend disabled via VITE_ENABLE_BACKEND=false');
+      setBackendConnected(false);
+      return;
+    }
+
     let reconnectAttempts = 0;
     const MAX_RECONNECT_ATTEMPTS = 3;
     let reconnectTimeout: NodeJS.Timeout | null = null;

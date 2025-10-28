@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { BroadcastOverlayView } from './components/BroadcastOverlayView.tsx'
+import { BroadcastVideoPlayer } from './components/BroadcastVideoPlayer.tsx'
 import { initMonitoring } from './lib/monitoring/sentry'
 import { MusicProvider } from './contexts/MusicProvider'
 
@@ -11,7 +12,8 @@ import { MusicProvider } from './contexts/MusicProvider'
 initMonitoring()
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+  // StrictMode disabled for performance - causes double mounting in dev
+  // <StrictMode>
     <MusicProvider>
       <BrowserRouter
         future={{
@@ -22,8 +24,9 @@ createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/broadcast" element={<BroadcastOverlayView />} />
+          <Route path="/broadcast/video-player" element={<BroadcastVideoPlayer />} />
         </Routes>
       </BrowserRouter>
     </MusicProvider>
-  </StrictMode>,
+  // </StrictMode>,
 )

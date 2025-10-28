@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { Monitor, Trash2, List, Settings, Play } from 'lucide-react'
+import { Monitor, Trash2, List, Settings, Play, Plus } from 'lucide-react'
 
 interface ShowQuestion {
   id: string
@@ -16,6 +16,8 @@ interface ShowQuestion {
 interface PopupSettings {
   duration: number
   auto_show_next: boolean
+  auto_read_tts: boolean
+  notification_sound_enabled: boolean
 }
 
 export function PopupQueuePanel() {
@@ -23,8 +25,16 @@ export function PopupQueuePanel() {
   const [queuedQuestions, setQueuedQuestions] = useState<string[]>([])
   const [settings, setSettings] = useState<PopupSettings>({
     duration: 15,
-    auto_show_next: false
+    auto_show_next: false,
+    auto_read_tts: false,
+    notification_sound_enabled: true
   })
+
+  // Manual add form state
+  const [showManualAdd, setShowManualAdd] = useState(false)
+  const [newCharacter, setNewCharacter] = useState('')
+  const [newMessage, setNewMessage] = useState('')
+  const [isAdding, setIsAdding] = useState(false)
 
   useEffect(() => {
     loadQuestions()
@@ -126,6 +136,48 @@ export function PopupQueuePanel() {
     setQueuedQuestions([])
   }
 
+  const handleManualAdd = async () => {
+    if (!newCharacter.trim() || !newMessage.trim()) {
+      alert('Please enter both character name and message')
+      return
+    }
+
+    setIsAdding(true)
+
+    try {
+      const nextPosition = questions.length + 1
+
+      const { data, error } = await supabase
+        .from('show_questions')
+        .insert({
+          topic: newCharacter.trim(),
+          question_text: newMessage.trim(),
+          position: nextPosition,
+          tts_generated: false,
+          show_on_overlay: false
+        })
+        .select()
+
+      if (error) throw error
+
+      if (data && data[0]) {
+        // Reload questions to show new one
+        await loadQuestions()
+        // Clear form
+        setNewCharacter('')
+        setNewMessage('')
+        setShowManualAdd(false)
+        // Auto-add to queue
+        addToQueue(data[0].id)
+      }
+    } catch (error) {
+      console.error('Error adding character message:', error)
+      alert('Failed to add message. Check console for details.')
+    } finally {
+      setIsAdding(false)
+    }
+  }
+
   const queuedQuestionsData = questions.filter(q => queuedQuestions.includes(q.id))
 
   return (
@@ -164,7 +216,7 @@ export function PopupQueuePanel() {
         </div>
 
         {/* Auto-show Toggle */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-3">
           <input
             type="checkbox"
             id="auto-show"
@@ -176,8 +228,43 @@ export function PopupQueuePanel() {
             Auto-show next question in queue
           </label>
         </div>
-        <p className="text-xs text-gray-500 mt-1 ml-8">
+        <p className="text-xs text-gray-500 mb-4 ml-8">
           Automatically display next queued question when current one finishes
+        </p>
+
+        {/* Auto-Read TTS Toggle */}
+        <div className="flex items-center gap-3 mb-3">
+          <input
+            type="checkbox"
+            id="auto-read"
+            checked={settings.auto_read_tts}
+            onChange={(e) => saveSettings({ ...settings, auto_read_tts: e.target.checked })}
+            className="w-5 h-5 text-amber-600 bg-gray-700 border-gray-600 rounded focus:ring-amber-500"
+          />
+          <label htmlFor="auto-read" className="text-gray-300 text-sm font-semibold cursor-pointer flex items-center gap-2">
+            🤖 Auto-Read with Danny Voice (BetaBot)
+          </label>
+        </div>
+        <p className="text-xs text-gray-500 mb-4 ml-8">
+          When OFF: Click "Play" button to hear Danny read the question<br/>
+          When ON: Danny automatically reads the question after notification sound
+        </p>
+
+        {/* Notification Sound Toggle */}
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="notification-sound"
+            checked={settings.notification_sound_enabled}
+            onChange={(e) => saveSettings({ ...settings, notification_sound_enabled: e.target.checked })}
+            className="w-5 h-5 text-green-600 bg-gray-700 border-gray-600 rounded focus:ring-green-500"
+          />
+          <label htmlFor="notification-sound" className="text-gray-300 text-sm font-semibold cursor-pointer flex items-center gap-2">
+            🔔 Play Notification Sound
+          </label>
+        </div>
+        <p className="text-xs text-gray-500 mt-1 ml-8">
+          Play a chime sound before displaying the question
         </p>
       </div>
 
@@ -251,9 +338,55 @@ export function PopupQueuePanel() {
         )}
       </div>
 
+      {/* Manual Add Character Message */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-gray-400">Add Character Message</h3>
+          <button
+            onClick={() => setShowManualAdd(!showManualAdd)}
+            className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded transition-colors flex items-center gap-1"
+          >
+            <Plus className="w-3 h-3" />
+            {showManualAdd ? 'Cancel' : 'New Message'}
+          </button>
+        </div>
+
+        {showManualAdd && (
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 space-y-3">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Character Name</label>
+              <input
+                type="text"
+                value={newCharacter}
+                onChange={(e) => setNewCharacter(e.target.value)}
+                placeholder="e.g., Alpha, AZ, Vic Nasty..."
+                className="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:border-green-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Message</label>
+              <textarea
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Enter the character's message..."
+                rows={3}
+                className="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:border-green-500 focus:outline-none resize-none"
+              />
+            </div>
+            <button
+              onClick={handleManualAdd}
+              disabled={isAdding || !newCharacter.trim() || !newMessage.trim()}
+              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors"
+            >
+              {isAdding ? 'Adding...' : 'Add to Queue'}
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Available Questions (for quick add) */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-400 mb-2">Quick Add to Queue</h3>
+        <h3 className="text-sm font-semibold text-gray-400 mb-2">Quick Add to Queue (from existing)</h3>
         <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
           {questions
             .filter(q => !queuedQuestions.includes(q.id))

@@ -23,6 +23,17 @@ export function AudioControlCenter() {
 
   // Check backend server connection
   useEffect(() => {
+    const backendEnabled = import.meta.env.VITE_ENABLE_BACKEND !== 'false';
+
+    if (!backendEnabled) {
+      console.info('AudioControlCenter: Backend disabled via VITE_ENABLE_BACKEND=false');
+      setBackendConnected(false);
+      return;
+    }
+
+    let failedAttempts = 0;
+    const MAX_FAILED_ATTEMPTS = 3;
+
     const checkBackend = async () => {
       try {
         const response = await fetch('http://localhost:3001/api/health', {
@@ -30,14 +41,21 @@ export function AudioControlCenter() {
           signal: AbortSignal.timeout(2000)
         })
         setBackendConnected(response.ok)
+        failedAttempts = 0; // Reset on success
       } catch {
         setBackendConnected(false)
+        failedAttempts++
+
+        if (failedAttempts >= MAX_FAILED_ATTEMPTS) {
+          console.warn('AudioControlCenter: Backend health checks stopped after 3 failures')
+          if (intervalId) clearInterval(intervalId)
+        }
       }
     }
 
     checkBackend()
-    const interval = setInterval(checkBackend, 5000)
-    return () => clearInterval(interval)
+    const intervalId = setInterval(checkBackend, 30000) // Check every 30s instead of 5s
+    return () => clearInterval(intervalId)
   }, [])
 
   // Enumerate audio devices on mount

@@ -9,19 +9,30 @@ interface AudioVisualizerProps {
 export function AudioVisualizer({ analyser, height = 60, className = '' }: AudioVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationFrameRef = useRef<number>()
+  const lastFrameTimeRef = useRef<number>(0)
 
   useEffect(() => {
     if (!analyser || !canvasRef.current) return
 
     const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext('2d', { alpha: false })
     if (!ctx) return
 
     const bufferLength = analyser.frequencyBinCount
     const dataArray = new Uint8Array(bufferLength)
 
-    const draw = () => {
+    // Throttle to 30fps instead of 60fps to reduce CPU usage
+    const FPS = 30
+    const frameInterval = 1000 / FPS
+
+    const draw = (currentTime: number) => {
       animationFrameRef.current = requestAnimationFrame(draw)
+
+      // Throttle frame rate
+      const elapsed = currentTime - lastFrameTimeRef.current
+      if (elapsed < frameInterval) return
+
+      lastFrameTimeRef.current = currentTime - (elapsed % frameInterval)
 
       analyser.getByteFrequencyData(dataArray)
 
@@ -44,7 +55,7 @@ export function AudioVisualizer({ analyser, height = 60, className = '' }: Audio
       }
     }
 
-    draw()
+    animationFrameRef.current = requestAnimationFrame(draw)
 
     return () => {
       if (animationFrameRef.current) {
@@ -59,7 +70,11 @@ export function AudioVisualizer({ analyser, height = 60, className = '' }: Audio
       width={800}
       height={height}
       className={`w-full rounded ${className}`}
-      style={{ imageRendering: 'pixelated' }}
+      style={{
+        imageRendering: 'pixelated',
+        willChange: 'contents',
+        contain: 'strict'
+      }}
     />
   )
 }
