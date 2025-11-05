@@ -145,20 +145,35 @@ export function GraphicsGallery() {
   const saveEpisodeInfo = async () => {
     try {
       setError(null)
+
+      // First check if there's an active episode
+      const { data: checkData, error: checkError } = await supabase
+        .from('episode_info')
+        .select('id')
+        .eq('is_active', true)
+        .single()
+
+      if (checkError || !checkData) {
+        setError('No active episode found. Please create one in the database first.')
+        return
+      }
+
+      // Update the episode
       const { error: updateError } = await supabase
         .from('episode_info')
         .update({
           episode_title: episodeTitle,
-          episode_topic: episodeTopic,
-          updated_at: new Date().toISOString()
+          episode_topic: episodeTopic
         })
-        .eq('is_active', true)
+        .eq('id', checkData.id)
 
       if (updateError) throw updateError
+
       setShowAlphaWedModal(false)
+      alert('Episode info updated successfully! ✅')
     } catch (err) {
       console.error('Failed to save episode info:', err)
-      setError('Failed to save episode info. Please try again.')
+      setError(`Failed to save episode info: ${err.message || 'Unknown error'}`)
     }
   }
 
