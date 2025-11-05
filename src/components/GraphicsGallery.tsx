@@ -42,6 +42,9 @@ const GRAPHIC_CONFIGS = [
 export function GraphicsGallery() {
   const [graphics, setGraphics] = useState<BroadcastGraphic[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [showAlphaWedModal, setShowAlphaWedModal] = useState(false)
+  const [episodeTitle, setEpisodeTitle] = useState('')
+  const [episodeTopic, setEpisodeTopic] = useState('')
 
   useEffect(() => {
     loadGraphics()
@@ -121,6 +124,52 @@ export function GraphicsGallery() {
     }
   }
 
+  const loadEpisodeInfo = async () => {
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('episode_info')
+        .select('*')
+        .eq('is_active', true)
+        .single()
+
+      if (fetchError) throw fetchError
+      if (data) {
+        setEpisodeTitle(data.episode_title || '')
+        setEpisodeTopic(data.episode_topic || '')
+      }
+    } catch (err) {
+      console.error('Failed to load episode info:', err)
+    }
+  }
+
+  const saveEpisodeInfo = async () => {
+    try {
+      setError(null)
+      const { error: updateError } = await supabase
+        .from('episode_info')
+        .update({
+          episode_title: episodeTitle,
+          episode_topic: episodeTopic,
+          updated_at: new Date().toISOString()
+        })
+        .eq('is_active', true)
+
+      if (updateError) throw updateError
+      setShowAlphaWedModal(false)
+    } catch (err) {
+      console.error('Failed to save episode info:', err)
+      setError('Failed to save episode info. Please try again.')
+    }
+  }
+
+  const handleAlphaWedClick = (e: React.MouseEvent) => {
+    if (e.metaKey || e.ctrlKey) {
+      e.preventDefault()
+      loadEpisodeInfo()
+      setShowAlphaWedModal(true)
+    }
+  }
+
   const getGraphic = (type: string) => graphics.find(g => g.graphic_type === type)
   const getConfig = (type: string) => GRAPHIC_CONFIGS.find(c => c.type === type)
 
@@ -148,11 +197,15 @@ export function GraphicsGallery() {
           if (config.hasModeSwitcher && config.type === 'alpha_wednesday') {
             return (
               <div key={config.type} className="col-span-2 md:col-span-3 lg:col-span-4">
-                <div className={`relative rounded-lg border-2 p-4 transition-all ${
-                  isActive
-                    ? 'bg-gradient-to-br from-purple-900/40 to-indigo-900/40 border-purple-400 shadow-lg shadow-purple-500/60'
-                    : 'bg-gray-900 border-gray-700'
-                }`}>
+                <div
+                  onClick={handleAlphaWedClick}
+                  className={`relative rounded-lg border-2 p-4 transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-gradient-to-br from-purple-900/40 to-indigo-900/40 border-purple-400 shadow-lg shadow-purple-500/60'
+                      : 'bg-gray-900 border-gray-700'
+                  }`}
+                  title="Cmd/Ctrl + Click to edit episode info"
+                >
                   {/* Header with toggle */}
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -241,8 +294,97 @@ export function GraphicsGallery() {
 
       <div className="mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded text-sm text-red-300">
         <p className="font-semibold">Quick Tip</p>
-        <p className="text-xs mt-1">Click any graphic to show/hide on broadcast view</p>
+        <p className="text-xs mt-1">Click any graphic to show/hide on broadcast view • Cmd/Ctrl+Click Alpha Wednesday to edit episode</p>
       </div>
+
+      {/* Alpha Wednesday Edit Modal */}
+      {showAlphaWedModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={() => setShowAlphaWedModal(false)}>
+          <div className="bg-gray-900 border-2 border-purple-500 rounded-lg p-6 max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                <Tv className="w-7 h-7 text-purple-400" />
+                Edit Overlay: alpha_wednesday
+              </h2>
+              <button
+                onClick={() => setShowAlphaWedModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Content Fields Tab Header */}
+              <div className="border-b border-gray-700 pb-2">
+                <h3 className="text-yellow-400 font-bold text-lg">Content Fields</h3>
+              </div>
+
+              {/* Mode Field */}
+              <div>
+                <label className="block text-white font-semibold mb-2">Mode</label>
+                <input
+                  type="text"
+                  value={getGraphic('alpha_wednesday')?.config?.mode || 'default'}
+                  disabled
+                  className="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-gray-400"
+                />
+              </div>
+
+              {/* Episode Title */}
+              <div>
+                <label className="block text-white font-semibold mb-2">Episode Title</label>
+                <input
+                  type="text"
+                  value={episodeTitle}
+                  onChange={(e) => setEpisodeTitle(e.target.value)}
+                  placeholder="e.g., Alpha Wednesday Returns"
+                  className="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:border-purple-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Episode Topic */}
+              <div>
+                <label className="block text-white font-semibold mb-2">Episode Topic</label>
+                <input
+                  type="text"
+                  value={episodeTopic}
+                  onChange={(e) => setEpisodeTopic(e.target.value)}
+                  placeholder="e.g., AI, Tech News, and Community Discussion"
+                  className="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:border-purple-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Available Modes (Read-only) */}
+              <div>
+                <label className="block text-white font-semibold mb-2">Available Modes</label>
+                <input
+                  type="text"
+                  value="default,debate,presentation,gaming"
+                  disabled
+                  className="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-gray-400"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-700">
+                <button
+                  onClick={() => setShowAlphaWedModal(false)}
+                  className="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveEpisodeInfo}
+                  className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-bold"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
