@@ -3,7 +3,8 @@ import { supabase, BroadcastGraphic } from '../lib/supabase'
 import {
   Radio, Coffee, Clock, AlertTriangle, Image,
   BarChart3, Trophy, MessageSquare, Sparkles,
-  Award, Zap, UserPlus, Gauge, Swords, Target
+  Award, Zap, UserPlus, Gauge, Swords, Target,
+  Tv
 } from 'lucide-react'
 
 const GRAPHIC_CONFIGS = [
@@ -20,6 +21,7 @@ const GRAPHIC_CONFIGS = [
 
   // SHOW LAYOUTS (distinct purple outline)
   { type: 'out_of_context_background', label: 'Out of Context', icon: Radio, color: 'purple', htmlFile: '/graphics/out-of-context-full.html' },
+  { type: 'alpha_wednesday', label: 'Alpha Wednesday', icon: Tv, color: 'purple', htmlFile: '/graphics/alpha-wednesday-universal.html', hasModeSwitcher: true },
 
   // NEW: Interactive Graphics with Audio
   { type: 'poll', label: 'Poll/Vote', icon: BarChart3, color: 'purple', htmlFile: '/stream-poll-screen.html' },
@@ -95,6 +97,30 @@ export function GraphicsGallery() {
     }
   }
 
+  const changeAlphaWednesdayMode = async (mode: string) => {
+    try {
+      setError(null)
+      const graphic = getGraphic('alpha_wednesday')
+      if (!graphic) return
+
+      const { error: updateError } = await supabase
+        .from('broadcast_graphics')
+        .update({
+          config: {
+            ...graphic.config,
+            mode
+          },
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', graphic.id)
+
+      if (updateError) throw updateError
+    } catch (err) {
+      console.error('Failed to change mode:', err)
+      setError('Failed to change mode. Please try again.')
+    }
+  }
+
   const getGraphic = (type: string) => graphics.find(g => g.graphic_type === type)
   const getConfig = (type: string) => GRAPHIC_CONFIGS.find(c => c.type === type)
 
@@ -116,7 +142,69 @@ export function GraphicsGallery() {
           const graphic = getGraphic(config.type)
           const isActive = graphic?.is_visible || false
           const Icon = config.icon
+          const currentMode = graphic?.config?.mode || 'default'
 
+          // Special rendering for Alpha Wednesday with mode switcher
+          if (config.hasModeSwitcher && config.type === 'alpha_wednesday') {
+            return (
+              <div key={config.type} className="col-span-2 md:col-span-3 lg:col-span-4">
+                <div className={`relative rounded-lg border-2 p-4 transition-all ${
+                  isActive
+                    ? 'bg-gradient-to-br from-purple-900/40 to-indigo-900/40 border-purple-400 shadow-lg shadow-purple-500/60'
+                    : 'bg-gray-900 border-gray-700'
+                }`}>
+                  {/* Header with toggle */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Icon className={`w-8 h-8 transition-all ${
+                        isActive ? 'text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]' : 'text-gray-500'
+                      }`} />
+                      <div>
+                        <h3 className={`font-bold text-lg ${isActive ? 'text-white' : 'text-gray-400'}`}>
+                          {config.label}
+                        </h3>
+                        <p className="text-xs text-gray-500">AI, Tech News & Community Discussion</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => graphic && toggleGraphic(graphic.id, isActive, config.htmlFile)}
+                      className={`px-6 py-2 rounded-lg font-bold transition-all ${
+                        isActive
+                          ? 'bg-purple-500 text-white hover:bg-purple-600'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      {isActive ? 'HIDE' : 'SHOW'}
+                    </button>
+                  </div>
+
+                  {/* Mode Switcher */}
+                  {isActive && (
+                    <div className="flex gap-2">
+                      <span className="text-sm text-gray-400 flex items-center">Layout Mode:</span>
+                      <div className="flex gap-2 flex-1">
+                        {['default', 'debate', 'presentation', 'gaming'].map(mode => (
+                          <button
+                            key={mode}
+                            onClick={() => changeAlphaWednesdayMode(mode)}
+                            className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                              currentMode === mode
+                                ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/50'
+                                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                            }`}
+                          >
+                            {mode.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          }
+
+          // Regular graphic button
           return (
             <button
               key={config.type}
