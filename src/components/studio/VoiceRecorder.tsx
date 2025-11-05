@@ -260,7 +260,7 @@ export function VoiceRecorder() {
   }
 
   // Create reverb impulse response
-  const createReverbImpulse = (audioContext: AudioContext, duration: number, decay: number) => {
+  const createReverbImpulse = (audioContext: AudioContext | OfflineAudioContext, duration: number, decay: number) => {
     const sampleRate = audioContext.sampleRate
     const length = sampleRate * duration
     const impulse = audioContext.createBuffer(2, length, sampleRate)

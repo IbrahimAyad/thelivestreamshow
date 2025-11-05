@@ -183,19 +183,13 @@ export function usePredictiveAI(config: Partial<PredictiveAIConfig> = {}) {
 
       for (const question of questions) {
         const showContext = {
-          episode: {
-            episode_number: 1,
-            episode_date: new Date().toISOString(),
-            episode_title: context.currentTopic || 'General Discussion',
-            episode_topic: context.currentTopic || 'General Discussion'
-          } as any,
-          segment: {
-            segment_name: 'Main Segment',
-            segment_topic: context.currentTopic || 'General Discussion',
-            question_text: question.question_text || question.text || ''
-          } as any,
-          isLive: true,
-          isRehearsal: false
+          showId: 'default-show',
+          elapsedMinutes: context.elapsedMinutes || 0,
+          totalDuration: context.showLengthMinutes || 60,
+          currentEngagement: context.currentEngagement || 0.5,
+          recentTopics: context.currentTopic ? [context.currentTopic] : [],
+          audienceSize: 100,
+          showStyle: 'educational' as const
         };
 
         const prediction = await engines.current.predictive.predictOutcome(

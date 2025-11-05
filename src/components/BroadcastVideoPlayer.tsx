@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import YouTube, { YouTubeProps } from 'react-youtube';
+import YouTube from 'react-youtube';
+import type { YouTubeProps } from 'react-youtube';
 
 interface QueuedVideo {
   id: string;

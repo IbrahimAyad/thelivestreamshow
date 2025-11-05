@@ -6,7 +6,7 @@ import sourceIdentifierPlugin from 'vite-plugin-source-identifier'
 const isProd = process.env.BUILD_MODE === 'prod'
 export default defineConfig({
   plugins: [
-    react(), 
+    react(),
     sourceIdentifierPlugin({
       enabled: !isProd,
       attributePrefix: 'data-matrix',
@@ -18,5 +18,14 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        // Suppress certain warnings
+        if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return
+        warn(warning)
+      }
+    }
+  }
 })
 

@@ -60,6 +60,7 @@ type MusicAPI = {
   error?: string                          // error message
   hasError: boolean                       // error flag
   analyserNode?: AnalyserNode
+  audioContext?: AudioContext | null      // exposed for EQ and other effects
   // engine accessors (for Studio Decks, if you must)
   getOrCreateAudioContext: () => AudioContext
   getOrCreateMediaElement: () => HTMLAudioElement
@@ -288,6 +289,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     current, isPlaying, currentTime, duration, ready, volume, queue, error, hasError,
     // Use fake analyser for visualization (works without CORS)
     analyserNode: fakeAnalyserRef.current ?? analyserRef.current ?? undefined,
+    audioContext: audioCtxRef.current,
     getOrCreateAudioContext, getOrCreateMediaElement, getOrCreateMediaElementSource,
   }), [current, isPlaying, currentTime, duration, ready, volume, queue, error, hasError])
 
