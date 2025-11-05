@@ -176,9 +176,6 @@ export function BroadcastGraphicsDisplay() {
             className="fullscreen-iframe"
             title={graphic.graphic_type}
           />
-          {isExclusive && (
-            <div className="click-to-close-hint">Click anywhere to close</div>
-          )}
           <style>{`
             .fullscreen-html-overlay {
               position: fixed;
