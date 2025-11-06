@@ -49,7 +49,8 @@ export function MorningNewsControl() {
           category: row.category,
           source: row.source,
           talkingPoints: row.talking_points || [],
-          timestamp: row.created_at
+          timestamp: row.created_at,
+          isVisible: row.is_visible
         }))
         setNewsStories(stories)
         console.log(`📰 Loaded ${stories.length} stories from database`)
@@ -340,7 +341,11 @@ export function MorningNewsControl() {
             return (
               <div
                 key={story.id}
-                className="bg-gray-800/50 border-2 border-gray-700 rounded-lg p-4 hover:border-cyan-600/50 transition-colors"
+                className={`bg-gray-800/50 border-2 rounded-lg p-4 transition-colors ${
+                  story.isVisible
+                    ? 'border-cyan-600/70 shadow-lg shadow-cyan-600/20'
+                    : 'border-gray-700 hover:border-gray-600'
+                }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -353,11 +358,19 @@ export function MorningNewsControl() {
                     )}
                   </div>
                   <button
-                    onClick={() => toggleStoryVisibility(story.id, false)}
-                    className="p-2 bg-gray-700 rounded-md hover:bg-cyan-600 transition-colors"
-                    title="Show on overlay"
+                    onClick={() => toggleStoryVisibility(story.id, story.isVisible || false)}
+                    className={`p-2 rounded-md transition-colors ${
+                      story.isVisible
+                        ? 'bg-cyan-600 hover:bg-cyan-700'
+                        : 'bg-gray-700 hover:bg-gray-600'
+                    }`}
+                    title={story.isVisible ? "Hide from overlay" : "Show on overlay"}
                   >
-                    <Eye className="w-4 h-4 text-gray-300" />
+                    {story.isVisible ? (
+                      <Eye className="w-4 h-4 text-white" />
+                    ) : (
+                      <EyeOff className="w-4 h-4 text-gray-400" />
+                    )}
                   </button>
                 </div>
 

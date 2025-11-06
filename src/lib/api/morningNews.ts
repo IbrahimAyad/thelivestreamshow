@@ -14,6 +14,7 @@ export interface NewsStory {
   source?: string;
   talkingPoints?: string[];
   timestamp: string;
+  isVisible?: boolean;
 }
 
 /**
