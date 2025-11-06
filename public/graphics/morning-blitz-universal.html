@@ -384,7 +384,7 @@
 
         /* ========== LAYOUT MODES ========== */
 
-        /* MODE 1: BLITZ (Default - current layout) */
+        /* MODE 1: BLITZ (Default - Panel + Host left, Media right) */
         .layout-blitz .left-column {
             width: 35%;
         }
@@ -398,46 +398,64 @@
             flex: 1;
         }
 
-        /* MODE 2: OUT OF CONTEXT - 2 big cameras side by side */
+        /* MODE 2: OUT OF CONTEXT - 2 BIG horizontal cameras side by side */
         .layout-out_of_context .main-container {
             flex-direction: row;
             gap: 30px;
+            justify-content: center;
+            align-items: center;
         }
-        .layout-out_of_context .left-column,
+        .layout-out_of_context .left-column {
+            display: none;
+        }
         .layout-out_of_context .panel-section {
             display: none;
         }
         .layout-out_of_context .camera-section {
+            display: block;
             width: 48%;
+            height: 100%;
         }
         .layout-out_of_context .video-section {
             width: 48%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .layout-out_of_context .video-frame {
+            width: 100%;
+            height: 100%;
         }
 
-        /* MODE 3: 3 CAMERA - Host bottom left, 2 vertical cameras right */
+        /* MODE 3: 3 CAMERA - Host (horizontal left), 2 VERTICAL portrait cameras (right) */
         .layout-3_camera .main-container {
             flex-direction: row;
             gap: 20px;
         }
         .layout-3_camera .left-column {
-            width: 48%;
+            width: 65%;
             display: flex;
             flex-direction: column;
         }
         .layout-3_camera .panel-section {
-            height: 50%;
+            display: none;
         }
         .layout-3_camera .camera-section {
             flex: 1;
+            height: 100%;
         }
         .layout-3_camera .video-section {
-            width: 48%;
+            width: 30%;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
+        /* Vertical portrait boxes for guests (9:16 aspect ratio like iPhone) */
         .layout-3_camera .video-frame {
+            flex: 1;
             height: calc(50% - 10px);
+            aspect-ratio: 9 / 16;
+            margin: 0 auto;
         }
         .layout-3_camera .video-frame:first-child {
             border-image: linear-gradient(135deg, #FCD34D, #F59E0B) 1;
@@ -446,25 +464,43 @@
             border-image: linear-gradient(135deg, #10B981, #059669) 1;
         }
 
-        /* MODE 4: 4 CAMERA - Grid of 4 cameras */
+        /* MODE 4: 4 CAMERA - Grid of 4 horizontal cameras (2x2) */
         .layout-4_camera .main-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr 1fr;
             gap: 20px;
         }
-        .layout-4_camera .left-column,
-        .layout-4_camera .video-section {
-            width: 100%;
-            height: 100%;
+        .layout-4_camera .left-column {
+            display: contents;
         }
         .layout-4_camera .panel-section {
-            display: block;
+            width: 100%;
             height: 100%;
+            grid-column: 1;
+            grid-row: 1;
         }
         .layout-4_camera .camera-section {
+            width: 100%;
+            height: 100%;
+            grid-column: 2;
+            grid-row: 1;
+        }
+        .layout-4_camera .video-section {
+            display: contents;
+        }
+        .layout-4_camera .video-frame:nth-child(1) {
+            width: 100%;
+            height: 100%;
             grid-column: 1;
             grid-row: 2;
+        }
+        .layout-4_camera .video-frame:nth-child(2) {
+            width: 100%;
+            height: 100%;
+            grid-column: 2;
+            grid-row: 2;
+            display: block;
         }
         .layout-4_camera .panel-frame {
             border-image: linear-gradient(135deg, #F59E0B, #D97706) 1;
