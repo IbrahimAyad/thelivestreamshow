@@ -570,6 +570,7 @@
         // Load layout mode
         async function loadLayoutMode() {
             try {
+                console.log('📡 Loading layout mode for morning_blitz...');
                 const { data, error } = await supabaseClient
                     .from('broadcast_graphics')
                     .select('config')
@@ -578,15 +579,22 @@
                     .single();
 
                 if (error) {
-                    console.error('Error loading layout mode:', error);
+                    console.error('❌ Error loading layout mode:', error.message, error);
+                    console.log('💡 Using default layout mode: blitz');
+                    setLayoutMode('blitz');
                     return;
                 }
 
                 if (data && data.config && data.config.mode) {
+                    console.log('✅ Layout mode loaded:', data.config.mode);
                     setLayoutMode(data.config.mode);
+                } else {
+                    console.log('💡 No mode in config, using default: blitz');
+                    setLayoutMode('blitz');
                 }
             } catch (error) {
-                console.error('Failed to load layout mode:', error);
+                console.error('❌ Failed to load layout mode:', error);
+                setLayoutMode('blitz');
             }
         }
 
@@ -609,6 +617,7 @@
         // Load images from Supabase
         async function loadImages() {
             try {
+                console.log('📸 Loading conversation images...');
                 const { data, error } = await supabaseClient
                     .from('morning_blitz_images')
                     .select('*')
@@ -617,14 +626,20 @@
                     .limit(5);
 
                 if (error) {
-                    console.error('Error loading images:', error);
+                    console.error('❌ Error loading images:', error.message, error);
+                    console.log('💡 No images to display (table might be empty or RLS issue)');
+                    images = [];
+                    renderImages();
                     return;
                 }
 
                 images = data || [];
+                console.log(`✅ Loaded ${images.length} conversation images`);
                 renderImages();
             } catch (error) {
-                console.error('Failed to load images:', error);
+                console.error('❌ Failed to load images:', error);
+                images = [];
+                renderImages();
             }
         }
 
