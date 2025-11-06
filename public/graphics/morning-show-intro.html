@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Morning Show Intro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: transparent;
+            overflow: hidden;
+            width: 1920px;
+            height: 1080px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #introVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <video id="introVideo" autoplay muted>
+            <source src="morning-show-intro.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <script>
+        const video = document.getElementById('introVideo');
+
+        console.log('🌅 Morning Show Intro - Video loaded');
+
+        // Auto-play video when loaded
+        video.addEventListener('loadeddata', () => {
+            console.log('✅ Video ready to play');
+            video.play().catch(err => {
+                console.error('❌ Video playback failed:', err);
+            });
+        });
+
+        // Log when video starts playing
+        video.addEventListener('play', () => {
+            console.log('▶️ Morning Show Intro playing...');
+        });
+
+        // Log when video ends
+        video.addEventListener('ended', () => {
+            console.log('✅ Morning Show Intro completed');
+        });
+
+        // Loop video option (uncomment if you want it to loop)
+        // video.loop = true;
+
+        // Error handling
+        video.addEventListener('error', (e) => {
+            console.error('❌ Video error:', e);
+            console.error('Error details:', video.error);
+        });
+
+        // Show video duration when metadata loads
+        video.addEventListener('loadedmetadata', () => {
+            console.log(`📹 Video duration: ${video.duration.toFixed(2)}s`);
+        });
+    </script>
+</body>
+</html>

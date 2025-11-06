@@ -22,6 +22,7 @@ const GRAPHIC_CONFIGS = [
   // SHOW LAYOUTS (distinct purple outline)
   { type: 'out_of_context_background', label: 'Out of Context', icon: Radio, color: 'purple', htmlFile: '/graphics/out-of-context-full.html' },
   { type: 'alpha_wednesday', label: 'Alpha Wednesday', icon: Tv, color: 'purple', htmlFile: '/graphics/alpha-wednesday-universal.html', hasModeSwitcher: true },
+  { type: 'morning_show_intro', label: 'Morning Show Intro', icon: Sparkles, color: 'cyan', htmlFile: '/graphics/morning-show-intro.html' },
   { type: 'morning_blitz', label: 'Morning Show', icon: Coffee, color: 'purple', htmlFile: '/graphics/morning-blitz-universal.html', hasModeSwitcher: true, hasImageManager: true },
 
   // NEW: Interactive Graphics with Audio

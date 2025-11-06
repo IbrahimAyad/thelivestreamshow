@@ -1,0 +1,63 @@
+# KCT Menswear - Fall 2025 Sweater Collection CSV Format
+
+This document defines the structure and SEO-optimized fields for the upcoming Fall/Winter 2025 sweater product import into Shopify.
+
+## ✅ Overview
+
+Each product listing must include:
+- SEO-friendly product titles
+- HTML-rich descriptions
+- Proper Shopify variant structure
+- Optimized meta fields (title, description, image alt text)
+- Size and color variants
+- Tags for search, filtering, and SEO
+
+---
+
+## 📦 CSV Columns & Format
+
+| Column Name                  | Required | Description |
+|-----------------------------|----------|-------------|
+| **Handle**                  | ✅        | URL-safe identifier (unique per product). Example: `mens-chunky-knit-hooded-cardigan-black-white` |
+| **Title**                   | ✅        | Product name (SEO-optimized). Example: `Men's Chunky Knit Hooded Cardigan – Black & White Zigzag` |
+| **Body (HTML)**             | ✅        | Full product description in HTML. Use `<p>` and `<ul>` tags. |
+| **Vendor**                  | ✅        | Brand name: `KCT Menswear` |
+| **Type**                    | ✅        | Product type: `Men’s Knitwear` |
+| **Tags**                    | ✅        | Comma-separated keywords. Example: `Chunky Knit, Black and White, Fall 2025, Urban Style, Hooded Sweater` |
+| **Published**               | ✅        | `TRUE` or `FALSE` |
+| **Option1 Name**            | ✅        | Always `Size` |
+| **Option1 Value**           | ✅        | Size values: `M`, `L`, `XL`, `2XL`, `3XL`, `4XL` |
+| **Option2 Name**            | ✅        | `Color` |
+| **Option2 Value**           | ✅        | Color value. Example: `Black/White` |
+| **Variant SKU**             | ✅        | Format: `KCT12205F-BW-M` (Example: KCT + StyleCode + ColorCode + Size) |
+| **Variant Price**           | ✅        | Sale price (e.g., `149.99`) |
+| **Variant Compare At Price**| Optional | Original price for showing discounts (e.g., `164.99`) |
+| **Image Src**               | ✅        | Full image URL (hosted on CDN or Shopify files) |
+| **Image Alt Text**          | ✅        | Example: `Men's Black and White Chunky Knit Hooded Cardigan by KCT Menswear` |
+| **SEO Title**               | ✅        | 50–60 character page title. Example: `Men’s Chunky Knit Cardigan – Black & White | KCT Menswear` |
+| **SEO Description**         | ✅        | 150–160 character meta description. Example: `Bold black & white chunky knit sweater with hood. Designed for Fall 2025. Shop KCT Menswear now.` |
+| **Status**                  | ✅        | Use `active` for published products |
+
+---
+
+## 🧠 Best Practices & Notes
+
+- **SEO-Focused Titles**: Include product type + fit/style + color + occasion/season if relevant.
+- **Descriptions**: Highlight materials, fit, design, usage (e.g., layering, streetwear, smart-casual).
+- **Tags**: Use both broad (e.g., `Men's Knitwear`) and specific (e.g., `Black Zigzag Sweater`) tags.
+- **Images**: Name and alt-tag your images with descriptive, keyword-rich phrases.
+- **Meta Data**: Ensure each product has a unique, optimized SEO title and description for Google indexing.
+
+---
+
+## ✅ Example Row (Markdown View)
+
+| Handle | Title | Body (HTML) | Vendor | Type | Tags | Option1 Name | Option1 Value | Option2 Name | Option2 Value | Variant SKU | Variant Price | Image Src | Image Alt Text | SEO Title | SEO Description | Status |
+|--------|-------|--------------|--------|------|------|---------------|----------------|---------------|----------------|--------------|----------------|------------|------------------|------------|------------------|--------|
+| mens-chunky-knit-hooded-cardigan-black-white | Men's Chunky Knit Hooded Cardigan – Black & White Zigzag | `<p>Command attention with this bold men's chunky knit cardigan...</p>` | KCT Menswear | Men’s Knitwear | Chunky Knit, Fall 2025, Hooded Sweater, Streetwear | Size | M | Color | Black/White | KCT12205F-BW-M | 149.99 | https://cdn.kctmenswear.com/sweater-blackwhite.jpg | Men's Chunky Knit Hooded Cardigan in Black and White by KCT Menswear | Men’s Chunky Knit Cardigan – Black & White | Bold black & white chunky knit sweater with hood. Designed for Fall 2025. Shop KCT Menswear now. | active |
+
+---
+
+## 💬 Questions?
+
+Contact [KCT SEO Content Lead] or reply to this doc with comments.
