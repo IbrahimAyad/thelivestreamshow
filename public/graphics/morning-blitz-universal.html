@@ -1188,12 +1188,36 @@
                 .on(
                     'postgres_changes',
                     {
-                        event: '*',
+                        event: 'INSERT',
                         schema: 'public',
                         table: 'morning_news_stories'
                     },
                     (payload) => {
-                        console.log('📰 News stories updated via realtime:', payload);
+                        console.log('📰 New story inserted:', payload);
+                        loadNewsStories();
+                    }
+                )
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'morning_news_stories'
+                    },
+                    (payload) => {
+                        console.log('📰 Story updated:', payload);
+                        loadNewsStories();
+                    }
+                )
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'DELETE',
+                        schema: 'public',
+                        table: 'morning_news_stories'
+                    },
+                    (payload) => {
+                        console.log('📰 Story deleted:', payload);
                         loadNewsStories();
                     }
                 )
