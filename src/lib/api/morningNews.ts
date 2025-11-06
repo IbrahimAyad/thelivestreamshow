@@ -109,6 +109,8 @@ Only return the JSON array, no other text.`
 
     const stories = JSON.parse(jsonContent);
 
+    console.log('📰 Raw categories from Perplexity:', stories.map((s: any) => s.category));
+
     // Add IDs and timestamps
     const processedStories: NewsStory[] = stories.map((story: any, index: number) => ({
       id: `news-${Date.now()}-${index}`,
@@ -121,6 +123,7 @@ Only return the JSON array, no other text.`
     }));
 
     console.log(`📰 Fetched ${processedStories.length} morning news stories`);
+    console.log('📰 Processed categories:', processedStories.map(s => s.category));
     return processedStories;
 
   } catch (error) {

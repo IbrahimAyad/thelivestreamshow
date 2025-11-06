@@ -111,7 +111,10 @@ export function MorningNewsControl() {
       })
 
       // Log what we're about to insert for debugging
-      console.log('📊 Stories to insert:', storiesToInsert.map(s => ({ headline: s.headline, category: s.category })))
+      console.log('📊 Stories to insert:')
+      storiesToInsert.forEach((s, i) => {
+        console.log(`  [${i}] ${s.headline.substring(0, 50)}... → category: "${s.category}"`)
+      })
 
       const { data: insertedData, error: insertError } = await supabase
         .from('morning_news_stories')
@@ -120,7 +123,9 @@ export function MorningNewsControl() {
 
       if (insertError) {
         console.error('❌ Error inserting stories:', insertError)
-        console.error('❌ Attempted categories:', storiesToInsert.map(s => s.category))
+        console.error('❌ Full error details:', JSON.stringify(insertError, null, 2))
+        console.error('❌ Attempted categories:', storiesToInsert.map(s => `"${s.category}"`).join(', '))
+        console.error('❌ Valid categories are: breaking, business, real_estate, tech, entertainment, sports, politics, general')
         throw insertError
       }
 
