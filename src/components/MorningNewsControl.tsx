@@ -9,10 +9,27 @@ export function MorningNewsControl() {
   const [error, setError] = useState<string | null>(null)
   const [selectedStories, setSelectedStories] = useState<Set<string>>(new Set())
   const [lastFetched, setLastFetched] = useState<Date | null>(null)
+  const [autoRefresh, setAutoRefresh] = useState(false)
+  const [refreshInterval, setRefreshInterval] = useState(30) // minutes
 
   useEffect(() => {
     loadStoriesFromDatabase()
   }, [])
+
+  // Auto-refresh timer
+  useEffect(() => {
+    if (!autoRefresh) return
+
+    const intervalMs = refreshInterval * 60 * 1000
+    console.log(`📰 Auto-refresh enabled: fetching news every ${refreshInterval} minutes`)
+
+    const timer = setInterval(() => {
+      console.log('📰 Auto-refresh: Fetching latest news...')
+      handleFetchNews()
+    }, intervalMs)
+
+    return () => clearInterval(timer)
+  }, [autoRefresh, refreshInterval])
 
   const loadStoriesFromDatabase = async () => {
     try {
@@ -129,6 +146,25 @@ export function MorningNewsControl() {
     }
   }
 
+  const clearAllStories = async () => {
+    if (!confirm('Delete all news stories? This cannot be undone.')) return
+
+    try {
+      const { error } = await supabase
+        .from('morning_news_stories')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000') // Delete all
+
+      if (error) throw error
+
+      await loadStoriesFromDatabase()
+      console.log('✅ All stories cleared')
+    } catch (err) {
+      console.error('Failed to clear stories:', err)
+      setError('Failed to clear stories')
+    }
+  }
+
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'breaking': return Zap
@@ -169,18 +205,44 @@ export function MorningNewsControl() {
             </p>
           </div>
         </div>
-        <button
-          onClick={handleFetchNews}
-          disabled={loading}
-          className="px-6 py-3 bg-cyan-600 text-white rounded-lg font-bold hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-          {loading ? 'Fetching...' : 'Fetch Latest News'}
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Auto-refresh toggle */}
+          <div className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg">
+            <input
+              type="checkbox"
+              id="autoRefresh"
+              checked={autoRefresh}
+              onChange={(e) => setAutoRefresh(e.target.checked)}
+              className="w-4 h-4 rounded"
+            />
+            <label htmlFor="autoRefresh" className="text-sm text-gray-300 cursor-pointer">
+              Auto-refresh every
+            </label>
+            <select
+              value={refreshInterval}
+              onChange={(e) => setRefreshInterval(Number(e.target.value))}
+              className="bg-gray-700 text-white text-sm rounded px-2 py-1"
+              disabled={!autoRefresh}
+            >
+              <option value={15}>15min</option>
+              <option value={30}>30min</option>
+              <option value={60}>1hr</option>
+              <option value={120}>2hr</option>
+            </select>
+          </div>
+          <button
+            onClick={handleFetchNews}
+            disabled={loading}
+            className="px-6 py-3 bg-cyan-600 text-white rounded-lg font-bold hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Fetching...' : 'Fetch Now'}
+          </button>
+        </div>
       </div>
 
       {/* Category Quick Fetch */}
-      <div className="mb-6 flex gap-2 flex-wrap">
+      <div className="mb-6 flex gap-2 flex-wrap items-center">
         <span className="text-sm text-gray-400 mr-2">Quick Fetch:</span>
         {['business', 'real_estate', 'tech', 'entertainment', 'sports'].map(category => {
           const Icon = getCategoryIcon(category)
@@ -196,6 +258,12 @@ export function MorningNewsControl() {
             </button>
           )
         })}
+        <button
+          onClick={clearAllStories}
+          className="ml-auto px-3 py-1 bg-red-900/30 text-red-400 rounded-md text-sm hover:bg-red-900/50 border border-red-500/30"
+        >
+          Clear All Stories
+        </button>
       </div>
 
       {error && (
