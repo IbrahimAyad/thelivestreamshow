@@ -443,7 +443,7 @@ export function GraphicsGallery() {
 
       <div className="mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded text-sm text-red-300">
         <p className="font-semibold">Quick Tip</p>
-        <p className="text-xs mt-1">Click any graphic to show/hide on broadcast view • Cmd/Ctrl+Click Alpha Wednesday to edit episode</p>
+        <p className="text-xs mt-1">Click any graphic to show/hide on broadcast view • Cmd/Ctrl+Click Alpha Wednesday to edit episode • Cmd/Ctrl+Click Morning Blitz to manage images</p>
       </div>
 
       {/* Morning Blitz Image Manager Modal */}
