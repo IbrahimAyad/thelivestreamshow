@@ -8,26 +8,32 @@ interface Point {
 }
 
 interface Stroke {
-  type: 'pen' | 'highlighter' | 'eraser' | 'line' | 'box';
+  type: 'pen' | 'highlighter' | 'eraser' | 'line' | 'box' | 'circle' | 'arrow' | 'text';
   points: Point[];
   color: string;
   size: number;
   timestamp: number;
+  text?: string; // For text tool
 }
 
 export default function Whiteboard() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [currentTool, setCurrentTool] = useState<'pen' | 'highlighter' | 'eraser' | 'line' | 'box'>('pen');
+  const [currentTool, setCurrentTool] = useState<'pen' | 'highlighter' | 'eraser' | 'line' | 'box' | 'circle' | 'arrow' | 'text'>('pen');
   const [currentColor, setCurrentColor] = useState('#000000');
   const [currentSize, setCurrentSize] = useState(3);
   const [isActive, setIsActive] = useState(false);
   const [currentStroke, setCurrentStroke] = useState<Point[]>([]);
+  const [strokeHistory, setStrokeHistory] = useState<string[]>([]); // IDs of strokes for undo
+  const [undoneStrokes, setUndoneStrokes] = useState<string[]>([]); // IDs for redo
+  const [showGrid, setShowGrid] = useState(false);
+  const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
   const sessionId = useRef(`session-${Date.now()}`);
   const lastPressure = useRef(1);
   const isPressureSupported = useRef(false);
   const isUsingPencil = useRef(false);
   const lastStrokeId = useRef<string | null>(null);
+  const startPoint = useRef<Point | null>(null);
 
   // Load whiteboard state
   useEffect(() => {
@@ -133,6 +139,134 @@ export default function Whiteboard() {
 
     smoothed.push(points[points.length - 1]);
     return smoothed;
+  };
+
+  // Undo last stroke
+  const undo = async () => {
+    if (strokeHistory.length === 0) return;
+
+    const lastStrokeId = strokeHistory[strokeHistory.length - 1];
+
+    // Hide the stroke in database
+    const { error } = await supabase
+      .from('whiteboard_strokes')
+      .update({ is_visible: false })
+      .eq('id', lastStrokeId);
+
+    if (!error) {
+      // Move to undone stack
+      setStrokeHistory(prev => prev.slice(0, -1));
+      setUndoneStrokes(prev => [...prev, lastStrokeId]);
+
+      // Reload canvas
+      reloadCanvas();
+    }
+  };
+
+  // Redo last undone stroke
+  const redo = async () => {
+    if (undoneStrokes.length === 0) return;
+
+    const strokeId = undoneStrokes[undoneStrokes.length - 1];
+
+    // Make stroke visible again
+    const { error } = await supabase
+      .from('whiteboard_strokes')
+      .update({ is_visible: true })
+      .eq('id', strokeId);
+
+    if (!error) {
+      // Move back to history
+      setUndoneStrokes(prev => prev.slice(0, -1));
+      setStrokeHistory(prev => [...prev, strokeId]);
+
+      // Reload canvas
+      reloadCanvas();
+    }
+  };
+
+  // Reload canvas from database
+  const reloadCanvas = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Reload all visible strokes
+    const { data: strokes } = await supabase
+      .from('whiteboard_strokes')
+      .select('stroke_data')
+      .eq('is_visible', true)
+      .eq('session_id', sessionId.current)
+      .order('timestamp', { ascending: true });
+
+    // Redraw all strokes
+    strokes?.forEach(({ stroke_data }) => {
+      drawStrokeLocally(stroke_data);
+    });
+  };
+
+  // Draw stroke on local canvas (not to database)
+  const drawStrokeLocally = (strokeData: Stroke) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const { type, points, color, size } = strokeData;
+
+    ctx.strokeStyle = color;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    const hasPressure = points.length > 0 && points[0].pressure !== undefined;
+
+    if (type === 'highlighter') {
+      ctx.globalAlpha = 0.3;
+    } else if (type === 'eraser') {
+      ctx.globalCompositeOperation = 'destination-out';
+    } else {
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    if (hasPressure && type !== 'eraser') {
+      // Draw with pressure
+      for (let i = 1; i < points.length; i++) {
+        const prev = points[i - 1];
+        const curr = points[i];
+        const pressure = curr.pressure || 1;
+        const minMultiplier = 0.3;
+        const maxMultiplier = 1.5;
+        const sizeMultiplier = minMultiplier + (maxMultiplier - minMultiplier) * pressure;
+        ctx.lineWidth = type === 'highlighter' ? size * 3 * sizeMultiplier : size * sizeMultiplier;
+        ctx.beginPath();
+        ctx.moveTo(prev.x, prev.y);
+        ctx.lineTo(curr.x, curr.y);
+        ctx.stroke();
+      }
+    } else {
+      // Draw without pressure
+      ctx.lineWidth = type === 'highlighter' ? size * 3 : type === 'eraser' ? size * 2 : size;
+      ctx.beginPath();
+      points.forEach((point, index) => {
+        if (index === 0) {
+          ctx.moveTo(point.x, point.y);
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      });
+      ctx.stroke();
+    }
+
+    // Reset
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
   };
 
   const clearCanvas = async () => {
@@ -309,9 +443,11 @@ export default function Whiteboard() {
       console.error('❌ Error saving stroke:', error);
     } else {
       console.log('✅ Stroke saved successfully:', data);
-      // Save the ID of the last stroke
+      // Save the ID of the last stroke and add to history
       if (data && data[0]) {
         lastStrokeId.current = data[0].id;
+        setStrokeHistory(prev => [...prev, data[0].id]);
+        setUndoneStrokes([]); // Clear redo stack on new stroke
       }
     }
 
@@ -338,15 +474,48 @@ export default function Whiteboard() {
     }
   }, []);
 
-  const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FFFFFF'];
+  // Expanded professional color palette (24 colors)
+  const colors = [
+    // First row - Primary colors
+    '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#FFFF00',
+    // Second row - Secondary colors
+    '#FF6B00', '#9C27B0', '#00BCD4', '#4CAF50', '#FF9800', '#E91E63',
+    // Third row - Pastels
+    '#FFB3BA', '#BAFFC9', '#BAE1FF', '#FFFFBA', '#FFDFBA', '#E0BBE4',
+    // Fourth row - Dark tones
+    '#1A1A1A', '#8B4513', '#2F4F4F', '#4B0082', '#800000', '#2C3E50'
+  ];
+
+  // Stroke width presets
+  const widthPresets = [
+    { label: 'Thin', value: 2 },
+    { label: 'Medium', value: 4 },
+    { label: 'Thick', value: 8 },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-blue-400">Live Whiteboard</h1>
-          <div className="flex gap-4">
+          <h1 className="text-3xl font-bold text-blue-400">Live Whiteboard Pro</h1>
+          <div className="flex gap-3">
+            <button
+              onClick={undo}
+              disabled={strokeHistory.length === 0}
+              className="px-4 py-2 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Undo (Ctrl+Z)"
+            >
+              ↶ Undo
+            </button>
+            <button
+              onClick={redo}
+              disabled={undoneStrokes.length === 0}
+              className="px-4 py-2 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Redo (Ctrl+Y)"
+            >
+              ↷ Redo
+            </button>
             <button
               onClick={toggleActive}
               className={`px-6 py-3 rounded-lg font-bold transition-all ${
@@ -361,63 +530,110 @@ export default function Whiteboard() {
               onClick={clearCanvas}
               className="px-6 py-3 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-all"
             >
-              Clear All
+              🗑️ Clear All
             </button>
           </div>
         </div>
 
         {/* Tools Panel */}
-        <div className="bg-gray-800 rounded-lg p-4 mb-4 flex flex-wrap gap-4 items-center">
+        <div className="bg-gray-800 rounded-lg p-4 mb-4 space-y-4">
           {/* Tool Buttons */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             <span className="text-blue-400 font-bold mr-2">Tools:</span>
-            {['pen', 'highlighter', 'eraser', 'line', 'box'].map((tool) => (
+            {['pen', 'highlighter', 'eraser', 'line', 'box', 'circle', 'arrow'].map((tool) => (
               <button
                 key={tool}
                 onClick={() => setCurrentTool(tool as any)}
-                className={`px-4 py-2 rounded-lg font-bold uppercase transition-all ${
+                className={`px-4 py-2 rounded-lg font-bold uppercase text-sm transition-all ${
                   currentTool === tool
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
-                {tool}
+                {tool === 'pen' && '✏️'} {tool === 'highlighter' && '🖍️'} {tool === 'eraser' && '🧹'}
+                {tool === 'line' && '📏'} {tool === 'box' && '⬜'} {tool === 'circle' && '⭕'}
+                {tool === 'arrow' && '➡️'} {tool}
               </button>
             ))}
           </div>
 
-          {/* Color Picker */}
-          <div className="flex gap-2 items-center">
-            <span className="text-blue-400 font-bold mr-2">Color:</span>
-            {colors.map((color) => (
-              <button
-                key={color}
-                onClick={() => setCurrentColor(color)}
-                className={`w-10 h-10 rounded-lg transition-all ${
-                  currentColor === color ? 'ring-4 ring-blue-400' : 'hover:scale-110'
-                }`}
-                style={{ backgroundColor: color, border: color === '#FFFFFF' ? '2px solid #666' : 'none' }}
-              />
-            ))}
-          </div>
-
-          {/* Size Slider */}
+          {/* Width Presets */}
           <div className="flex gap-2 items-center">
             <span className="text-blue-400 font-bold mr-2">Size:</span>
+            {widthPresets.map((preset) => (
+              <button
+                key={preset.label}
+                onClick={() => setCurrentSize(preset.value)}
+                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                  currentSize === preset.value
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
             <input
               type="range"
               min="1"
               max="20"
               value={currentSize}
               onChange={(e) => setCurrentSize(parseInt(e.target.value))}
-              className="w-32"
+              className="w-32 ml-2"
             />
-            <span className="text-white font-bold w-8">{currentSize}</span>
+            <span className="text-white font-bold w-8">{currentSize}px</span>
+          </div>
+
+          {/* Color Picker - 24 colors in 4 rows */}
+          <div className="space-y-2">
+            <span className="text-blue-400 font-bold">Colors:</span>
+            <div className="grid grid-cols-6 gap-2">
+              {colors.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => setCurrentColor(color)}
+                  className={`w-12 h-12 rounded-lg transition-all ${
+                    currentColor === color ? 'ring-4 ring-blue-400 scale-110' : 'hover:scale-105'
+                  }`}
+                  style={{
+                    backgroundColor: color,
+                    border: (color === '#FFFFFF' || color === '#FFFFBA') ? '2px solid #666' : 'none'
+                  }}
+                  title={color}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Background Options */}
+          <div className="flex gap-4 items-center pt-2 border-t border-gray-700">
+            <button
+              onClick={() => setShowGrid(!showGrid)}
+              className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                showGrid
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              📊 {showGrid ? 'Grid ON' : 'Grid OFF'}
+            </button>
+            <span className="text-blue-400 font-bold">Background:</span>
+            {['#FFFFFF', '#F5F5DC', '#000000', '#2C3E50'].map((bg) => (
+              <button
+                key={bg}
+                onClick={() => setBackgroundColor(bg)}
+                className={`w-10 h-10 rounded-lg transition-all ${
+                  backgroundColor === bg ? 'ring-4 ring-blue-400' : 'hover:scale-110'
+                }`}
+                style={{ backgroundColor: bg, border: bg === '#FFFFFF' ? '2px solid #666' : 'none' }}
+                title={bg === '#FFFFFF' ? 'White' : bg === '#F5F5DC' ? 'Beige' : bg === '#000000' ? 'Black' : 'Dark'}
+              />
+            ))}
           </div>
         </div>
 
         {/* Canvas */}
-        <div className="bg-white rounded-lg shadow-2xl p-4">
+        <div className="rounded-lg shadow-2xl p-4" style={{ backgroundColor: backgroundColor }}>
           <canvas
             ref={canvasRef}
             onMouseDown={startDrawing}
@@ -436,7 +652,14 @@ export default function Whiteboard() {
               e.preventDefault();
               stopDrawing();
             }}
-            style={{ touchAction: 'none' }}
+            style={{
+              touchAction: 'none',
+              backgroundColor: backgroundColor,
+              backgroundImage: showGrid
+                ? 'linear-gradient(rgba(128,128,128,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(128,128,128,0.2) 1px, transparent 1px)'
+                : 'none',
+              backgroundSize: showGrid ? '30px 30px' : 'auto'
+            }}
             className="border-2 border-gray-300 rounded cursor-crosshair w-full"
           />
         </div>
