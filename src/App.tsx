@@ -318,6 +318,9 @@ function App() {
                   <div><ShowMetadataControl /></div>
                   <div><EpisodeInfoPanel /></div>
                   <div className="lg:col-span-2">
+                    <GraphicsGallery />
+                  </div>
+                  <div className="lg:col-span-2">
                     <OverlayGrid onOverlaySelect={(overlayId) => {
                       console.log('Overlay selected:', overlayId);
                       // Future: Activate overlay in broadcast view
