@@ -75,16 +75,30 @@ export function MorningNewsControl() {
         throw new Error('No stories returned from API')
       }
 
+      // Normalize categories to match database constraints
+      const normalizeCategory = (cat: string): string => {
+        const normalized = cat.toLowerCase().trim()
+        const validCategories = ['breaking', 'business', 'real_estate', 'tech', 'entertainment', 'sports', 'politics', 'general']
+        if (!validCategories.includes(normalized)) {
+          console.warn(`⚠️ Invalid category "${cat}" normalized to "general"`)
+          return 'general'
+        }
+        return normalized
+      }
+
       // Save to database and auto-show top 3 stories
-      const storiesToInsert = stories.map((story, i) => ({
-        headline: story.headline,
-        summary: story.summary,
-        category: story.category,
-        source: story.source || 'Perplexity News',
-        talking_points: story.talkingPoints,
-        is_visible: i < 3, // Auto-show top 3 stories
-        display_order: i + 1
-      }))
+      const storiesToInsert = stories.map((story, i) => {
+        const normalizedCategory = normalizeCategory(story.category)
+        return {
+          headline: story.headline,
+          summary: story.summary,
+          category: normalizedCategory,
+          source: story.source || 'Perplexity News',
+          talking_points: story.talkingPoints,
+          is_visible: i < 3, // Auto-show top 3 stories
+          display_order: i + 1
+        }
+      })
 
       const { data: insertedData, error: insertError } = await supabase
         .from('morning_news_stories')
@@ -116,16 +130,30 @@ export function MorningNewsControl() {
     try {
       const stories = await fetchCategoryNews(category)
 
+      // Normalize categories to match database constraints
+      const normalizeCategory = (cat: string): string => {
+        const normalized = cat.toLowerCase().trim()
+        const validCategories = ['breaking', 'business', 'real_estate', 'tech', 'entertainment', 'sports', 'politics', 'general']
+        if (!validCategories.includes(normalized)) {
+          console.warn(`⚠️ Invalid category "${cat}" normalized to "general"`)
+          return 'general'
+        }
+        return normalized
+      }
+
       // Save to database and auto-show all category stories
-      const storiesToInsert = stories.map((story, i) => ({
-        headline: story.headline,
-        summary: story.summary,
-        category: story.category,
-        source: story.source || 'Perplexity News',
-        talking_points: story.talkingPoints,
-        is_visible: true, // Auto-show category stories
-        display_order: i + 1
-      }))
+      const storiesToInsert = stories.map((story, i) => {
+        const normalizedCategory = normalizeCategory(story.category)
+        return {
+          headline: story.headline,
+          summary: story.summary,
+          category: normalizedCategory,
+          source: story.source || 'Perplexity News',
+          talking_points: story.talkingPoints,
+          is_visible: true, // Auto-show category stories
+          display_order: i + 1
+        }
+      })
 
       const { data: insertedData, error: insertError } = await supabase
         .from('morning_news_stories')
