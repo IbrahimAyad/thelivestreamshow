@@ -325,14 +325,14 @@ function App() {
                   <div className="lg:col-span-2">
                     <MorningNewsControl />
                   </div>
+                  <div>
+                    <WhiteboardControl />
+                  </div>
                   <div className="lg:col-span-2">
                     <OverlayGrid onOverlaySelect={(overlayId) => {
                       console.log('Overlay selected:', overlayId);
                       // Future: Activate overlay in broadcast view
                     }} />
-                  </div>
-                  <div>
-                    <WhiteboardControl />
                   </div>
                   <div><BetaBotDirectorPanel /></div>
                   <div className="lg:col-span-2"><SegmentControlPanel /></div>
