@@ -437,7 +437,16 @@
         }
 
         .news-box.collapsed .news-box-header,
-        .news-box.collapsed .news-stories {
+        .news-box.collapsed .news-stories,
+        .news-box.collapsed .lock-in-btn {
+            display: none;
+        }
+
+        .news-box.collapsed .news-toggle-btn {
+            display: flex;
+        }
+
+        .news-box:not(.collapsed) .news-toggle-btn {
             display: none;
         }
 
