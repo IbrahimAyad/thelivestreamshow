@@ -979,9 +979,10 @@
 
         /* MODE 1: BLITZ (Default - Panel + Host left, Media right) */
         /* === LAYOUT 1: BLITZ (Hot Takes & Breaking News) === */
+        /* All cameras now 4:3 ratio (1.33:1) for natural face framing */
         .layout-blitz .main-container {
-            grid-template-columns: 500px 20px 860px 1fr;
-            grid-template-rows: 150px 281px 24px 375px 1fr 100px;
+            grid-template-columns: 500px 20px 900px 1fr;
+            grid-template-rows: 150px 375px 24px 375px 1fr 100px;
             grid-template-areas:
                 ". . . ."
                 "panel . media ."
@@ -1015,9 +1016,10 @@
         }
 
         /* === LAYOUT 2: SOLO SPOTLIGHT (Single Camera Full View) === */
+        /* 4:3 ratio for natural face framing - no stretched faces */
         .layout-out_of_context .main-container {
-            grid-template-columns: 60px 1800px 1fr 80px 20px;
-            grid-template-rows: 100px 880px 1fr;
+            grid-template-columns: 160px 1200px 1fr 80px 20px;
+            grid-template-rows: 100px 900px 1fr;
             grid-template-areas:
                 ". . . . ."
                 ". camera . media ."
@@ -1036,7 +1038,7 @@
         }
         .layout-out_of_context .video-frame:nth-child(1) {
             width: 80px;
-            height: 45px;
+            height: 60px; /* 4:3 ratio */
         }
         .layout-out_of_context .video-frame:nth-child(2) {
             display: none;
@@ -1051,15 +1053,15 @@
         }
 
         /* === LAYOUT 3: TRIPLE THREAT (Panel Discussion) === */
+        /* 4:3 ratio - host large on left, two guests stacked right */
         .layout-3_camera .main-container {
-            grid-template-columns: 20px 920px 20px 940px 20px;
-            grid-template-rows: 150px 360px 40px 360px 1fr 100px;
+            grid-template-columns: 20px 920px 20px 640px 1fr;
+            grid-template-rows: 150px 480px 40px 480px 1fr;
             grid-template-areas:
                 ". . . . ."
                 ". host . guest1 ."
                 ". host . . ."
                 ". host . guest2 ."
-                ". . . . ."
                 ". . . . .";
         }
         .layout-3_camera .panel-section {
@@ -1085,9 +1087,10 @@
         }
 
         /* === LAYOUT 4: QUAD SQUAD (4-Camera Grid) === */
+        /* Perfect 4:3 ratio for all 4 cameras - 2x2 grid */
         .layout-4_camera .main-container {
-            grid-template-columns: 20px 930px 40px 930px 20px;
-            grid-template-rows: 100px 480px 20px 480px 1fr;
+            grid-template-columns: 20px 640px 40px 640px 1fr;
+            grid-template-rows: 100px 480px 40px 480px 1fr;
             grid-template-areas:
                 ". . . . ."
                 ". panel1 . host ."
