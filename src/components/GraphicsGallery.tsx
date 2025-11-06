@@ -233,7 +233,7 @@ export function GraphicsGallery() {
         .getPublicUrl(fileName)
 
       setNewImageUrl(publicUrl)
-      alert('Image uploaded! ✅ Add a caption and click "Add Image"')
+      alert('✅ Image uploaded successfully!\n\nThe image URL has been filled in. Now:\n1. Add a caption (optional)\n2. Click "Add Image" button below')
     } catch (err: any) {
       console.error('Failed to upload image:', err)
       setError(`Failed to upload image: ${err.message || 'Unknown error'}`)
@@ -245,10 +245,11 @@ export function GraphicsGallery() {
   const addBlitzImage = async () => {
     try {
       if (!newImageUrl.trim()) {
-        alert('Please enter an image URL or upload an image')
+        setError('⚠️ Please enter an image URL or upload an image first')
         return
       }
 
+      setError(null)
       const maxOrder = blitzImages.length > 0
         ? Math.max(...blitzImages.map(img => img.display_order))
         : 0
@@ -257,20 +258,23 @@ export function GraphicsGallery() {
         .from('morning_blitz_images')
         .insert({
           image_url: newImageUrl,
-          caption: newImageCaption || null,
+          caption: newImageCaption || `Image ${maxOrder + 1}`,
           display_order: maxOrder + 1,
           is_active: true
         })
 
-      if (insertError) throw insertError
+      if (insertError) {
+        console.error('Insert error:', insertError)
+        throw new Error(insertError.message || 'Database insert failed')
+      }
 
       setNewImageUrl('')
       setNewImageCaption('')
-      loadBlitzImages()
-      alert('Image added successfully! ✅')
-    } catch (err) {
+      await loadBlitzImages()
+      alert('✅ Conversation image added successfully!')
+    } catch (err: any) {
       console.error('Failed to add image:', err)
-      setError('Failed to add image. Please try again.')
+      setError(`❌ Failed to add image: ${err.message || 'Unknown error'}`)
     }
   }
 
