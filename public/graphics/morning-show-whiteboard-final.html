@@ -52,63 +52,36 @@
         /* Header with title */
         .board-header {
             background: linear-gradient(90deg, #1E3A5F, #2C5282);
-            padding: 12px 20px;
+            padding: 6px 15px;
             border-radius: 12px 12px 0 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #00BFFF;
+            border-bottom: 1px solid #00BFFF;
             position: relative;
-            overflow: hidden;
-        }
-
-        .board-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 191, 255, 0.2), transparent);
-            animation: headerShine 4s infinite;
-        }
-
-        @keyframes headerShine {
-            0% { left: -100%; }
-            100% { left: 100%; }
         }
 
         .board-title {
-            font-size: 1.8em;
+            font-size: 1em;
             color: #00BFFF;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.05em;
             font-weight: bold;
-            text-shadow: 
-                0 0 10px rgba(0, 191, 255, 0.5),
-                2px 2px 4px rgba(0, 0, 0, 0.8);
         }
 
         .morning-badge {
             background: linear-gradient(135deg, #00BFFF, #0080FF);
-            padding: 6px 15px;
-            border-radius: 8px;
+            padding: 4px 10px;
+            border-radius: 5px;
             color: #FFF;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 0.9em;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-            animation: badgePulse 3s infinite;
-        }
-
-        @keyframes badgePulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            font-size: 0.7em;
         }
 
         /* Canvas area */
         .canvas-wrapper {
-            height: calc(100% - 110px);
+            height: calc(100% - 85px);
             position: relative;
             background: rgba(255, 255, 255, 0.95);
             margin: 10px;
@@ -583,9 +556,8 @@
     <div class="whiteboard-container" id="whiteboard">
         <!-- Header -->
         <div class="board-header">
-            <div class="board-title">Professor UNC's Enhanced Board</div>
-            <button class="minimize-btn" onclick="toggleMinimize()">–</button>
-            <div class="morning-badge">MORNING SHOW PRO</div>
+            <div class="board-title">Drawing Board</div>
+            <div class="morning-badge">LIVE</div>
         </div>
         
         <!-- Canvas area with multiple layers -->
