@@ -178,40 +178,32 @@
             }
         }
 
-        /* ===== WHITEBOARD STYLES ===== */
-        .whiteboard-overlay {
+        /* ===== REAL-TIME WHITEBOARD OVERLAY ===== */
+        .whiteboard-realtime-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            z-index: 500;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            pointer-events: none;
-        }
-
-        .whiteboard-overlay.active {
-            display: flex;
-            pointer-events: all;
-        }
-
-        .whiteboard-container {
-            position: absolute;
             top: 140px;
             right: 20px;
             width: 910px;
             height: 680px;
-            background: linear-gradient(135deg, rgba(10, 25, 47, 0.98), rgba(20, 40, 60, 0.98));
+            background: rgba(255, 255, 255, 0.95);
             border: 3px solid #00BFFF;
             border-radius: 15px;
             box-shadow:
                 0 0 30px rgba(0, 191, 255, 0.4),
-                inset 0 0 30px rgba(0, 0, 0, 0.5),
                 0 10px 40px rgba(0, 0, 0, 0.7);
-            animation: boardAppear 0.5s ease-out;
+            z-index: 500;
+            display: none;
+        }
+
+        .whiteboard-realtime-overlay.active {
+            display: block;
+        }
+
+        .whiteboard-realtime-canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+            cursor: crosshair;
         }
 
         @keyframes boardAppear {
@@ -1157,17 +1149,9 @@
         </div>
     </div>
 
-    <!-- Whiteboard Overlay (iframe loads full whiteboard) -->
-    <div class="whiteboard-overlay" id="whiteboardOverlay">
-        <div class="whiteboard-container">
-            <iframe
-                id="whiteboardIframe"
-                src="about:blank"
-                style="width: 100%; height: 100%; border: none; border-radius: 15px;"
-                allow="clipboard-write"
-            ></iframe>
-            <button class="wb-close-btn-fixed" onclick="toggleWhiteboard()">✕ CLOSE</button>
-        </div>
+    <!-- Real-Time Whiteboard Overlay -->
+    <div class="whiteboard-realtime-overlay" id="whiteboardRealtimeOverlay">
+        <canvas id="whiteboardCanvas" class="whiteboard-realtime-canvas"></canvas>
     </div>
 
     <!-- Image Boxes at Bottom -->
@@ -1599,22 +1583,189 @@
             console.log('📰 News box toggled:', newsBox.classList.contains('collapsed') ? 'collapsed' : 'expanded');
         }
 
-        // ===== WHITEBOARD FUNCTIONALITY =====
-        // Toggle whiteboard visibility
-        function toggleWhiteboard() {
-            const overlay = document.getElementById('whiteboardOverlay');
-            const iframe = document.getElementById('whiteboardIframe');
-            const isActive = overlay.classList.contains('active');
+        // ===== REAL-TIME WHITEBOARD FUNCTIONALITY =====
+        let whiteboardCanvas = null;
+        let whiteboardCtx = null;
+        let whiteboardChannel = null;
+        let lastClearedAt = null;
 
-            if (isActive) {
-                overlay.classList.remove('active');
-                iframe.src = 'about:blank';
-                console.log('📋 Whiteboard closed');
+        // Initialize whiteboard canvas
+        function initWhiteboardCanvas() {
+            whiteboardCanvas = document.getElementById('whiteboardCanvas');
+            if (!whiteboardCanvas) return;
+
+            whiteboardCanvas.width = 910;
+            whiteboardCanvas.height = 680;
+            whiteboardCtx = whiteboardCanvas.getContext('2d');
+
+            console.log('🎨 Real-time whiteboard canvas initialized');
+        }
+
+        // Draw a stroke on the canvas
+        function drawStroke(strokeData) {
+            if (!whiteboardCtx) return;
+
+            const { type, points, color, size } = strokeData;
+
+            whiteboardCtx.strokeStyle = color;
+            whiteboardCtx.lineWidth = size;
+            whiteboardCtx.lineCap = 'round';
+            whiteboardCtx.lineJoin = 'round';
+
+            if (type === 'highlighter') {
+                whiteboardCtx.globalAlpha = 0.3;
+            } else if (type === 'eraser') {
+                whiteboardCtx.globalCompositeOperation = 'destination-out';
             } else {
-                overlay.classList.add('active');
-                // Load the full advanced whiteboard
-                iframe.src = '/graphics/morning-show-whiteboard-final.html';
-                console.log('📋 Whiteboard opened with full features');
+                whiteboardCtx.globalAlpha = 1;
+                whiteboardCtx.globalCompositeOperation = 'source-over';
+            }
+
+            whiteboardCtx.beginPath();
+            points.forEach((point, index) => {
+                if (index === 0) {
+                    whiteboardCtx.moveTo(point.x, point.y);
+                } else {
+                    whiteboardCtx.lineTo(point.x, point.y);
+                }
+            });
+            whiteboardCtx.stroke();
+
+            // Reset
+            whiteboardCtx.globalAlpha = 1;
+            whiteboardCtx.globalCompositeOperation = 'source-over';
+        }
+
+        // Clear the canvas
+        function clearWhiteboardCanvas() {
+            if (whiteboardCtx && whiteboardCanvas) {
+                whiteboardCtx.clearRect(0, 0, whiteboardCanvas.width, whiteboardCanvas.height);
+                console.log('🗑️ Whiteboard canvas cleared');
+            }
+        }
+
+        // Load all existing strokes
+        async function loadExistingStrokes() {
+            console.log('📥 Loading existing whiteboard strokes...');
+
+            const { data: strokes, error } = await supabaseClient
+                .from('whiteboard_strokes')
+                .select('stroke_data, timestamp')
+                .eq('is_visible', true)
+                .order('timestamp', { ascending: true });
+
+            if (error) {
+                console.error('❌ Error loading strokes:', error);
+                return;
+            }
+
+            console.log(`✅ Loaded ${strokes?.length || 0} strokes`);
+
+            // Redraw all strokes
+            strokes?.forEach(stroke => {
+                drawStroke(stroke.stroke_data);
+            });
+        }
+
+        // Subscribe to whiteboard state changes
+        function subscribeToWhiteboard() {
+            console.log('📡 Subscribing to whiteboard real-time updates...');
+
+            // Subscribe to whiteboard state (show/hide, clear)
+            const stateChannel = supabaseClient
+                .channel('whiteboard-state-channel')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'whiteboard_state'
+                    },
+                    async (payload) => {
+                        console.log('🎬 Whiteboard state changed:', payload);
+
+                        const overlay = document.getElementById('whiteboardRealtimeOverlay');
+                        if (!overlay) return;
+
+                        if (payload.new && 'is_active' in payload.new) {
+                            if (payload.new.is_active) {
+                                overlay.classList.add('active');
+                                await loadExistingStrokes();
+                                console.log('✅ Whiteboard shown');
+                            } else {
+                                overlay.classList.remove('active');
+                                console.log('✅ Whiteboard hidden');
+                            }
+                        }
+
+                        if (payload.new && 'cleared_at' in payload.new) {
+                            const clearedAt = new Date(payload.new.cleared_at).getTime();
+                            if (!lastClearedAt || clearedAt > lastClearedAt) {
+                                lastClearedAt = clearedAt;
+                                clearWhiteboardCanvas();
+                                console.log('✅ Whiteboard cleared at:', new Date(clearedAt));
+                            }
+                        }
+                    }
+                )
+                .subscribe();
+
+            // Subscribe to new strokes
+            const strokesChannel = supabaseClient
+                .channel('whiteboard-strokes-channel')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'whiteboard_strokes'
+                    },
+                    (payload) => {
+                        console.log('✏️ New stroke received:', payload);
+                        if (payload.new && payload.new.is_visible) {
+                            drawStroke(payload.new.stroke_data);
+                        }
+                    }
+                )
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'whiteboard_strokes'
+                    },
+                    (payload) => {
+                        console.log('📝 Stroke updated:', payload);
+                        // If made invisible, we need to reload all strokes
+                        if (payload.new && !payload.new.is_visible) {
+                            clearWhiteboardCanvas();
+                            loadExistingStrokes();
+                        }
+                    }
+                )
+                .subscribe();
+
+            whiteboardChannel = { stateChannel, strokesChannel };
+        }
+
+        // Load initial whiteboard state
+        async function loadWhiteboardState() {
+            const { data } = await supabaseClient
+                .from('whiteboard_state')
+                .select('is_active, cleared_at')
+                .single();
+
+            if (data && data.is_active) {
+                const overlay = document.getElementById('whiteboardRealtimeOverlay');
+                if (overlay) {
+                    overlay.classList.add('active');
+                    await loadExistingStrokes();
+                    console.log('✅ Whiteboard loaded as active');
+                }
+            }
+
+            if (data && data.cleared_at) {
+                lastClearedAt = new Date(data.cleared_at).getTime();
             }
         }
 
@@ -1628,6 +1779,11 @@
 
             // Start with news box collapsed
             document.getElementById('newsBox').classList.add('collapsed');
+
+            // Initialize whiteboard
+            initWhiteboardCanvas();
+            await loadWhiteboardState();
+            subscribeToWhiteboard();
 
             // Debug: Check if buttons exist
             console.log('🔍 Collapsed buttons container:', document.querySelector('.collapsed-buttons'));
