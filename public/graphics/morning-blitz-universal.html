@@ -1588,6 +1588,8 @@
         let whiteboardCtx = null;
         let whiteboardChannel = null;
         let lastClearedAt = null;
+        let lastStrokeTimestamp = null;
+        let pollingInterval = null;
 
         // Initialize whiteboard canvas
         function initWhiteboardCanvas() {
@@ -1650,7 +1652,7 @@
 
             const { data: strokes, error } = await supabaseClient
                 .from('whiteboard_strokes')
-                .select('stroke_data, timestamp')
+                .select('stroke_data, timestamp, created_at')
                 .eq('is_visible', true)
                 .order('timestamp', { ascending: true });
 
@@ -1664,7 +1666,56 @@
             // Redraw all strokes
             strokes?.forEach(stroke => {
                 drawStroke(stroke.stroke_data);
+                // Track last stroke timestamp
+                const strokeTime = new Date(stroke.created_at).getTime();
+                if (!lastStrokeTimestamp || strokeTime > lastStrokeTimestamp) {
+                    lastStrokeTimestamp = strokeTime;
+                }
             });
+        }
+
+        // Poll for new strokes (fallback if real-time doesn't work)
+        async function pollForNewStrokes() {
+            if (!lastStrokeTimestamp) return;
+
+            const { data: newStrokes, error } = await supabaseClient
+                .from('whiteboard_strokes')
+                .select('stroke_data, created_at')
+                .eq('is_visible', true)
+                .gt('created_at', new Date(lastStrokeTimestamp).toISOString())
+                .order('timestamp', { ascending: true });
+
+            if (error) {
+                console.error('❌ Error polling for strokes:', error);
+                return;
+            }
+
+            if (newStrokes && newStrokes.length > 0) {
+                console.log(`🔄 Polling found ${newStrokes.length} new strokes`);
+                newStrokes.forEach(stroke => {
+                    drawStroke(stroke.stroke_data);
+                    const strokeTime = new Date(stroke.created_at).getTime();
+                    if (strokeTime > lastStrokeTimestamp) {
+                        lastStrokeTimestamp = strokeTime;
+                    }
+                });
+            }
+        }
+
+        // Start polling as fallback
+        function startPolling() {
+            if (pollingInterval) return;
+            console.log('🔄 Starting polling fallback (every 2 seconds)');
+            pollingInterval = setInterval(pollForNewStrokes, 2000);
+        }
+
+        // Stop polling
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                console.log('⏸️ Polling stopped');
+            }
         }
 
         // Subscribe to whiteboard state changes
@@ -1691,9 +1742,11 @@
                             if (payload.new.is_active) {
                                 overlay.classList.add('active');
                                 await loadExistingStrokes();
+                                startPolling(); // Start polling fallback
                                 console.log('✅ Whiteboard shown');
                             } else {
                                 overlay.classList.remove('active');
+                                stopPolling(); // Stop polling when hidden
                                 console.log('✅ Whiteboard hidden');
                             }
                         }
@@ -1770,6 +1823,7 @@
                 if (overlay) {
                     overlay.classList.add('active');
                     await loadExistingStrokes();
+                    startPolling(); // Start polling if already active
                     console.log('✅ Whiteboard loaded as active');
                 }
             }
