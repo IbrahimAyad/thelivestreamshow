@@ -22,7 +22,7 @@ const GRAPHIC_CONFIGS = [
   // SHOW LAYOUTS (distinct purple outline)
   { type: 'out_of_context_background', label: 'Out of Context', icon: Radio, color: 'purple', htmlFile: '/graphics/out-of-context-full.html' },
   { type: 'alpha_wednesday', label: 'Alpha Wednesday', icon: Tv, color: 'purple', htmlFile: '/graphics/alpha-wednesday-universal.html', hasModeSwitcher: true },
-  { type: 'morning_blitz', label: 'Morning Blitz', icon: Coffee, color: 'purple', htmlFile: '/graphics/morning-blitz-universal.html', hasImageManager: true },
+  { type: 'morning_blitz', label: 'Morning Show', icon: Coffee, color: 'purple', htmlFile: '/graphics/morning-blitz-universal.html', hasModeSwitcher: true, hasImageManager: true },
 
   // NEW: Interactive Graphics with Audio
   { type: 'poll', label: 'Poll/Vote', icon: BarChart3, color: 'purple', htmlFile: '/stream-poll-screen.html' },
@@ -107,10 +107,10 @@ export function GraphicsGallery() {
     }
   }
 
-  const changeAlphaWednesdayMode = async (mode: string) => {
+  const changeOverlayMode = async (graphicType: string, mode: string) => {
     try {
       setError(null)
-      const graphic = getGraphic('alpha_wednesday')
+      const graphic = getGraphic(graphicType)
       if (!graphic) return
 
       const { error: updateError } = await supabase
@@ -130,6 +130,10 @@ export function GraphicsGallery() {
       setError('Failed to change mode. Please try again.')
     }
   }
+
+  // Backwards compatibility aliases
+  const changeAlphaWednesdayMode = (mode: string) => changeOverlayMode('alpha_wednesday', mode)
+  const changeMorningShowMode = (mode: string) => changeOverlayMode('morning_blitz', mode)
 
   const loadEpisodeInfo = async () => {
     try {
@@ -329,20 +333,19 @@ export function GraphicsGallery() {
           const Icon = config.icon
           const currentMode = graphic?.config?.mode || 'default'
 
-          // Special rendering for Morning Blitz with image manager
-          if (config.hasImageManager && config.type === 'morning_blitz') {
+          // Special rendering for Morning Show with mode switcher AND image manager
+          if (config.hasImageManager && config.hasModeSwitcher && config.type === 'morning_blitz') {
             return (
               <div key={config.type} className="col-span-2 md:col-span-3 lg:col-span-4">
                 <div
-                  onClick={handleMorningBlitzClick}
-                  className={`relative rounded-lg border-2 p-4 transition-all cursor-pointer ${
+                  className={`relative rounded-lg border-2 p-4 transition-all ${
                     isActive
                       ? 'bg-gradient-to-br from-cyan-900/40 to-blue-900/40 border-cyan-400 shadow-lg shadow-cyan-500/60'
                       : 'bg-gray-900 border-gray-700'
                   }`}
-                  title="Click to manage conversation images"
                 >
-                  <div className="flex items-center justify-between">
+                  {/* Header with toggle */}
+                  <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <Icon className={`w-8 h-8 transition-all ${
                         isActive ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]' : 'text-gray-500'
@@ -351,23 +354,53 @@ export function GraphicsGallery() {
                         <h3 className={`font-bold text-lg ${isActive ? 'text-white' : 'text-gray-400'}`}>
                           {config.label}
                         </h3>
-                        <p className="text-xs text-gray-500">Conversation Starter Images</p>
+                        <p className="text-xs text-gray-500">Morning Show Layouts & Images</p>
                       </div>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        graphic && toggleGraphic(graphic.id, isActive, config.htmlFile)
-                      }}
-                      className={`px-6 py-2 rounded-lg font-bold transition-all ${
-                        isActive
-                          ? 'bg-cyan-500 text-white hover:bg-cyan-600'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      }`}
-                    >
-                      {isActive ? 'HIDE' : 'SHOW'}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleMorningBlitzClick}
+                        className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-bold text-sm"
+                      >
+                        📸 Manage Images
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          graphic && toggleGraphic(graphic.id, isActive, config.htmlFile)
+                        }}
+                        className={`px-6 py-2 rounded-lg font-bold transition-all ${
+                          isActive
+                            ? 'bg-cyan-500 text-white hover:bg-cyan-600'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        {isActive ? 'HIDE' : 'SHOW'}
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Mode Switcher */}
+                  {isActive && (
+                    <div className="flex gap-2">
+                      <span className="text-sm text-gray-400 flex items-center">Layout Mode:</span>
+                      <div className="flex gap-2 flex-1">
+                        {['blitz', 'out_of_context', '3_camera', '4_camera'].map(mode => (
+                          <button
+                            key={mode}
+                            onClick={() => changeMorningShowMode(mode)}
+                            className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                              currentMode === mode
+                                ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/50'
+                                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                            }`}
+                          >
+                            {mode.toUpperCase().replace('_', ' ')}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )
