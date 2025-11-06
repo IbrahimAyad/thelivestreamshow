@@ -36,11 +36,20 @@ export default function Whiteboard() {
   const isUsingPencil = useRef(false);
   const lastStrokeId = useRef<string | null>(null);
   const startPoint = useRef<Point | null>(null);
+  const lastPoint = useRef<Point | null>(null);
+  const animationFrameId = useRef<number | null>(null);
 
   // Load whiteboard state
   useEffect(() => {
     loadWhiteboardState();
     subscribeToState();
+
+    // Cleanup animation frame on unmount
+    return () => {
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
+    };
   }, []);
 
   // Keyboard shortcuts
@@ -281,32 +290,56 @@ export default function Whiteboard() {
       const end = points[points.length - 1];
       drawArrow(ctx, start.x, start.y, end.x, end.y, size * 3);
     } else if (hasPressure && type !== 'eraser') {
-      // Draw with pressure
-      for (let i = 1; i < points.length; i++) {
-        const prev = points[i - 1];
+      // Draw with pressure using smooth curves
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+
+      for (let i = 1; i < points.length - 1; i++) {
         const curr = points[i];
+        const next = points[i + 1];
         const pressure = curr.pressure || 1;
         const minMultiplier = 0.3;
         const maxMultiplier = 1.5;
         const sizeMultiplier = minMultiplier + (maxMultiplier - minMultiplier) * pressure;
         ctx.lineWidth = type === 'highlighter' ? size * 3 * sizeMultiplier : size * sizeMultiplier;
+
+        // Use quadratic curve for smoothness
+        const controlX = (curr.x + next.x) / 2;
+        const controlY = (curr.y + next.y) / 2;
+        ctx.quadraticCurveTo(curr.x, curr.y, controlX, controlY);
+      }
+
+      // Draw final segment
+      if (points.length > 1) {
+        const lastPoint = points[points.length - 1];
+        ctx.lineTo(lastPoint.x, lastPoint.y);
+      }
+      ctx.stroke();
+    } else {
+      // Draw without pressure using smooth curves
+      ctx.lineWidth = type === 'highlighter' ? size * 3 : type === 'eraser' ? size * 2 : size;
+
+      if (points.length < 2) {
+        // Single point - just draw a dot
         ctx.beginPath();
-        ctx.moveTo(prev.x, prev.y);
-        ctx.lineTo(curr.x, curr.y);
+        ctx.arc(points[0].x, points[0].y, ctx.lineWidth / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Multiple points - use smooth curves
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+
+        for (let i = 1; i < points.length - 1; i++) {
+          const controlX = (points[i].x + points[i + 1].x) / 2;
+          const controlY = (points[i].y + points[i + 1].y) / 2;
+          ctx.quadraticCurveTo(points[i].x, points[i].y, controlX, controlY);
+        }
+
+        // Draw final segment
+        const lastPoint = points[points.length - 1];
+        ctx.lineTo(lastPoint.x, lastPoint.y);
         ctx.stroke();
       }
-    } else {
-      // Draw without pressure
-      ctx.lineWidth = type === 'highlighter' ? size * 3 : type === 'eraser' ? size * 2 : size;
-      ctx.beginPath();
-      points.forEach((point, index) => {
-        if (index === 0) {
-          ctx.moveTo(point.x, point.y);
-        } else {
-          ctx.lineTo(point.x, point.y);
-        }
-      });
-      ctx.stroke();
     }
 
     // Reset
@@ -377,6 +410,7 @@ export default function Whiteboard() {
 
     setIsDrawing(true);
     setCurrentStroke([{ x, y, pressure }]);
+    lastPoint.current = { x, y, pressure }; // Reset for new stroke
 
     // For shape tools, save the start point
     if (currentTool === 'line' || currentTool === 'box' || currentTool === 'circle' || currentTool === 'arrow') {
@@ -428,7 +462,24 @@ export default function Whiteboard() {
     const y = (clientY - rect.top) * scaleY;
     const pressure = getPressure(e);
 
-    const newStroke = [...currentStroke, { x, y, pressure }];
+    const newPoint = { x, y, pressure };
+
+    // Interpolate points if moving fast for smoother lines
+    let pointsToAdd = [newPoint];
+    if (lastPoint.current) {
+      const distance = Math.sqrt(
+        Math.pow(newPoint.x - lastPoint.current.x, 2) +
+        Math.pow(newPoint.y - lastPoint.current.y, 2)
+      );
+
+      // If moving fast (>5 pixels), add interpolated points
+      if (distance > 5) {
+        pointsToAdd = interpolatePoints(lastPoint.current, newPoint);
+      }
+    }
+    lastPoint.current = newPoint;
+
+    const newStroke = [...currentStroke, ...pointsToAdd];
     setCurrentStroke(newStroke);
 
     const ctx = canvas.getContext('2d');
@@ -477,7 +528,7 @@ export default function Whiteboard() {
         drawArrow(ctx, startX, startY, x, y, currentSize * 3);
       }
     } else {
-      // Regular drawing tools
+      // Regular drawing tools - use smooth curves
       if (currentTool === 'highlighter') {
         ctx.globalAlpha = 0.3;
         if (isPressureSupported.current) {
@@ -493,8 +544,24 @@ export default function Whiteboard() {
         ctx.globalCompositeOperation = 'source-over';
       }
 
-      ctx.lineTo(x, y);
-      ctx.stroke();
+      // Use smooth quadratic curves instead of straight lines
+      if (newStroke.length >= 2) {
+        const lastIdx = newStroke.length - 1;
+        const prevPoint = newStroke[lastIdx - 1];
+        const currPoint = newStroke[lastIdx];
+
+        // Calculate control point (average of previous and current)
+        const controlX = (prevPoint.x + currPoint.x) / 2;
+        const controlY = (prevPoint.y + currPoint.y) / 2;
+
+        ctx.quadraticCurveTo(prevPoint.x, prevPoint.y, controlX, controlY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(controlX, controlY);
+      } else {
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
     }
   };
 
@@ -641,6 +708,54 @@ export default function Whiteboard() {
       reloadCanvas();
     }
   }, [backgroundColor, showGrid]);
+
+  // SMOOTHING HELPERS: Bezier curve interpolation for smoother lines
+  const getAveragePoint = (p1: Point, p2: Point): Point => {
+    return {
+      x: (p1.x + p2.x) / 2,
+      y: (p1.y + p2.y) / 2,
+      pressure: (p1.pressure + p2.pressure) / 2
+    };
+  };
+
+  const drawSmoothLine = (ctx: CanvasRenderingContext2D, points: Point[]) => {
+    if (points.length < 2) return;
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+
+    // Use quadratic curves for smoothing
+    for (let i = 1; i < points.length - 1; i++) {
+      const avgPoint = getAveragePoint(points[i], points[i + 1]);
+      ctx.quadraticCurveTo(points[i].x, points[i].y, avgPoint.x, avgPoint.y);
+    }
+
+    // Draw last segment
+    if (points.length > 1) {
+      const lastPoint = points[points.length - 1];
+      ctx.lineTo(lastPoint.x, lastPoint.y);
+    }
+
+    ctx.stroke();
+  };
+
+  // Point interpolation: Add points between fast movements for smoother drawing
+  const interpolatePoints = (p1: Point, p2: Point): Point[] => {
+    const distance = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+    const steps = Math.max(Math.floor(distance / 2), 1); // Add point every 2 pixels
+    const interpolated: Point[] = [];
+
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      interpolated.push({
+        x: p1.x + (p2.x - p1.x) * t,
+        y: p1.y + (p2.y - p1.y) * t,
+        pressure: p1.pressure + (p2.pressure - p1.pressure) * t
+      });
+    }
+
+    return interpolated;
+  };
 
   // Expanded professional color palette (24 colors)
   const colors = [

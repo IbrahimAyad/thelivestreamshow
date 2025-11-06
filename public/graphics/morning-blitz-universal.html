@@ -1706,35 +1706,56 @@
                 const end = points[points.length - 1];
                 drawArrowOnCanvas(whiteboardCtx, start.x, start.y, end.x, end.y, size * 3);
             } else if (hasPressure && type !== 'eraser') {
-                // Draw with pressure sensitivity - segment by segment
-                for (let i = 1; i < points.length; i++) {
-                    const prev = points[i - 1];
-                    const curr = points[i];
+                // Draw with pressure using smooth curves
+                whiteboardCtx.beginPath();
+                whiteboardCtx.moveTo(points[0].x, points[0].y);
 
+                for (let i = 1; i < points.length - 1; i++) {
+                    const curr = points[i];
+                    const next = points[i + 1];
                     const pressure = curr.pressure || 1;
                     const minMultiplier = 0.3;
                     const maxMultiplier = 1.5;
                     const sizeMultiplier = minMultiplier + (maxMultiplier - minMultiplier) * pressure;
-
                     whiteboardCtx.lineWidth = type === 'highlighter' ? size * 3 * sizeMultiplier : size * sizeMultiplier;
 
+                    // Use quadratic curve for smoothness
+                    const controlX = (curr.x + next.x) / 2;
+                    const controlY = (curr.y + next.y) / 2;
+                    whiteboardCtx.quadraticCurveTo(curr.x, curr.y, controlX, controlY);
+                }
+
+                // Draw final segment
+                if (points.length > 1) {
+                    const lastPoint = points[points.length - 1];
+                    whiteboardCtx.lineTo(lastPoint.x, lastPoint.y);
+                }
+                whiteboardCtx.stroke();
+            } else {
+                // Draw without pressure using smooth curves
+                whiteboardCtx.lineWidth = type === 'highlighter' ? size * 3 : type === 'eraser' ? size * 2 : size;
+
+                if (points.length < 2) {
+                    // Single point - draw a dot
                     whiteboardCtx.beginPath();
-                    whiteboardCtx.moveTo(prev.x, prev.y);
-                    whiteboardCtx.lineTo(curr.x, curr.y);
+                    whiteboardCtx.arc(points[0].x, points[0].y, whiteboardCtx.lineWidth / 2, 0, Math.PI * 2);
+                    whiteboardCtx.fill();
+                } else {
+                    // Multiple points - use smooth curves
+                    whiteboardCtx.beginPath();
+                    whiteboardCtx.moveTo(points[0].x, points[0].y);
+
+                    for (let i = 1; i < points.length - 1; i++) {
+                        const controlX = (points[i].x + points[i + 1].x) / 2;
+                        const controlY = (points[i].y + points[i + 1].y) / 2;
+                        whiteboardCtx.quadraticCurveTo(points[i].x, points[i].y, controlX, controlY);
+                    }
+
+                    // Draw final segment
+                    const lastPoint = points[points.length - 1];
+                    whiteboardCtx.lineTo(lastPoint.x, lastPoint.y);
                     whiteboardCtx.stroke();
                 }
-            } else {
-                // Draw without pressure
-                whiteboardCtx.lineWidth = type === 'highlighter' ? size * 3 : type === 'eraser' ? size * 2 : size;
-                whiteboardCtx.beginPath();
-                points.forEach((point, index) => {
-                    if (index === 0) {
-                        whiteboardCtx.moveTo(point.x, point.y);
-                    } else {
-                        whiteboardCtx.lineTo(point.x, point.y);
-                    }
-                });
-                whiteboardCtx.stroke();
             }
 
             // Reset
