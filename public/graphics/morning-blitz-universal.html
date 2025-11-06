@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Morning Blitz - Universal Overlay</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            background: transparent;
+            overflow: hidden;
+            width: 1920px;
+            height: 1080px;
+        }
+
+        /* Animated morning gradient background */
+        .morning-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a0a 0%, #0f1419 25%, #0a1929 50%, #0f1419 75%, #0a0a0a 100%);
+            animation: bgShift 15s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        @keyframes bgShift {
+            0%, 100% { filter: brightness(1) hue-rotate(0deg); }
+            50% { filter: brightness(1.1) hue-rotate(10deg); }
+        }
+
+        /* Animated grid overlay */
+        .grid-overlay {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(14, 165, 233, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(14, 165, 233, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 30s linear infinite;
+            z-index: 2;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Main title at top */
+        .header-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 100;
+        }
+
+        .morning-title {
+            font-size: 4.5em;
+            background: linear-gradient(135deg, #0EA5E9, #60A5FA, #0EA5E9);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 900;
+            text-shadow: 0 0 40px rgba(14, 165, 233, 0.5);
+            animation: titleShine 3s ease-in-out infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes titleShine {
+            0%, 100% { filter: brightness(1); transform: scale(1); }
+            50% { filter: brightness(1.2); transform: scale(1.02); }
+        }
+
+        .morning-subtitle {
+            font-size: 1.8em;
+            color: rgba(224, 231, 255, 0.9);
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            text-shadow: 0 0 20px rgba(14, 165, 233, 0.3), 2px 2px 5px #000;
+            animation: subtitleGlow 4s ease-in-out infinite;
+        }
+
+        @keyframes subtitleGlow {
+            0%, 100% { opacity: 0.9; }
+            50% { opacity: 1; }
+        }
+
+        .time-display {
+            margin-top: 10px;
+            font-size: 1.5em;
+            color: #60A5FA;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.1em;
+            animation: timePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes timePulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        /* Main layout container */
+        .main-container {
+            position: fixed;
+            top: 160px;
+            left: 20px;
+            right: 20px;
+            bottom: 200px;
+            display: flex;
+            gap: 20px;
+            z-index: 50;
+        }
+
+        /* Left column - Panel and Camera */
+        .left-column {
+            width: 35%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel-section {
+            height: 40%;
+            position: relative;
+        }
+
+        .panel-frame {
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.2);
+            border: 3px solid;
+            border-image: linear-gradient(45deg, #0EA5E9, #60A5FA, #0EA5E9) 1;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 40px rgba(14, 165, 233, 0.2), inset 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .panel-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: linear-gradient(135deg, #0EA5E9, #60A5FA);
+            padding: 5px 15px;
+            color: #0a0a0a;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 10;
+        }
+
+        .camera-section {
+            flex: 1;
+            position: relative;
+        }
+
+        .camera-frame {
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.2);
+            border: 3px solid;
+            border-image: linear-gradient(135deg, #60A5FA, #0EA5E9, #60A5FA) 1;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 40px rgba(14, 165, 233, 0.2), inset 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .camera-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: linear-gradient(135deg, #0284C7, #0EA5E9);
+            padding: 5px 15px;
+            color: #E0E7FF;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 10;
+        }
+
+        /* Right area - Video */
+        .video-section {
+            flex: 1;
+            position: relative;
+        }
+
+        .video-frame {
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.2);
+            border: 3px solid;
+            border-image: linear-gradient(135deg, #0EA5E9, #60A5FA, #0EA5E9) 1;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 50px rgba(14, 165, 233, 0.15), inset 0 0 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-label {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #0EA5E9, #60A5FA);
+            padding: 5px 15px;
+            color: #0a0a0a;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 10;
+        }
+
+        /* Image boxes at bottom */
+        .images-container {
+            position: fixed;
+            bottom: 65px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .image-box {
+            width: 220px;
+            height: 120px;
+            background: linear-gradient(135deg, #0f1419, #1e293b);
+            border: 3px solid rgba(14, 165, 233, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 30px rgba(14, 165, 233, 0.2), inset 0 0 20px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .image-box.revealed {
+            border-color: #0EA5E9;
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(96, 165, 250, 0.1));
+            transform: scale(1.05);
+            box-shadow: 0 0 50px rgba(14, 165, 233, 0.5);
+        }
+
+        .image-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .image-box.revealed img {
+            display: block;
+        }
+
+        .image-number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2em;
+            color: #60A5FA;
+            font-weight: 900;
+            text-shadow: 2px 2px 0 #000, 0 0 20px rgba(96, 165, 250, 0.5);
+            z-index: 5;
+        }
+
+        .image-box.revealed .image-number {
+            display: none;
+        }
+
+        .image-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+            color: #E0E7FF;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .image-box.revealed .image-caption {
+            opacity: 1;
+        }
+
+        /* Status bar at bottom */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: linear-gradient(90deg, #0f1419, #1e293b, #0f1419);
+            border-top: 2px solid rgba(14, 165, 233, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 100;
+        }
+
+        .status-item {
+            color: #E0E7FF;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .live-dot {
+            width: 12px;
+            height: 12px;
+            background: #0EA5E9;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #0EA5E9;
+            animation: livePulse 1s infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        /* Animated particles */
+        .particle {
+            position: fixed;
+            width: 3px;
+            height: 3px;
+            background: #0EA5E9;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            animation: floatUp 15s linear infinite;
+            z-index: 3;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+        }
+
+        .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { left: 20%; animation-delay: 2s; }
+        .particle:nth-child(3) { left: 30%; animation-delay: 4s; }
+        .particle:nth-child(4) { left: 40%; animation-delay: 6s; }
+        .particle:nth-child(5) { left: 50%; animation-delay: 8s; }
+        .particle:nth-child(6) { left: 60%; animation-delay: 10s; }
+        .particle:nth-child(7) { left: 70%; animation-delay: 12s; }
+        .particle:nth-child(8) { left: 80%; animation-delay: 14s; }
+    </style>
+</head>
+<body>
+    <div class="morning-bg"></div>
+    <div class="grid-overlay"></div>
+
+    <!-- Particles -->
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+
+    <!-- Header -->
+    <div class="header-container">
+        <div class="morning-title">Morning Blitz</div>
+        <div class="morning-subtitle">Conversation Starters</div>
+        <div class="time-display" id="currentTime">Loading...</div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-container">
+        <!-- Left Column -->
+        <div class="left-column">
+            <div class="panel-section">
+                <div class="panel-frame">
+                    <div class="panel-label">PANEL</div>
+                </div>
+            </div>
+            <div class="camera-section">
+                <div class="camera-frame">
+                    <div class="camera-label">HOST</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Section (right) -->
+        <div class="video-section">
+            <div class="video-frame">
+                <div class="video-label">MEDIA</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Boxes at Bottom -->
+    <div class="images-container" id="imagesContainer">
+        <!-- Images will be loaded dynamically -->
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">Morning Blitz</div>
+        <div class="status-item live-indicator">
+            <div class="live-dot"></div>
+            <span>LIVE</span>
+        </div>
+        <div class="status-item">Conversation Starters</div>
+    </div>
+
+    <script>
+        // Initialize Supabase
+        const SUPABASE_URL = 'https://tcmobgzplmqtgvafpdzp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjbW9iZ3pwbG1xdGd2YWZwZHpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0NTc5NzMsImV4cCI6MjA2MDAzMzk3M30.mU-I9h7wdjHWuLkKq_GjXVVoWTLrCB1Lp4cVbbVQmUg';
+
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let images = [];
+        let revealedImages = new Set();
+
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            const displayMinutes = minutes.toString().padStart(2, '0');
+            document.getElementById('currentTime').textContent = `${displayHours}:${displayMinutes} ${ampm} EST`;
+        }
+
+        updateTime();
+        setInterval(updateTime, 60000);
+
+        // Load images from Supabase
+        async function loadImages() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('morning_blitz_images')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('display_order', { ascending: true })
+                    .limit(5);
+
+                if (error) {
+                    console.error('Error loading images:', error);
+                    return;
+                }
+
+                images = data || [];
+                renderImages();
+            } catch (error) {
+                console.error('Failed to load images:', error);
+            }
+        }
+
+        // Render image boxes
+        function renderImages() {
+            const container = document.getElementById('imagesContainer');
+            container.innerHTML = '';
+
+            images.forEach((image, index) => {
+                const box = document.createElement('div');
+                box.className = 'image-box';
+                box.id = `image-${image.id}`;
+                box.onclick = () => revealImage(image.id, index);
+
+                const img = document.createElement('img');
+                img.src = image.image_url;
+                img.alt = image.caption || 'Image';
+
+                const number = document.createElement('div');
+                number.className = 'image-number';
+                number.textContent = index + 1;
+
+                const caption = document.createElement('div');
+                caption.className = 'image-caption';
+                caption.textContent = image.caption || `Image ${index + 1}`;
+
+                box.appendChild(img);
+                box.appendChild(number);
+                box.appendChild(caption);
+
+                container.appendChild(box);
+            });
+        }
+
+        // Reveal image on click
+        function revealImage(imageId, index) {
+            if (revealedImages.has(imageId)) return;
+
+            const box = document.getElementById(`image-${imageId}`);
+            if (!box) return;
+
+            box.classList.add('revealed');
+            revealedImages.add(imageId);
+
+            // Flash effect
+            createFlash();
+
+            console.log(`🖼️ Revealed image ${index + 1}`);
+        }
+
+        // Create flash effect
+        function createFlash() {
+            const flash = document.createElement('div');
+            flash.style.position = 'fixed';
+            flash.style.top = '0';
+            flash.style.left = '0';
+            flash.style.width = '100%';
+            flash.style.height = '100%';
+            flash.style.background = 'radial-gradient(circle at center, rgba(14, 165, 233, 0.2), transparent)';
+            flash.style.pointerEvents = 'none';
+            flash.style.zIndex = '1000';
+
+            document.body.appendChild(flash);
+
+            flash.animate([
+                { opacity: 0 },
+                { opacity: 1 },
+                { opacity: 0 }
+            ], {
+                duration: 300,
+                easing: 'ease-out'
+            }).onfinish = () => flash.remove();
+        }
+
+        // Subscribe to real-time changes
+        function subscribeToChanges() {
+            const channel = supabaseClient
+                .channel('morning-blitz-images')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'morning_blitz_images'
+                    },
+                    (payload) => {
+                        console.log('🔵 Images updated:', payload);
+                        loadImages();
+                    }
+                )
+                .subscribe();
+        }
+
+        // Initialize
+        async function init() {
+            console.log('🌅 Morning Blitz Overlay Initialized');
+            await loadImages();
+            subscribeToChanges();
+        }
+
+        init();
+    </script>
+</body>
+</html>

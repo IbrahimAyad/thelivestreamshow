@@ -22,6 +22,7 @@ const GRAPHIC_CONFIGS = [
   // SHOW LAYOUTS (distinct purple outline)
   { type: 'out_of_context_background', label: 'Out of Context', icon: Radio, color: 'purple', htmlFile: '/graphics/out-of-context-full.html' },
   { type: 'alpha_wednesday', label: 'Alpha Wednesday', icon: Tv, color: 'purple', htmlFile: '/graphics/alpha-wednesday-universal.html', hasModeSwitcher: true },
+  { type: 'morning_blitz', label: 'Morning Blitz', icon: Coffee, color: 'purple', htmlFile: '/graphics/morning-blitz-universal.html', hasImageManager: true },
 
   // NEW: Interactive Graphics with Audio
   { type: 'poll', label: 'Poll/Vote', icon: BarChart3, color: 'purple', htmlFile: '/stream-poll-screen.html' },
@@ -45,6 +46,11 @@ export function GraphicsGallery() {
   const [showAlphaWedModal, setShowAlphaWedModal] = useState(false)
   const [episodeTitle, setEpisodeTitle] = useState('')
   const [episodeTopic, setEpisodeTopic] = useState('')
+
+  const [showMorningBlitzModal, setShowMorningBlitzModal] = useState(false)
+  const [blitzImages, setBlitzImages] = useState<any[]>([])
+  const [newImageUrl, setNewImageUrl] = useState('')
+  const [newImageCaption, setNewImageCaption] = useState('')
 
   useEffect(() => {
     loadGraphics()
@@ -185,6 +191,90 @@ export function GraphicsGallery() {
     }
   }
 
+  const loadBlitzImages = async () => {
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('morning_blitz_images')
+        .select('*')
+        .order('display_order', { ascending: true })
+
+      if (fetchError) throw fetchError
+      if (data) setBlitzImages(data)
+    } catch (err) {
+      console.error('Failed to load blitz images:', err)
+    }
+  }
+
+  const addBlitzImage = async () => {
+    try {
+      if (!newImageUrl.trim()) {
+        alert('Please enter an image URL')
+        return
+      }
+
+      const maxOrder = blitzImages.length > 0
+        ? Math.max(...blitzImages.map(img => img.display_order))
+        : 0
+
+      const { error: insertError } = await supabase
+        .from('morning_blitz_images')
+        .insert({
+          image_url: newImageUrl,
+          caption: newImageCaption || null,
+          display_order: maxOrder + 1,
+          is_active: true
+        })
+
+      if (insertError) throw insertError
+
+      setNewImageUrl('')
+      setNewImageCaption('')
+      loadBlitzImages()
+      alert('Image added successfully! ✅')
+    } catch (err) {
+      console.error('Failed to add image:', err)
+      setError('Failed to add image. Please try again.')
+    }
+  }
+
+  const toggleBlitzImage = async (id: string, isActive: boolean) => {
+    try {
+      const { error: updateError } = await supabase
+        .from('morning_blitz_images')
+        .update({ is_active: !isActive })
+        .eq('id', id)
+
+      if (updateError) throw updateError
+      loadBlitzImages()
+    } catch (err) {
+      console.error('Failed to toggle image:', err)
+      setError('Failed to toggle image. Please try again.')
+    }
+  }
+
+  const deleteBlitzImage = async (id: string) => {
+    try {
+      const { error: deleteError } = await supabase
+        .from('morning_blitz_images')
+        .delete()
+        .eq('id', id)
+
+      if (deleteError) throw deleteError
+      loadBlitzImages()
+    } catch (err) {
+      console.error('Failed to delete image:', err)
+      setError('Failed to delete image. Please try again.')
+    }
+  }
+
+  const handleMorningBlitzClick = (e: React.MouseEvent) => {
+    if (e.metaKey || e.ctrlKey) {
+      e.preventDefault()
+      loadBlitzImages()
+      setShowMorningBlitzModal(true)
+    }
+  }
+
   const getGraphic = (type: string) => graphics.find(g => g.graphic_type === type)
   const getConfig = (type: string) => GRAPHIC_CONFIGS.find(c => c.type === type)
 
@@ -207,6 +297,50 @@ export function GraphicsGallery() {
           const isActive = graphic?.is_visible || false
           const Icon = config.icon
           const currentMode = graphic?.config?.mode || 'default'
+
+          // Special rendering for Morning Blitz with image manager
+          if (config.hasImageManager && config.type === 'morning_blitz') {
+            return (
+              <div key={config.type} className="col-span-2 md:col-span-3 lg:col-span-4">
+                <div
+                  onClick={handleMorningBlitzClick}
+                  className={`relative rounded-lg border-2 p-4 transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-gradient-to-br from-cyan-900/40 to-blue-900/40 border-cyan-400 shadow-lg shadow-cyan-500/60'
+                      : 'bg-gray-900 border-gray-700'
+                  }`}
+                  title="Cmd/Ctrl + Click to manage images"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Icon className={`w-8 h-8 transition-all ${
+                        isActive ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]' : 'text-gray-500'
+                      }`} />
+                      <div>
+                        <h3 className={`font-bold text-lg ${isActive ? 'text-white' : 'text-gray-400'}`}>
+                          {config.label}
+                        </h3>
+                        <p className="text-xs text-gray-500">Conversation Starter Images</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        graphic && toggleGraphic(graphic.id, isActive, config.htmlFile)
+                      }}
+                      className={`px-6 py-2 rounded-lg font-bold transition-all ${
+                        isActive
+                          ? 'bg-cyan-500 text-white hover:bg-cyan-600'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      {isActive ? 'HIDE' : 'SHOW'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          }
 
           // Special rendering for Alpha Wednesday with mode switcher
           if (config.hasModeSwitcher && config.type === 'alpha_wednesday') {
@@ -311,6 +445,113 @@ export function GraphicsGallery() {
         <p className="font-semibold">Quick Tip</p>
         <p className="text-xs mt-1">Click any graphic to show/hide on broadcast view • Cmd/Ctrl+Click Alpha Wednesday to edit episode</p>
       </div>
+
+      {/* Morning Blitz Image Manager Modal */}
+      {showMorningBlitzModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={() => setShowMorningBlitzModal(false)}>
+          <div className="bg-gray-900 border-2 border-cyan-500 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                <Coffee className="w-7 h-7 text-cyan-400" />
+                Morning Blitz - Conversation Images
+              </h2>
+              <button
+                onClick={() => setShowMorningBlitzModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Add New Image Section */}
+            <div className="mb-6 p-4 bg-gray-800 border border-gray-700 rounded-lg">
+              <h3 className="text-cyan-400 font-bold text-lg mb-4">Add New Image</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-white font-semibold mb-2">Image URL</label>
+                  <input
+                    type="text"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white focus:border-cyan-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-white font-semibold mb-2">Caption (Optional)</label>
+                  <input
+                    type="text"
+                    value={newImageCaption}
+                    onChange={(e) => setNewImageCaption(e.target.value)}
+                    placeholder="e.g., What's your hot take on AI?"
+                    className="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white focus:border-cyan-500 focus:outline-none"
+                  />
+                </div>
+                <button
+                  onClick={addBlitzImage}
+                  className="w-full px-6 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors font-bold"
+                >
+                  Add Image
+                </button>
+              </div>
+            </div>
+
+            {/* Current Images List */}
+            <div>
+              <h3 className="text-white font-bold text-lg mb-4">Current Images ({blitzImages.length})</h3>
+              {blitzImages.length === 0 ? (
+                <p className="text-gray-400 text-center py-8">No images added yet. Add your first conversation starter above!</p>
+              ) : (
+                <div className="space-y-2">
+                  {blitzImages.map((image, index) => (
+                    <div
+                      key={image.id}
+                      className={`flex items-center gap-4 p-3 rounded-lg border ${
+                        image.is_active
+                          ? 'bg-cyan-900/20 border-cyan-500/30'
+                          : 'bg-gray-800 border-gray-700'
+                      }`}
+                    >
+                      <div className="text-gray-400 font-bold w-8">#{index + 1}</div>
+                      <div className="flex-1">
+                        <div className="text-white font-semibold truncate">{image.caption || 'No caption'}</div>
+                        <div className="text-xs text-gray-500 truncate">{image.image_url}</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => toggleBlitzImage(image.id, image.is_active)}
+                          className={`px-3 py-1 rounded text-sm font-bold transition-colors ${
+                            image.is_active
+                              ? 'bg-cyan-600 text-white hover:bg-cyan-700'
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          }`}
+                        >
+                          {image.is_active ? 'Active' : 'Inactive'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm('Delete this image?')) {
+                              deleteBlitzImage(image.id)
+                            }
+                          }}
+                          className="px-3 py-1 bg-red-600 text-white rounded text-sm font-bold hover:bg-red-700 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 p-3 bg-cyan-900/20 border border-cyan-500/30 rounded text-sm text-cyan-300">
+              <p className="font-semibold">Tip</p>
+              <p className="text-xs mt-1">Only active images will appear on the overlay. Max 5 images shown at once.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Alpha Wednesday Edit Modal */}
       {showAlphaWedModal && (
