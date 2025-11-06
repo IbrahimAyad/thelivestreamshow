@@ -10,7 +10,7 @@ export interface NewsStory {
   id: string;
   headline: string;
   summary: string;
-  category: 'breaking' | 'tech' | 'entertainment' | 'sports' | 'politics' | 'general';
+  category: 'breaking' | 'business' | 'real_estate' | 'tech' | 'entertainment' | 'sports' | 'politics' | 'general';
   source?: string;
   talkingPoints?: string[];
   timestamp: string;
@@ -46,16 +46,24 @@ export async function fetchMorningNews(): Promise<NewsStory[]> {
         messages: [
           {
             role: 'system',
-            content: `You are a morning show news curator. Today is ${currentDate}. Find the most engaging, discussion-worthy news stories from the past 24 hours. Focus on stories that would make great conversation topics for a live morning talk show.`
+            content: `You are a morning show news curator for a business-focused audience. Today is ${currentDate}. Find the most engaging, discussion-worthy news stories from the past 24 hours. FOCUS ON: Business news, real estate market updates, entertainment industry deals, and major sports events. These should be conversation starters for professionals and entrepreneurs.`
           },
           {
             role: 'user',
-            content: `Give me the top 5 most interesting news stories from TODAY (${currentDate}) that would be perfect for a morning talk show. For each story, provide:
+            content: `Give me the top 5 most interesting news stories from TODAY (${currentDate}) that would be perfect for a business-focused morning talk show.
+
+PRIORITY CATEGORIES:
+1. Business & Finance (stock market, company news, mergers, startups)
+2. Real Estate (property market, commercial deals, housing trends)
+3. Entertainment Industry (box office, streaming deals, celebrity business ventures)
+4. Sports Business (team valuations, athlete contracts, major upsets)
+
+For each story, provide:
 
 1. A catchy headline (max 80 characters)
-2. A brief summary (2-3 sentences)
-3. Category (breaking/tech/entertainment/sports/politics/general)
-4. 3 talking points or questions for discussion
+2. A brief summary (2-3 sentences, business angle)
+3. Category (business/real_estate/entertainment/sports/tech/breaking/general)
+4. 3 talking points or questions for discussion (business impact focus)
 
 Format as JSON array with this structure:
 [

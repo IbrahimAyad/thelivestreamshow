@@ -132,6 +132,8 @@ export function MorningNewsControl() {
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'breaking': return Zap
+      case 'business': return TrendingUp
+      case 'real_estate': return Newspaper
       case 'tech': return Sparkles
       case 'entertainment': return Tv
       case 'sports': return Trophy
@@ -143,6 +145,8 @@ export function MorningNewsControl() {
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'breaking': return 'text-red-400 bg-red-900/20 border-red-500'
+      case 'business': return 'text-emerald-400 bg-emerald-900/20 border-emerald-500'
+      case 'real_estate': return 'text-amber-400 bg-amber-900/20 border-amber-500'
       case 'tech': return 'text-purple-400 bg-purple-900/20 border-purple-500'
       case 'entertainment': return 'text-pink-400 bg-pink-900/20 border-pink-500'
       case 'sports': return 'text-green-400 bg-green-900/20 border-green-500'
@@ -178,7 +182,7 @@ export function MorningNewsControl() {
       {/* Category Quick Fetch */}
       <div className="mb-6 flex gap-2 flex-wrap">
         <span className="text-sm text-gray-400 mr-2">Quick Fetch:</span>
-        {['tech', 'entertainment', 'sports', 'politics'].map(category => {
+        {['business', 'real_estate', 'tech', 'entertainment', 'sports'].map(category => {
           const Icon = getCategoryIcon(category)
           return (
             <button
