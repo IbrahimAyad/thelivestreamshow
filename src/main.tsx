@@ -5,6 +5,7 @@ import './index.css'
 import App from './App.tsx'
 import { BroadcastOverlayView } from './components/BroadcastOverlayView.tsx'
 import { BroadcastVideoPlayer } from './components/BroadcastVideoPlayer.tsx'
+import Whiteboard from './pages/dashboard/Whiteboard.tsx'
 import { initMonitoring } from './lib/monitoring/sentry'
 import { MusicProvider } from './contexts/MusicProvider'
 
@@ -25,6 +26,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/" element={<App />} />
           <Route path="/broadcast" element={<BroadcastOverlayView />} />
           <Route path="/broadcast/video-player" element={<BroadcastVideoPlayer />} />
+          <Route path="/whiteboard" element={<Whiteboard />} />
         </Routes>
       </BrowserRouter>
     </MusicProvider>

@@ -5,6 +5,7 @@ import { QuestionBannerControl } from './components/QuestionBannerControl'
 import { GraphicsGallery } from './components/GraphicsGallery'
 import { MorningNewsControl } from './components/MorningNewsControl'
 import OverlayGrid from './components/OverlayGrid'
+import { WhiteboardControl } from './components/WhiteboardControl'
 import { LowerThirdControl } from './components/LowerThirdControl'
 import { BetaBotDirectorPanel } from './components/BetaBotDirectorPanel'
 import { QuickActions } from './components/QuickActions'
@@ -329,6 +330,9 @@ function App() {
                       console.log('Overlay selected:', overlayId);
                       // Future: Activate overlay in broadcast view
                     }} />
+                  </div>
+                  <div>
+                    <WhiteboardControl />
                   </div>
                   <div><BetaBotDirectorPanel /></div>
                   <div className="lg:col-span-2"><SegmentControlPanel /></div>
