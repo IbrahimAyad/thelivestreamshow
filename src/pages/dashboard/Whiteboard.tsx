@@ -26,6 +26,8 @@ export default function Whiteboard() {
   const sessionId = useRef(`session-${Date.now()}`);
   const lastPressure = useRef(1);
   const isPressureSupported = useRef(false);
+  const isUsingPencil = useRef(false);
+  const lastStrokeId = useRef<string | null>(null);
 
   // Load whiteboard state
   useEffect(() => {
@@ -110,6 +112,29 @@ export default function Whiteboard() {
     return baseSize * sizeMultiplier;
   };
 
+  // Smooth stroke points for better curves
+  const smoothPoints = (points: Point[]): Point[] => {
+    if (points.length < 3) return points;
+
+    const smoothed: Point[] = [points[0]];
+
+    for (let i = 1; i < points.length - 1; i++) {
+      const prev = points[i - 1];
+      const curr = points[i];
+      const next = points[i + 1];
+
+      // Average the points for smoothing
+      smoothed.push({
+        x: (prev.x + curr.x + next.x) / 3,
+        y: (prev.y + curr.y + next.y) / 3,
+        pressure: curr.pressure
+      });
+    }
+
+    smoothed.push(points[points.length - 1]);
+    return smoothed;
+  };
+
   const clearCanvas = async () => {
     // Hide all existing strokes
     await supabase
@@ -136,6 +161,22 @@ export default function Whiteboard() {
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement> | any) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    // PALM REJECTION: Check if this is Apple Pencil or stylus
+    if (e.touches && e.touches[0]) {
+      const touch = e.touches[0];
+
+      // Apple Pencil has touchType 'stylus' or has force property
+      if (touch.touchType === 'stylus' || touch.force !== undefined) {
+        isUsingPencil.current = true;
+      }
+
+      // If we're using pencil and this touch is not a stylus, ignore it (palm rejection)
+      if (isUsingPencil.current && touch.touchType !== 'stylus' && touch.touchType !== undefined) {
+        console.log('🚫 Palm detected - ignoring touch');
+        return;
+      }
+    }
 
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
@@ -168,6 +209,14 @@ export default function Whiteboard() {
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement> | any) => {
     if (!isDrawing) return;
+
+    // PALM REJECTION: Ignore non-stylus touches when using pencil
+    if (e.touches && e.touches[0]) {
+      const touch = e.touches[0];
+      if (isUsingPencil.current && touch.touchType !== 'stylus' && touch.touchType !== undefined) {
+        return;
+      }
+    }
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -231,10 +280,15 @@ export default function Whiteboard() {
 
     setIsDrawing(false);
 
+    // Smooth the stroke for better curves (only for pen/highlighter)
+    const strokeToSave = (currentTool === 'pen' || currentTool === 'highlighter')
+      ? smoothPoints(currentStroke)
+      : [...currentStroke];
+
     // Save stroke to database
     const strokeData: Stroke = {
       type: currentTool,
-      points: currentStroke,
+      points: strokeToSave,
       color: currentColor,
       size: currentSize,
       timestamp: Date.now()
@@ -255,8 +309,13 @@ export default function Whiteboard() {
       console.error('❌ Error saving stroke:', error);
     } else {
       console.log('✅ Stroke saved successfully:', data);
+      // Save the ID of the last stroke
+      if (data && data[0]) {
+        lastStrokeId.current = data[0].id;
+      }
     }
 
+    // Only clear stroke after successful save
     setCurrentStroke([]);
 
     // Reset canvas context
