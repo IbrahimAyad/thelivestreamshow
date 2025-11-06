@@ -437,17 +437,16 @@
         }
 
         .news-box.collapsed .news-box-header,
-        .news-box.collapsed .news-stories,
-        .news-box.collapsed .lock-in-btn {
+        .news-box.collapsed .news-stories {
             display: none;
         }
 
-        .news-box.collapsed .news-toggle-btn {
-            display: flex;
+        .news-box:not(.collapsed) .collapsed-buttons {
+            display: none;
         }
 
-        .news-box:not(.collapsed) .news-toggle-btn {
-            display: none;
+        .lock-in-btn {
+            width: 100%;
         }
 
         .news-icon {
@@ -1113,11 +1112,16 @@
 
     <!-- News Box - Top Right -->
     <div class="news-box" id="newsBox">
-        <!-- Toggle Button (shown when collapsed) -->
-        <button class="news-toggle-btn" id="newsToggleBtn" onclick="toggleNewsBox()">
-            <span class="pulse-dot"></span>
-            <span>LIVE BREAKING NEWS</span>
-        </button>
+        <!-- Toggle Buttons (shown when collapsed) -->
+        <div style="display: flex; flex-direction: column; gap: 10px;" class="collapsed-buttons">
+            <button class="news-toggle-btn" id="newsToggleBtn" onclick="toggleNewsBox()">
+                <span class="pulse-dot"></span>
+                <span>LIVE BREAKING NEWS</span>
+            </button>
+            <button class="lock-in-btn" onclick="toggleWhiteboard()">
+                🔒 LOCK IN
+            </button>
+        </div>
 
         <!-- News Content (hidden when collapsed) -->
         <div class="news-box-header">
