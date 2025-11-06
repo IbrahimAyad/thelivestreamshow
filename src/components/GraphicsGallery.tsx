@@ -184,11 +184,9 @@ export function GraphicsGallery() {
   }
 
   const handleAlphaWedClick = (e: React.MouseEvent) => {
-    if (e.metaKey || e.ctrlKey) {
-      e.preventDefault()
-      loadEpisodeInfo()
-      setShowAlphaWedModal(true)
-    }
+    e.preventDefault()
+    loadEpisodeInfo()
+    setShowAlphaWedModal(true)
   }
 
   const loadBlitzImages = async () => {
@@ -268,11 +266,9 @@ export function GraphicsGallery() {
   }
 
   const handleMorningBlitzClick = (e: React.MouseEvent) => {
-    if (e.metaKey || e.ctrlKey) {
-      e.preventDefault()
-      loadBlitzImages()
-      setShowMorningBlitzModal(true)
-    }
+    e.preventDefault()
+    loadBlitzImages()
+    setShowMorningBlitzModal(true)
   }
 
   const getGraphic = (type: string) => graphics.find(g => g.graphic_type === type)
@@ -309,7 +305,7 @@ export function GraphicsGallery() {
                       ? 'bg-gradient-to-br from-cyan-900/40 to-blue-900/40 border-cyan-400 shadow-lg shadow-cyan-500/60'
                       : 'bg-gray-900 border-gray-700'
                   }`}
-                  title="Cmd/Ctrl + Click to manage images"
+                  title="Click to manage conversation images"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -353,7 +349,7 @@ export function GraphicsGallery() {
                       ? 'bg-gradient-to-br from-purple-900/40 to-indigo-900/40 border-purple-400 shadow-lg shadow-purple-500/60'
                       : 'bg-gray-900 border-gray-700'
                   }`}
-                  title="Cmd/Ctrl + Click to edit episode info"
+                  title="Click to edit episode info"
                 >
                   {/* Header with toggle */}
                   <div className="flex items-center justify-between mb-4">
@@ -443,7 +439,7 @@ export function GraphicsGallery() {
 
       <div className="mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded text-sm text-red-300">
         <p className="font-semibold">Quick Tip</p>
-        <p className="text-xs mt-1">Click any graphic to show/hide on broadcast view • Cmd/Ctrl+Click Alpha Wednesday to edit episode • Cmd/Ctrl+Click Morning Blitz to manage images</p>
+        <p className="text-xs mt-1">Click Morning Blitz to manage images • Click Alpha Wednesday to edit episode • Use SHOW/HIDE buttons to control visibility</p>
       </div>
 
       {/* Morning Blitz Image Manager Modal */}
