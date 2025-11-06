@@ -264,7 +264,10 @@
                 2px 2px 4px rgba(0, 0, 0, 0.8);
         }
 
-        .wb-close-btn {
+        .wb-close-btn-fixed {
+            position: absolute;
+            top: 10px;
+            right: 10px;
             background: linear-gradient(135deg, #FF6B6B, #FF4444);
             border: 2px solid #FF4444;
             color: #FFF;
@@ -276,10 +279,11 @@
             font-size: 0.9em;
             text-transform: uppercase;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
         }
 
-        .wb-close-btn:hover {
-            transform: translateY(-2px);
+        .wb-close-btn-fixed:hover {
+            transform: translateY(-2px) scale(1.05);
             box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
         }
 
@@ -1153,58 +1157,16 @@
         </div>
     </div>
 
-    <!-- Whiteboard Overlay -->
+    <!-- Whiteboard Overlay (iframe loads full whiteboard) -->
     <div class="whiteboard-overlay" id="whiteboardOverlay">
         <div class="whiteboard-container">
-            <!-- Header -->
-            <div class="wb-header">
-                <div class="wb-title">Professor UNC's Board</div>
-                <button class="wb-close-btn" onclick="toggleWhiteboard()">CLOSE</button>
-            </div>
-
-            <!-- Canvas area -->
-            <div class="wb-canvas-wrapper" id="wbCanvasWrapper">
-                <!-- Canvas layers will be dynamically added here -->
-            </div>
-
-            <!-- Drawing tools panel -->
-            <div class="wb-tools-panel">
-                <!-- Tools Group -->
-                <div class="wb-tool-group">
-                    <span class="wb-tool-label">Tools:</span>
-                    <button class="wb-tool-btn active" id="wbPenBtn" onclick="selectWbTool('pen')">PEN</button>
-                    <button class="wb-tool-btn" id="wbHighlighterBtn" onclick="selectWbTool('highlighter')">HIGHLIGHTER</button>
-                    <button class="wb-tool-btn" id="wbEraserBtn" onclick="selectWbTool('eraser')">ERASER</button>
-                    <button class="wb-tool-btn" id="wbTextBtn" onclick="selectWbTool('text')">TEXT</button>
-                    <button class="wb-tool-btn" id="wbLineBtn" onclick="selectWbTool('line')">LINE</button>
-                    <button class="wb-tool-btn" id="wbBoxBtn" onclick="selectWbTool('box')">BOX</button>
-                </div>
-
-                <!-- Colors Group -->
-                <div class="wb-tool-group">
-                    <span class="wb-tool-label">Color:</span>
-                    <div style="display: flex; gap: 5px;">
-                        <div class="wb-color-option active" style="background: #000;" onclick="selectWbColor('#000')"></div>
-                        <div class="wb-color-option" style="background: #FF0000;" onclick="selectWbColor('#FF0000')"></div>
-                        <div class="wb-color-option" style="background: #00FF00;" onclick="selectWbColor('#00FF00')"></div>
-                        <div class="wb-color-option" style="background: #0000FF;" onclick="selectWbColor('#0000FF')"></div>
-                        <div class="wb-color-option" style="background: #FFFF00;" onclick="selectWbColor('#FFFF00')"></div>
-                        <div class="wb-color-option" style="background: #FFF;" onclick="selectWbColor('#FFF')"></div>
-                    </div>
-                </div>
-
-                <!-- Size Group -->
-                <div class="wb-tool-group">
-                    <span class="wb-tool-label">Size:</span>
-                    <input type="range" class="wb-size-slider" id="wbSizeSlider" min="1" max="20" value="3" oninput="updateWbSize(this.value)">
-                    <span class="wb-size-display" id="wbSizeDisplay">3</span>
-                </div>
-
-                <!-- Actions Group -->
-                <div class="wb-tool-group">
-                    <button class="wb-tool-btn" style="background: linear-gradient(135deg, #FF6B6B, #FF4444); border-color: #FF4444;" onclick="clearWbCanvas()">CLEAR</button>
-                </div>
-            </div>
+            <iframe
+                id="whiteboardIframe"
+                src="about:blank"
+                style="width: 100%; height: 100%; border: none; border-radius: 15px;"
+                allow="clipboard-write"
+            ></iframe>
+            <button class="wb-close-btn-fixed" onclick="toggleWhiteboard()">✕ CLOSE</button>
         </div>
     </div>
 
@@ -1638,181 +1600,22 @@
         }
 
         // ===== WHITEBOARD FUNCTIONALITY =====
-        let wbCanvas = null;
-        let wbCtx = null;
-        let wbDrawing = false;
-        let wbCurrentTool = 'pen';
-        let wbCurrentColor = '#000';
-        let wbCurrentSize = 3;
-        let wbLastX = 0;
-        let wbLastY = 0;
-
-        // Initialize whiteboard canvas
-        function initWhiteboardCanvas() {
-            const wrapper = document.getElementById('wbCanvasWrapper');
-            if (!wbCanvas) {
-                wbCanvas = document.createElement('canvas');
-                wbCanvas.className = 'wb-canvas-layer';
-                wbCanvas.width = wrapper.clientWidth;
-                wbCanvas.height = wrapper.clientHeight;
-                wrapper.appendChild(wbCanvas);
-                wbCtx = wbCanvas.getContext('2d');
-
-                // Set up event listeners
-                wbCanvas.addEventListener('mousedown', startWbDrawing);
-                wbCanvas.addEventListener('mousemove', wbDraw);
-                wbCanvas.addEventListener('mouseup', stopWbDrawing);
-                wbCanvas.addEventListener('mouseout', stopWbDrawing);
-
-                // Touch support
-                wbCanvas.addEventListener('touchstart', handleWbTouchStart);
-                wbCanvas.addEventListener('touchmove', handleWbTouchMove);
-                wbCanvas.addEventListener('touchend', stopWbDrawing);
-
-                console.log('🎨 Whiteboard canvas initialized');
-            }
-        }
-
         // Toggle whiteboard visibility
         function toggleWhiteboard() {
             const overlay = document.getElementById('whiteboardOverlay');
+            const iframe = document.getElementById('whiteboardIframe');
             const isActive = overlay.classList.contains('active');
 
             if (isActive) {
                 overlay.classList.remove('active');
+                iframe.src = 'about:blank';
                 console.log('📋 Whiteboard closed');
             } else {
                 overlay.classList.add('active');
-                initWhiteboardCanvas();
-                console.log('📋 Whiteboard opened');
+                // Load the full advanced whiteboard
+                iframe.src = '/graphics/morning-show-whiteboard-final.html';
+                console.log('📋 Whiteboard opened with full features');
             }
-        }
-
-        // Select drawing tool
-        function selectWbTool(tool) {
-            wbCurrentTool = tool;
-
-            // Update button states
-            document.querySelectorAll('.wb-tool-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`wb${tool.charAt(0).toUpperCase() + tool.slice(1)}Btn`).classList.add('active');
-
-            console.log('🔧 Tool selected:', tool);
-        }
-
-        // Select color
-        function selectWbColor(color) {
-            wbCurrentColor = color;
-
-            // Update color button states
-            document.querySelectorAll('.wb-color-option').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-
-            console.log('🎨 Color selected:', color);
-        }
-
-        // Update brush size
-        function updateWbSize(size) {
-            wbCurrentSize = parseInt(size);
-            document.getElementById('wbSizeDisplay').textContent = size;
-        }
-
-        // Clear canvas
-        function clearWbCanvas() {
-            if (wbCtx && wbCanvas) {
-                wbCtx.clearRect(0, 0, wbCanvas.width, wbCanvas.height);
-                console.log('🗑️ Canvas cleared');
-            }
-        }
-
-        // Start drawing
-        function startWbDrawing(e) {
-            wbDrawing = true;
-            const rect = wbCanvas.getBoundingClientRect();
-            wbLastX = e.clientX - rect.left;
-            wbLastY = e.clientY - rect.top;
-
-            if (wbCurrentTool === 'pen' || wbCurrentTool === 'highlighter') {
-                wbCtx.beginPath();
-                wbCtx.moveTo(wbLastX, wbLastY);
-            }
-        }
-
-        // Draw on canvas
-        function wbDraw(e) {
-            if (!wbDrawing) return;
-
-            const rect = wbCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            if (wbCurrentTool === 'pen') {
-                wbCtx.strokeStyle = wbCurrentColor;
-                wbCtx.lineWidth = wbCurrentSize;
-                wbCtx.lineCap = 'round';
-                wbCtx.lineJoin = 'round';
-                wbCtx.globalAlpha = 1;
-                wbCtx.lineTo(x, y);
-                wbCtx.stroke();
-            } else if (wbCurrentTool === 'highlighter') {
-                wbCtx.strokeStyle = wbCurrentColor;
-                wbCtx.lineWidth = wbCurrentSize * 3;
-                wbCtx.lineCap = 'round';
-                wbCtx.lineJoin = 'round';
-                wbCtx.globalAlpha = 0.3;
-                wbCtx.lineTo(x, y);
-                wbCtx.stroke();
-            } else if (wbCurrentTool === 'eraser') {
-                wbCtx.globalCompositeOperation = 'destination-out';
-                wbCtx.beginPath();
-                wbCtx.arc(x, y, wbCurrentSize * 2, 0, Math.PI * 2);
-                wbCtx.fill();
-                wbCtx.globalCompositeOperation = 'source-over';
-            } else if (wbCurrentTool === 'line') {
-                // Simple line drawing
-                wbCtx.beginPath();
-                wbCtx.moveTo(wbLastX, wbLastY);
-                wbCtx.lineTo(x, y);
-                wbCtx.strokeStyle = wbCurrentColor;
-                wbCtx.lineWidth = wbCurrentSize;
-                wbCtx.stroke();
-            } else if (wbCurrentTool === 'box') {
-                // Simple box drawing
-                wbCtx.strokeStyle = wbCurrentColor;
-                wbCtx.lineWidth = wbCurrentSize;
-                wbCtx.strokeRect(wbLastX, wbLastY, x - wbLastX, y - wbLastY);
-            }
-
-            wbLastX = x;
-            wbLastY = y;
-        }
-
-        // Stop drawing
-        function stopWbDrawing() {
-            wbDrawing = false;
-            if (wbCtx) {
-                wbCtx.globalAlpha = 1;
-            }
-        }
-
-        // Touch event handlers
-        function handleWbTouchStart(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const mouseEvent = new MouseEvent('mousedown', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-            });
-            wbCanvas.dispatchEvent(mouseEvent);
-        }
-
-        function handleWbTouchMove(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const mouseEvent = new MouseEvent('mousemove', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-            });
-            wbCanvas.dispatchEvent(mouseEvent);
         }
 
         // Initialize
