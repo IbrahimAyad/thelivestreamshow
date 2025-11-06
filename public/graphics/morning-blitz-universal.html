@@ -624,14 +624,25 @@
         .panel-frame {
             width: 100%;
             height: 100%;
-            background: rgba(15, 23, 42, 0.2);
+            background: transparent !important; /* Fully transparent */
             border: 3px solid;
             border-image: linear-gradient(45deg, #0EA5E9, #60A5FA, #0EA5E9) 1;
             border-radius: 15px;
             position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 0 40px rgba(14, 165, 233, 0.2), inset 0 0 30px rgba(0, 0, 0, 0.5);
+            overflow: visible; /* Allow glow to show */
+            backdrop-filter: none; /* No blur on transparent */
+            box-shadow: none;
+            transition: all 0.3s ease;
+            pointer-events: none; /* Allow clicks through */
+        }
+
+        /* Active speaker glow for panel frame */
+        .panel-frame.active {
+            box-shadow:
+                0 0 30px currentColor,
+                0 0 60px currentColor,
+                inset 0 0 30px rgba(255,255,255,0.1);
+            animation: pulse 2s ease-in-out infinite;
         }
 
         .panel-label {
@@ -657,14 +668,30 @@
         .camera-frame {
             width: 100%;
             height: 100%;
-            background: rgba(15, 23, 42, 0.2);
+            background: transparent !important; /* Fully transparent */
             border: 3px solid;
             border-image: linear-gradient(135deg, #60A5FA, #0EA5E9, #60A5FA) 1;
             border-radius: 15px;
             position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 0 40px rgba(14, 165, 233, 0.2), inset 0 0 30px rgba(0, 0, 0, 0.5);
+            overflow: visible; /* Allow glow to show */
+            backdrop-filter: none; /* No blur on transparent */
+            box-shadow: none;
+            transition: all 0.3s ease;
+            pointer-events: none; /* Allow clicks through */
+        }
+
+        /* Active speaker glow effect */
+        .camera-frame.active {
+            box-shadow:
+                0 0 30px currentColor,
+                0 0 60px currentColor,
+                inset 0 0 30px rgba(255,255,255,0.1);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
         }
 
         .camera-label {
@@ -691,14 +718,25 @@
         .video-frame {
             width: 100%;
             height: 100%;
-            background: rgba(15, 23, 42, 0.2);
+            background: transparent !important; /* Fully transparent */
             border: 3px solid;
             border-image: linear-gradient(135deg, #0EA5E9, #60A5FA, #0EA5E9) 1;
             border-radius: 15px;
             position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 0 50px rgba(14, 165, 233, 0.15), inset 0 0 40px rgba(0, 0, 0, 0.3);
+            overflow: visible; /* Allow glow to show */
+            backdrop-filter: none; /* No blur on transparent */
+            box-shadow: none;
+            transition: all 0.3s ease;
+            pointer-events: none; /* Allow clicks through */
+        }
+
+        /* Active speaker glow for video frames */
+        .video-frame.active {
+            box-shadow:
+                0 0 30px currentColor,
+                0 0 60px currentColor,
+                inset 0 0 30px rgba(255,255,255,0.1);
+            animation: pulse 2s ease-in-out infinite;
         }
 
         .video-label {
@@ -941,26 +979,42 @@
         /* ========== LAYOUT MODES ========== */
 
         /* MODE 1: BLITZ (Default - Panel + Host left, Media right) */
+        /* === LAYOUT 1: BLITZ (Hot Takes & Breaking News) === */
         .layout-blitz .left-column {
-            width: 35%;
+            width: 520px; /* Fixed width for camera column */
         }
         .layout-blitz .panel-section {
-            height: 40%;
+            position: absolute;
+            left: 20px;
+            top: 150px;
+            width: 500px;
+            height: 281px; /* 16:9 ratio */
         }
         .layout-blitz .camera-section {
-            flex: 1;
+            position: absolute;
+            left: 20px;
+            bottom: 100px;
+            width: 500px;
+            height: 375px; /* 4:3 ratio for better face framing */
         }
         .layout-blitz .video-section {
-            flex: 1;
+            position: absolute;
+            left: 540px;
+            top: 150px;
+            width: 860px;
+            height: 680px;
+        }
+        .layout-blitz .panel-frame {
+            border: 3px solid #00FFFF; /* Cyan for panel */
+        }
+        .layout-blitz .camera-frame {
+            border: 3px solid #00FFFF; /* Cyan for host */
+        }
+        .layout-blitz .video-frame {
+            border: 3px solid #FFD700; /* Gold for media */
         }
 
-        /* MODE 2: OUT OF CONTEXT - 2 BIG horizontal cameras side by side */
-        .layout-out_of_context .main-container {
-            flex-direction: row;
-            gap: 30px;
-            justify-content: center;
-            align-items: center;
-        }
+        /* === LAYOUT 2: SOLO SPOTLIGHT (Single Camera Full View) === */
         .layout-out_of_context .left-column {
             display: none;
         }
@@ -968,104 +1022,122 @@
             display: none;
         }
         .layout-out_of_context .camera-section {
-            display: block;
-            width: 48%;
-            height: 100%;
+            position: absolute;
+            left: 60px;
+            top: 100px;
+            width: 1800px;
+            height: 880px; /* Near full-screen with safe margins */
         }
         .layout-out_of_context .video-section {
-            width: 48%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
+            position: absolute;
+            right: 20px;
+            top: 150px;
+            width: 80px;
+            height: 45px; /* Small media indicator */
+        }
+        .layout-out_of_context .camera-frame {
+            border: 4px solid transparent;
+            border-image: linear-gradient(45deg, #00FFFF, #FFD700) 1; /* Gradient border */
         }
         .layout-out_of_context .video-frame {
-            width: 100%;
-            height: 100%;
+            border: 2px solid #FFD700;
+            border-radius: 5px;
         }
 
-        /* MODE 3: 3 CAMERA - Host (horizontal left), 2 VERTICAL portrait cameras (right) */
-        .layout-3_camera .main-container {
-            flex-direction: row;
-            gap: 20px;
-        }
+        /* === LAYOUT 3: TRIPLE THREAT (Panel Discussion) === */
         .layout-3_camera .left-column {
-            width: 65%;
-            display: flex;
-            flex-direction: column;
+            display: none;
         }
         .layout-3_camera .panel-section {
             display: none;
         }
         .layout-3_camera .camera-section {
-            flex: 1;
-            height: 100%;
+            position: absolute;
+            left: 20px;
+            top: 150px;
+            width: 920px;
+            height: 680px; /* Large host camera 60% width */
         }
         .layout-3_camera .video-section {
-            width: 30%;
+            position: absolute;
+            right: 20px;
+            top: 150px;
+            width: 940px;
+            height: 780px;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
-        /* Vertical portrait boxes for guests (9:16 aspect ratio like iPhone) */
-        .layout-3_camera .video-frame {
-            flex: 1;
-            height: calc(50% - 10px);
-            aspect-ratio: 9 / 16;
-            margin: 0 auto;
+        .layout-3_camera .video-frame:nth-child(1) {
+            position: absolute;
+            top: 0;
+            width: 940px;
+            height: 360px; /* 16:9 ratio */
+            border: 3px solid #FFD700; /* Gold for Guest 1 */
         }
-        .layout-3_camera .video-frame:first-child {
-            border-image: linear-gradient(135deg, #FCD34D, #F59E0B) 1;
+        .layout-3_camera .video-frame:nth-child(2) {
+            position: absolute;
+            top: 400px; /* 360 + 40px gap */
+            width: 940px;
+            height: 360px; /* 16:9 ratio */
+            border: 3px solid #00FF00; /* Green for Guest 2 */
         }
-        .layout-3_camera .video-frame:last-child {
-            border-image: linear-gradient(135deg, #10B981, #059669) 1;
+        .layout-3_camera .camera-frame {
+            border: 4px solid #00FFFF; /* Cyan for host */
         }
 
-        /* MODE 4: 4 CAMERA - Grid of 4 horizontal cameras (2x2) */
-        .layout-4_camera .main-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 20px;
-        }
+        /* === LAYOUT 4: QUAD SQUAD (4-Camera Grid) === */
         .layout-4_camera .left-column {
-            display: contents;
+            display: none;
         }
+        /* Top-left: Panel 1 */
         .layout-4_camera .panel-section {
-            width: 100%;
-            height: 100%;
-            grid-column: 1;
-            grid-row: 1;
-        }
-        .layout-4_camera .camera-section {
-            width: 100%;
-            height: 100%;
-            grid-column: 2;
-            grid-row: 1;
-        }
-        .layout-4_camera .video-section {
-            display: contents;
-        }
-        .layout-4_camera .video-frame:nth-child(1) {
-            width: 100%;
-            height: 100%;
-            grid-column: 1;
-            grid-row: 2;
-        }
-        .layout-4_camera .video-frame:nth-child(2) {
-            width: 100%;
-            height: 100%;
-            grid-column: 2;
-            grid-row: 2;
-            display: block;
+            position: absolute;
+            left: 20px;
+            top: 100px;
+            width: 930px;
+            height: 480px; /* 16:9 ratio */
         }
         .layout-4_camera .panel-frame {
-            border-image: linear-gradient(135deg, #F59E0B, #D97706) 1;
+            border: 3px solid #FF0000; /* Red for Panel 1 */
+        }
+        /* Top-right: Host */
+        .layout-4_camera .camera-section {
+            position: absolute;
+            right: 20px;
+            top: 100px;
+            width: 930px;
+            height: 480px; /* 16:9 ratio */
         }
         .layout-4_camera .camera-frame {
-            border-image: linear-gradient(135deg, #0EA5E9, #0284C7) 1;
+            border: 3px solid #00FFFF; /* Cyan for Host */
         }
-        .layout-4_camera .video-frame {
-            border-image: linear-gradient(135deg, #10B981, #059669) 1;
+        /* Bottom row */
+        .layout-4_camera .video-section {
+            position: absolute;
+            left: 20px;
+            bottom: 100px;
+            width: 100%;
+            height: 480px;
+            display: flex;
+            gap: 40px;
+        }
+        /* Bottom-left: Panel 2 */
+        .layout-4_camera .video-frame:nth-child(1) {
+            position: absolute;
+            left: 0;
+            width: 930px;
+            height: 480px; /* 16:9 ratio */
+            border: 3px solid #FFD700; /* Gold for Panel 2 */
+        }
+        /* Bottom-right: Guest */
+        .layout-4_camera .video-frame:nth-child(2) {
+            position: absolute;
+            right: 0;
+            width: 930px;
+            height: 480px; /* 16:9 ratio */
+            border: 3px solid #00FF00; /* Green for Guest */
+            display: block;
         }
     </style>
 </head>
