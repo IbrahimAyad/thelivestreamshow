@@ -3,6 +3,7 @@ import { AuthProviderWithBoundary } from './contexts/AuthContext'
 import { ShowProviderWithBoundary } from './contexts/ShowContext'
 import { QuestionBannerControl } from './components/QuestionBannerControl'
 import { GraphicsGallery } from './components/GraphicsGallery'
+import { MorningNewsControl } from './components/MorningNewsControl'
 import OverlayGrid from './components/OverlayGrid'
 import { LowerThirdControl } from './components/LowerThirdControl'
 import { BetaBotDirectorPanel } from './components/BetaBotDirectorPanel'
@@ -319,6 +320,9 @@ function App() {
                   <div><EpisodeInfoPanel /></div>
                   <div className="lg:col-span-2">
                     <GraphicsGallery />
+                  </div>
+                  <div className="lg:col-span-2">
+                    <MorningNewsControl />
                   </div>
                   <div className="lg:col-span-2">
                     <OverlayGrid onOverlaySelect={(overlayId) => {
