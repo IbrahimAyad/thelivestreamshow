@@ -1823,6 +1823,11 @@
 
             // Start with news box collapsed
             document.getElementById('newsBox').classList.add('collapsed');
+
+            // Debug: Check if buttons exist
+            console.log('🔍 Collapsed buttons container:', document.querySelector('.collapsed-buttons'));
+            console.log('🔍 LOCK IN button:', document.querySelector('.lock-in-btn'));
+            console.log('🔍 News box classes:', document.getElementById('newsBox').className);
         }
 
         init();
