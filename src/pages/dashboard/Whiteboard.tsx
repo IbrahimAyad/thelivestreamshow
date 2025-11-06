@@ -41,6 +41,25 @@ export default function Whiteboard() {
     subscribeToState();
   }, []);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Z or Cmd+Z for undo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+      // Ctrl+Y or Cmd+Y or Ctrl+Shift+Z for redo
+      else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [strokeHistory, undoneStrokes]);
+
   const loadWhiteboardState = async () => {
     const { data } = await supabase
       .from('whiteboard_state')
@@ -223,6 +242,7 @@ export default function Whiteboard() {
     ctx.strokeStyle = color;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    ctx.lineWidth = size;
 
     const hasPressure = points.length > 0 && points[0].pressure !== undefined;
 
@@ -235,7 +255,30 @@ export default function Whiteboard() {
       ctx.globalCompositeOperation = 'source-over';
     }
 
-    if (hasPressure && type !== 'eraser') {
+    // Handle shape tools
+    if (type === 'line' && points.length >= 2) {
+      const start = points[0];
+      const end = points[points.length - 1];
+      ctx.beginPath();
+      ctx.moveTo(start.x, start.y);
+      ctx.lineTo(end.x, end.y);
+      ctx.stroke();
+    } else if (type === 'box' && points.length >= 2) {
+      const start = points[0];
+      const end = points[points.length - 1];
+      ctx.strokeRect(start.x, start.y, end.x - start.x, end.y - start.y);
+    } else if (type === 'circle' && points.length >= 2) {
+      const start = points[0];
+      const end = points[points.length - 1];
+      const radius = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+      ctx.beginPath();
+      ctx.arc(start.x, start.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (type === 'arrow' && points.length >= 2) {
+      const start = points[0];
+      const end = points[points.length - 1];
+      drawArrow(ctx, start.x, start.y, end.x, end.y, size * 3);
+    } else if (hasPressure && type !== 'eraser') {
       // Draw with pressure
       for (let i = 1; i < points.length; i++) {
         const prev = points[i - 1];
@@ -333,11 +376,21 @@ export default function Whiteboard() {
     setIsDrawing(true);
     setCurrentStroke([{ x, y, pressure }]);
 
+    // For shape tools, save the start point
+    if (currentTool === 'line' || currentTool === 'box' || currentTool === 'circle' || currentTool === 'arrow') {
+      startPoint.current = { x, y, pressure };
+    }
+
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.beginPath();
       ctx.moveTo(x, y);
       ctx.lineWidth = isPressureSupported.current ? getDynamicSize(currentSize, pressure) : currentSize;
+
+      // Save canvas state for shape preview
+      if (currentTool === 'line' || currentTool === 'box' || currentTool === 'circle' || currentTool === 'arrow') {
+        ctx.save();
+      }
     }
   };
 
@@ -390,22 +443,81 @@ export default function Whiteboard() {
       ctx.lineWidth = currentSize;
     }
 
-    if (currentTool === 'highlighter') {
-      ctx.globalAlpha = 0.3;
-      if (isPressureSupported.current) {
-        ctx.lineWidth = getDynamicSize(currentSize * 3, pressure);
-      } else {
-        ctx.lineWidth = currentSize * 3;
-      }
-    } else if (currentTool === 'eraser') {
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.lineWidth = currentSize * 2;
-    } else {
-      ctx.globalAlpha = 1;
-      ctx.globalCompositeOperation = 'source-over';
-    }
+    // Handle shape tools with live preview
+    if (currentTool === 'line' || currentTool === 'box' || currentTool === 'circle' || currentTool === 'arrow') {
+      if (!startPoint.current) return;
 
-    ctx.lineTo(x, y);
+      // Clear canvas and redraw everything
+      ctx.restore();
+      ctx.save();
+
+      ctx.strokeStyle = currentColor;
+      ctx.lineWidth = currentSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      const startX = startPoint.current.x;
+      const startY = startPoint.current.y;
+
+      if (currentTool === 'line') {
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      } else if (currentTool === 'box') {
+        ctx.strokeRect(startX, startY, x - startX, y - startY);
+      } else if (currentTool === 'circle') {
+        const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+        ctx.beginPath();
+        ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (currentTool === 'arrow') {
+        drawArrow(ctx, startX, startY, x, y, currentSize * 3);
+      }
+    } else {
+      // Regular drawing tools
+      if (currentTool === 'highlighter') {
+        ctx.globalAlpha = 0.3;
+        if (isPressureSupported.current) {
+          ctx.lineWidth = getDynamicSize(currentSize * 3, pressure);
+        } else {
+          ctx.lineWidth = currentSize * 3;
+        }
+      } else if (currentTool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineWidth = currentSize * 2;
+      } else {
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+  };
+
+  // Draw arrow helper function
+  const drawArrow = (ctx: CanvasRenderingContext2D, fromX: number, fromY: number, toX: number, toY: number, headLength: number) => {
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+
+    // Draw line
+    ctx.beginPath();
+    ctx.moveTo(fromX, fromY);
+    ctx.lineTo(toX, toY);
+    ctx.stroke();
+
+    // Draw arrowhead
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(
+      toX - headLength * Math.cos(angle - Math.PI / 6),
+      toY - headLength * Math.sin(angle - Math.PI / 6)
+    );
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(
+      toX - headLength * Math.cos(angle + Math.PI / 6),
+      toY - headLength * Math.sin(angle + Math.PI / 6)
+    );
     ctx.stroke();
   };
 
