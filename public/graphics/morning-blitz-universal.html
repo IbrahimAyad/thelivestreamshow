@@ -185,21 +185,25 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: transparent;
             z-index: 500;
             display: none;
             justify-content: center;
             align-items: center;
+            pointer-events: none;
         }
 
         .whiteboard-overlay.active {
             display: flex;
+            pointer-events: all;
         }
 
         .whiteboard-container {
-            position: relative;
-            width: calc(100% - 40px);
-            height: calc(100% - 40px);
+            position: absolute;
+            top: 140px;
+            right: 20px;
+            width: 910px;
+            height: 680px;
             background: linear-gradient(135deg, rgba(10, 25, 47, 0.98), rgba(20, 40, 60, 0.98));
             border: 3px solid #00BFFF;
             border-radius: 15px;
@@ -1147,9 +1151,6 @@
         <div class="news-stories" id="newsStories">
             <!-- News stories will be loaded dynamically -->
         </div>
-        <button class="lock-in-btn" onclick="toggleWhiteboard()">
-            🔒 LOCK IN
-        </button>
     </div>
 
     <!-- Whiteboard Overlay -->
