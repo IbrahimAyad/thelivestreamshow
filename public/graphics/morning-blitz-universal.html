@@ -382,6 +382,76 @@
         .particle:nth-child(7) { left: 70%; animation-delay: 12s; }
         .particle:nth-child(8) { left: 80%; animation-delay: 14s; }
 
+        /* Fullscreen image overlay */
+        .fullscreen-image-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease-out;
+            cursor: pointer;
+        }
+
+        .fullscreen-image-overlay img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border: 5px solid #0EA5E9;
+            border-radius: 15px;
+            box-shadow: 0 0 100px rgba(14, 165, 233, 0.5);
+            animation: zoomIn 0.4s ease-out;
+        }
+
+        .fullscreen-image-overlay .caption-overlay {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #0EA5E9, #60A5FA);
+            padding: 20px 40px;
+            border-radius: 10px;
+            color: #0a0a0a;
+            font-size: 2em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            box-shadow: 0 10px 40px rgba(14, 165, 233, 0.5);
+        }
+
+        .fullscreen-image-overlay .close-hint {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            color: #E0E7FF;
+            font-size: 1.5em;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            opacity: 0.7;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
         /* ========== LAYOUT MODES ========== */
 
         /* MODE 1: BLITZ (Default - Panel + Host left, Media right) */
@@ -688,7 +758,15 @@
                 const box = document.createElement('div');
                 box.className = 'image-box';
                 box.id = `image-${image.id}`;
+
+                // Single click to reveal
                 box.onclick = () => revealImage(image.id, index);
+
+                // Double click to expand fullscreen
+                box.ondblclick = (e) => {
+                    e.stopPropagation();
+                    expandImageFullscreen(image);
+                };
 
                 const img = document.createElement('img');
                 img.src = image.image_url;
@@ -748,6 +826,71 @@
                 duration: 300,
                 easing: 'ease-out'
             }).onfinish = () => flash.remove();
+        }
+
+        // Expand image to fullscreen
+        function expandImageFullscreen(image) {
+            console.log('🖼️ Expanding image fullscreen:', image.caption);
+
+            // Create fullscreen overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'fullscreen-image-overlay';
+            overlay.id = 'fullscreenOverlay';
+
+            // Create fullscreen image
+            const img = document.createElement('img');
+            img.src = image.image_url;
+            img.alt = image.caption || 'Image';
+
+            // Create caption overlay
+            const captionOverlay = document.createElement('div');
+            captionOverlay.className = 'caption-overlay';
+            captionOverlay.textContent = image.caption || 'Lock In';
+
+            // Create close hint
+            const closeHint = document.createElement('div');
+            closeHint.className = 'close-hint';
+            closeHint.textContent = 'Click to Close';
+
+            // Append elements
+            overlay.appendChild(img);
+            overlay.appendChild(captionOverlay);
+            overlay.appendChild(closeHint);
+
+            // Click anywhere to close
+            overlay.onclick = closeFullscreenImage;
+
+            // ESC key to close
+            document.addEventListener('keydown', handleEscapeKey);
+
+            document.body.appendChild(overlay);
+        }
+
+        // Close fullscreen image
+        function closeFullscreenImage() {
+            const overlay = document.getElementById('fullscreenOverlay');
+            if (!overlay) return;
+
+            console.log('✖️ Closing fullscreen image');
+
+            // Fade out animation
+            overlay.animate([
+                { opacity: 1 },
+                { opacity: 0 }
+            ], {
+                duration: 200,
+                easing: 'ease-out'
+            }).onfinish = () => {
+                overlay.remove();
+                document.removeEventListener('keydown', handleEscapeKey);
+            };
+        }
+
+        // Handle ESC key to close fullscreen
+        function handleEscapeKey(e) {
+            if (e.key === 'Escape') {
+                closeFullscreenImage();
+            }
         }
 
         // Subscribe to real-time changes
