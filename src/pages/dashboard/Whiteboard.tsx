@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 interface Point {
   x: number;
   y: number;
-  pressure?: number;
+  pressure: number;
 }
 
 interface Stroke {
@@ -24,6 +24,8 @@ export default function Whiteboard() {
   const [isActive, setIsActive] = useState(false);
   const [currentStroke, setCurrentStroke] = useState<Point[]>([]);
   const sessionId = useRef(`session-${Date.now()}`);
+  const lastPressure = useRef(1);
+  const isPressureSupported = useRef(false);
 
   // Load whiteboard state
   useEffect(() => {
@@ -75,6 +77,39 @@ export default function Whiteboard() {
     setIsActive(newState);
   };
 
+  // Get pressure from touch/pointer event
+  const getPressure = (e: any): number => {
+    // Check for PointerEvent pressure (Apple Pencil, stylus)
+    if (e.pressure !== undefined && e.pressure > 0) {
+      isPressureSupported.current = true;
+      return e.pressure;
+    }
+
+    // Check for Touch force (iPad/iPhone)
+    if (e.touches && e.touches[0]) {
+      const touch = e.touches[0];
+      if (touch.force !== undefined) {
+        isPressureSupported.current = true;
+        return Math.max(0.1, Math.min(1, touch.force));
+      }
+    }
+
+    return 1; // Default pressure
+  };
+
+  // Calculate dynamic size with pressure
+  const getDynamicSize = (baseSize: number, pressure: number): number => {
+    const minMultiplier = 0.3;
+    const maxMultiplier = 1.5;
+
+    // Smooth pressure transitions
+    const smoothPressure = lastPressure.current * 0.3 + pressure * 0.7;
+    lastPressure.current = smoothPressure;
+
+    const sizeMultiplier = minMultiplier + (maxMultiplier - minMultiplier) * smoothPressure;
+    return baseSize * sizeMultiplier;
+  };
+
   const clearCanvas = async () => {
     // Hide all existing strokes
     await supabase
@@ -98,55 +133,90 @@ export default function Whiteboard() {
     }
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement> | any) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    // Scale coordinates from display size to canvas size
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+
+    // Get coordinates from mouse or touch
+    let clientX, clientY;
+    if (e.touches && e.touches[0]) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+    const pressure = getPressure(e);
 
     setIsDrawing(true);
-    setCurrentStroke([{ x, y }]);
+    setCurrentStroke([{ x, y, pressure }]);
 
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.beginPath();
       ctx.moveTo(x, y);
+      ctx.lineWidth = isPressureSupported.current ? getDynamicSize(currentSize, pressure) : currentSize;
     }
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement> | any) => {
     if (!isDrawing) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    // Scale coordinates from display size to canvas size
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
 
-    const newStroke = [...currentStroke, { x, y }];
+    // Get coordinates from mouse or touch
+    let clientX, clientY;
+    if (e.touches && e.touches[0]) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+    const pressure = getPressure(e);
+
+    const newStroke = [...currentStroke, { x, y, pressure }];
     setCurrentStroke(newStroke);
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     ctx.strokeStyle = currentColor;
-    ctx.lineWidth = currentSize;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
+    // Apply pressure-sensitive line width
+    if (isPressureSupported.current && currentTool !== 'eraser') {
+      ctx.lineWidth = getDynamicSize(currentSize, pressure);
+    } else {
+      ctx.lineWidth = currentSize;
+    }
+
     if (currentTool === 'highlighter') {
       ctx.globalAlpha = 0.3;
+      if (isPressureSupported.current) {
+        ctx.lineWidth = getDynamicSize(currentSize * 3, pressure);
+      } else {
+        ctx.lineWidth = currentSize * 3;
+      }
     } else if (currentTool === 'eraser') {
       ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth = currentSize * 2;
     } else {
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
@@ -295,6 +365,19 @@ export default function Whiteboard() {
             onMouseMove={draw}
             onMouseUp={stopDrawing}
             onMouseLeave={stopDrawing}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              startDrawing(e);
+            }}
+            onTouchMove={(e) => {
+              e.preventDefault();
+              draw(e);
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              stopDrawing();
+            }}
+            style={{ touchAction: 'none' }}
             className="border-2 border-gray-300 rounded cursor-crosshair w-full"
           />
         </div>

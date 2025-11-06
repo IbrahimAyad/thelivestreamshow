@@ -1610,9 +1610,11 @@
             const { type, points, color, size } = strokeData;
 
             whiteboardCtx.strokeStyle = color;
-            whiteboardCtx.lineWidth = size;
             whiteboardCtx.lineCap = 'round';
             whiteboardCtx.lineJoin = 'round';
+
+            // Check if stroke has pressure data
+            const hasPressure = points.length > 0 && points[0].pressure !== undefined;
 
             if (type === 'highlighter') {
                 whiteboardCtx.globalAlpha = 0.3;
@@ -1623,15 +1625,37 @@
                 whiteboardCtx.globalCompositeOperation = 'source-over';
             }
 
-            whiteboardCtx.beginPath();
-            points.forEach((point, index) => {
-                if (index === 0) {
-                    whiteboardCtx.moveTo(point.x, point.y);
-                } else {
-                    whiteboardCtx.lineTo(point.x, point.y);
+            if (hasPressure && type !== 'eraser') {
+                // Draw with pressure sensitivity - segment by segment
+                for (let i = 1; i < points.length; i++) {
+                    const prev = points[i - 1];
+                    const curr = points[i];
+
+                    const pressure = curr.pressure || 1;
+                    const minMultiplier = 0.3;
+                    const maxMultiplier = 1.5;
+                    const sizeMultiplier = minMultiplier + (maxMultiplier - minMultiplier) * pressure;
+
+                    whiteboardCtx.lineWidth = type === 'highlighter' ? size * 3 * sizeMultiplier : size * sizeMultiplier;
+
+                    whiteboardCtx.beginPath();
+                    whiteboardCtx.moveTo(prev.x, prev.y);
+                    whiteboardCtx.lineTo(curr.x, curr.y);
+                    whiteboardCtx.stroke();
                 }
-            });
-            whiteboardCtx.stroke();
+            } else {
+                // Draw without pressure
+                whiteboardCtx.lineWidth = type === 'highlighter' ? size * 3 : type === 'eraser' ? size * 2 : size;
+                whiteboardCtx.beginPath();
+                points.forEach((point, index) => {
+                    if (index === 0) {
+                        whiteboardCtx.moveTo(point.x, point.y);
+                    } else {
+                        whiteboardCtx.lineTo(point.x, point.y);
+                    }
+                });
+                whiteboardCtx.stroke();
+            }
 
             // Reset
             whiteboardCtx.globalAlpha = 1;
