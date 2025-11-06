@@ -51,6 +51,7 @@ export function GraphicsGallery() {
   const [blitzImages, setBlitzImages] = useState<any[]>([])
   const [newImageUrl, setNewImageUrl] = useState('')
   const [newImageCaption, setNewImageCaption] = useState('')
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   useEffect(() => {
     loadGraphics()
@@ -203,10 +204,44 @@ export function GraphicsGallery() {
     }
   }
 
+  const handleImageUpload = async (file: File) => {
+    try {
+      setUploadingImage(true)
+      setError(null)
+
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop()
+      const fileName = `morning-blitz/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('broadcast-assets')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) throw uploadError
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('broadcast-assets')
+        .getPublicUrl(fileName)
+
+      setNewImageUrl(publicUrl)
+      alert('Image uploaded! ✅ Add a caption and click "Add Image"')
+    } catch (err: any) {
+      console.error('Failed to upload image:', err)
+      setError(`Failed to upload image: ${err.message || 'Unknown error'}`)
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   const addBlitzImage = async () => {
     try {
       if (!newImageUrl.trim()) {
-        alert('Please enter an image URL')
+        alert('Please enter an image URL or upload an image')
         return
       }
 
@@ -463,6 +498,28 @@ export function GraphicsGallery() {
             <div className="mb-6 p-4 bg-gray-800 border border-gray-700 rounded-lg">
               <h3 className="text-cyan-400 font-bold text-lg mb-4">Add New Image</h3>
               <div className="space-y-3">
+                {/* File Upload */}
+                <div>
+                  <label className="block text-white font-semibold mb-2">Upload Image</label>
+                  <div className="flex gap-2">
+                    <label className={`flex-1 px-4 py-2 bg-cyan-600 text-white rounded-lg text-center cursor-pointer hover:bg-cyan-700 transition-colors font-bold ${uploadingImage ? 'opacity-50' : ''}`}>
+                      {uploadingImage ? 'Uploading...' : '📤 Choose File'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleImageUpload(file)
+                        }}
+                        className="hidden"
+                        disabled={uploadingImage}
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Or enter URL below</p>
+                </div>
+
+                {/* Image URL */}
                 <div>
                   <label className="block text-white font-semibold mb-2">Image URL</label>
                   <input
@@ -471,6 +528,7 @@ export function GraphicsGallery() {
                     onChange={(e) => setNewImageUrl(e.target.value)}
                     placeholder="https://example.com/image.jpg"
                     className="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white focus:border-cyan-500 focus:outline-none"
+                    disabled={uploadingImage}
                   />
                 </div>
                 <div>

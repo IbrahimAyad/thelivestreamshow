@@ -286,7 +286,9 @@ const OverlayGrid: React.FC<OverlayGridProps> = ({ onOverlaySelect }) => {
 
       <div className="grid grid-cols-4 gap-4 mb-4">
         {Array.isArray(overlays) && overlays.length > 0 ? (
-          overlays.map((overlay) => (
+          overlays
+            .filter(overlay => !['alpha_wednesday', 'morning_blitz'].includes(overlay.graphic_type))
+            .map((overlay) => (
             <div
               key={overlay.id}
               onClick={(e) => handleOverlayClick(overlay, e)}
