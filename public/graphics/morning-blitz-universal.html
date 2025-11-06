@@ -1590,17 +1590,42 @@
         let lastClearedAt = null;
         let lastStrokeTimestamp = null;
         let pollingInterval = null;
+        let currentCanvasMode = 'normal'; // 'normal' or 'maximized'
 
         // Initialize whiteboard canvas
         function initWhiteboardCanvas() {
             whiteboardCanvas = document.getElementById('whiteboardCanvas');
             if (!whiteboardCanvas) return;
 
-            whiteboardCanvas.width = 910;
-            whiteboardCanvas.height = 680;
+            // Start with normal size
+            setCanvasSize('normal');
             whiteboardCtx = whiteboardCanvas.getContext('2d');
 
             console.log('🎨 Real-time whiteboard canvas initialized');
+        }
+
+        // Set canvas size based on mode
+        function setCanvasSize(mode) {
+            if (!whiteboardCanvas) return;
+
+            const overlay = document.getElementById('whiteboardRealtimeOverlay');
+            if (!overlay) return;
+
+            if (mode === 'maximized') {
+                whiteboardCanvas.width = 1400;
+                whiteboardCanvas.height = 900;
+                overlay.style.width = '1400px';
+                overlay.style.height = '900px';
+                console.log('📐 Canvas resized to MAXIMIZED: 1400x900');
+            } else {
+                whiteboardCanvas.width = 910;
+                whiteboardCanvas.height = 680;
+                overlay.style.width = '910px';
+                overlay.style.height = '680px';
+                console.log('📐 Canvas resized to NORMAL: 910x680');
+            }
+
+            currentCanvasMode = mode;
         }
 
         // Draw arrow helper
@@ -1822,6 +1847,15 @@
                                 stopPolling(); // Stop polling when hidden
                                 console.log('✅ Whiteboard hidden');
                             }
+                        }
+
+                        // Handle canvas mode changes
+                        if (payload.new && 'canvas_mode' in payload.new) {
+                            const mode = payload.new.canvas_mode || 'normal';
+                            setCanvasSize(mode);
+                            // Reload strokes after resize
+                            clearWhiteboardCanvas();
+                            await loadExistingStrokes();
                         }
 
                         if (payload.new && 'cleared_at' in payload.new) {

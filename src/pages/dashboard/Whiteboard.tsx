@@ -28,6 +28,7 @@ export default function Whiteboard() {
   const [undoneStrokes, setUndoneStrokes] = useState<string[]>([]); // IDs for redo
   const [showGrid, setShowGrid] = useState(false);
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
+  const [toolsPanelCollapsed, setToolsPanelCollapsed] = useState(false);
   const sessionId = useRef(`session-${Date.now()}`);
   const lastPressure = useRef(1);
   const isPressureSupported = useRef(false);
@@ -580,11 +581,46 @@ export default function Whiteboard() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
-      // Match broadcast canvas size: 910x680
-      canvas.width = 910;
-      canvas.height = 680;
+      // Larger canvas size when tools are collapsed
+      // Expanded: 910x680 (fits nicely with tools)
+      // Collapsed: 1400x900 (much larger for drawing)
+      const width = toolsPanelCollapsed ? 1400 : 910;
+      const height = toolsPanelCollapsed ? 900 : 680;
+
+      canvas.width = width;
+      canvas.height = height;
+
+      // Update canvas mode in database so broadcast can resize
+      updateCanvasMode(toolsPanelCollapsed ? 'maximized' : 'normal');
+
+      // Reload canvas content after resize
+      reloadCanvas();
     }
-  }, []);
+  }, [toolsPanelCollapsed]);
+
+  // Update canvas mode in database
+  const updateCanvasMode = async (mode: string) => {
+    const { data: stateRecord } = await supabase
+      .from('whiteboard_state')
+      .select('id')
+      .single();
+
+    if (stateRecord) {
+      await supabase
+        .from('whiteboard_state')
+        .update({ canvas_mode: mode })
+        .eq('id', stateRecord.id);
+
+      console.log(`📐 Canvas mode updated to: ${mode}`);
+    }
+  };
+
+  // Redraw canvas when background or grid changes
+  useEffect(() => {
+    if (canvasRef.current) {
+      reloadCanvas();
+    }
+  }, [backgroundColor, showGrid]);
 
   // Expanded professional color palette (24 colors)
   const colors = [
@@ -647,7 +683,25 @@ export default function Whiteboard() {
           </div>
         </div>
 
+        {/* Tools Panel Toggle */}
+        <div className="flex justify-between items-center mb-2">
+          <button
+            onClick={() => setToolsPanelCollapsed(!toolsPanelCollapsed)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all"
+          >
+            {toolsPanelCollapsed ? '🔽 Show Tools & Expand Canvas' : '🔼 Hide Tools & Maximize Canvas'}
+          </button>
+          {toolsPanelCollapsed && (
+            <div className="text-gray-400 text-sm">
+              Canvas: 1400x900px (Large Mode) | Current: <span className="text-blue-400 font-bold">{currentTool}</span> |
+              Color: <span className="inline-block w-4 h-4 rounded ml-1" style={{ backgroundColor: currentColor, border: '1px solid #666' }}></span> |
+              Size: <span className="text-blue-400 font-bold">{currentSize}px</span>
+            </div>
+          )}
+        </div>
+
         {/* Tools Panel */}
+        {!toolsPanelCollapsed && (
         <div className="bg-gray-800 rounded-lg p-4 mb-4 space-y-4">
           {/* Tool Buttons */}
           <div className="flex flex-wrap gap-2 items-center">
@@ -743,6 +797,7 @@ export default function Whiteboard() {
             ))}
           </div>
         </div>
+        )}
 
         {/* Canvas */}
         <div className="rounded-lg shadow-2xl p-4" style={{ backgroundColor: backgroundColor }}>
@@ -766,13 +821,13 @@ export default function Whiteboard() {
             }}
             style={{
               touchAction: 'none',
-              backgroundColor: backgroundColor,
+              backgroundColor: 'transparent',
               backgroundImage: showGrid
-                ? 'linear-gradient(rgba(128,128,128,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(128,128,128,0.2) 1px, transparent 1px)'
+                ? 'linear-gradient(rgba(128,128,128,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(128,128,128,0.3) 1px, transparent 1px)'
                 : 'none',
               backgroundSize: showGrid ? '30px 30px' : 'auto'
             }}
-            className="border-2 border-gray-300 rounded cursor-crosshair w-full"
+            className="border-2 border-gray-400 rounded cursor-crosshair w-full"
           />
         </div>
 
