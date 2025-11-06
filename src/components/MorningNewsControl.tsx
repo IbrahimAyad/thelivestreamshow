@@ -3,6 +3,27 @@ import { supabase } from '../lib/supabase'
 import { fetchMorningNews, fetchCategoryNews, getDemoNews, NewsStory } from '../lib/api/morningNews'
 import { Newspaper, RefreshCw, TrendingUp, Zap, Tv, Trophy, Sparkles, Eye, EyeOff } from 'lucide-react'
 
+// Normalize categories to match database constraints
+const normalizeCategory = (cat: string): string => {
+  // Handle null/undefined
+  if (!cat) {
+    console.warn(`⚠️ Empty category normalized to "general"`)
+    return 'general'
+  }
+
+  // Normalize: lowercase, trim, replace spaces/hyphens with underscore
+  let normalized = cat.toLowerCase().trim().replace(/[\s-]+/g, '_')
+
+  const validCategories = ['breaking', 'business', 'real_estate', 'tech', 'entertainment', 'sports', 'politics', 'general']
+
+  if (!validCategories.includes(normalized)) {
+    console.warn(`⚠️ Invalid category "${cat}" (normalized: "${normalized}") → "general"`)
+    return 'general'
+  }
+
+  return normalized
+}
+
 export function MorningNewsControl() {
   const [newsStories, setNewsStories] = useState<NewsStory[]>([])
   const [loading, setLoading] = useState(false)
@@ -75,17 +96,6 @@ export function MorningNewsControl() {
         throw new Error('No stories returned from API')
       }
 
-      // Normalize categories to match database constraints
-      const normalizeCategory = (cat: string): string => {
-        const normalized = cat.toLowerCase().trim()
-        const validCategories = ['breaking', 'business', 'real_estate', 'tech', 'entertainment', 'sports', 'politics', 'general']
-        if (!validCategories.includes(normalized)) {
-          console.warn(`⚠️ Invalid category "${cat}" normalized to "general"`)
-          return 'general'
-        }
-        return normalized
-      }
-
       // Save to database and auto-show top 3 stories
       const storiesToInsert = stories.map((story, i) => {
         const normalizedCategory = normalizeCategory(story.category)
@@ -100,6 +110,9 @@ export function MorningNewsControl() {
         }
       })
 
+      // Log what we're about to insert for debugging
+      console.log('📊 Stories to insert:', storiesToInsert.map(s => ({ headline: s.headline, category: s.category })))
+
       const { data: insertedData, error: insertError } = await supabase
         .from('morning_news_stories')
         .insert(storiesToInsert)
@@ -107,6 +120,7 @@ export function MorningNewsControl() {
 
       if (insertError) {
         console.error('❌ Error inserting stories:', insertError)
+        console.error('❌ Attempted categories:', storiesToInsert.map(s => s.category))
         throw insertError
       }
 
@@ -129,17 +143,6 @@ export function MorningNewsControl() {
 
     try {
       const stories = await fetchCategoryNews(category)
-
-      // Normalize categories to match database constraints
-      const normalizeCategory = (cat: string): string => {
-        const normalized = cat.toLowerCase().trim()
-        const validCategories = ['breaking', 'business', 'real_estate', 'tech', 'entertainment', 'sports', 'politics', 'general']
-        if (!validCategories.includes(normalized)) {
-          console.warn(`⚠️ Invalid category "${cat}" normalized to "general"`)
-          return 'general'
-        }
-        return normalized
-      }
 
       // Save to database and auto-show all category stories
       const storiesToInsert = stories.map((story, i) => {
