@@ -76,22 +76,31 @@ export function MorningNewsControl() {
       }
 
       // Save to database and auto-show top 3 stories
-      for (let i = 0; i < stories.length; i++) {
-        const story = stories[i]
-        await supabase.from('morning_news_stories').insert({
-          headline: story.headline,
-          summary: story.summary,
-          category: story.category,
-          source: story.source || 'Perplexity News',
-          talking_points: story.talkingPoints,
-          is_visible: i < 3, // Auto-show top 3 stories
-          display_order: i + 1
-        })
+      const storiesToInsert = stories.map((story, i) => ({
+        headline: story.headline,
+        summary: story.summary,
+        category: story.category,
+        source: story.source || 'Perplexity News',
+        talking_points: story.talkingPoints,
+        is_visible: i < 3, // Auto-show top 3 stories
+        display_order: i + 1
+      }))
+
+      const { data: insertedData, error: insertError } = await supabase
+        .from('morning_news_stories')
+        .insert(storiesToInsert)
+        .select()
+
+      if (insertError) {
+        console.error('❌ Error inserting stories:', insertError)
+        throw insertError
       }
 
-      setNewsStories(stories)
-      setLastFetched(new Date())
       console.log(`✅ Fetched and saved ${stories.length} news stories (top 3 auto-visible)`)
+      console.log(`📊 Inserted ${insertedData?.length || 0} stories to database`)
+
+      setLastFetched(new Date())
+      await loadStoriesFromDatabase()
     } catch (err: any) {
       console.error('Failed to fetch news:', err)
       setError(err.message || 'Failed to fetch news')
@@ -108,21 +117,30 @@ export function MorningNewsControl() {
       const stories = await fetchCategoryNews(category)
 
       // Save to database and auto-show all category stories
-      for (let i = 0; i < stories.length; i++) {
-        const story = stories[i]
-        await supabase.from('morning_news_stories').insert({
-          headline: story.headline,
-          summary: story.summary,
-          category: story.category,
-          source: story.source || 'Perplexity News',
-          talking_points: story.talkingPoints,
-          is_visible: true, // Auto-show category stories
-          display_order: i + 1
-        })
+      const storiesToInsert = stories.map((story, i) => ({
+        headline: story.headline,
+        summary: story.summary,
+        category: story.category,
+        source: story.source || 'Perplexity News',
+        talking_points: story.talkingPoints,
+        is_visible: true, // Auto-show category stories
+        display_order: i + 1
+      }))
+
+      const { data: insertedData, error: insertError } = await supabase
+        .from('morning_news_stories')
+        .insert(storiesToInsert)
+        .select()
+
+      if (insertError) {
+        console.error('❌ Error inserting category stories:', insertError)
+        throw insertError
       }
 
-      await loadStoriesFromDatabase()
       console.log(`✅ Fetched ${stories.length} ${category} stories (all visible)`)
+      console.log(`📊 Inserted ${insertedData?.length || 0} ${category} stories`)
+
+      await loadStoriesFromDatabase()
     } catch (err: any) {
       console.error(`Failed to fetch ${category} news:`, err)
       setError(err.message || `Failed to fetch ${category} news`)
@@ -133,21 +151,23 @@ export function MorningNewsControl() {
 
   const toggleStoryVisibility = async (storyId: string, isVisible: boolean) => {
     try {
-      const { error } = await supabase
+      console.log(`🔄 Toggling story ${storyId} from ${isVisible} to ${!isVisible}`)
+      const { data, error } = await supabase
         .from('morning_news_stories')
         .update({ is_visible: !isVisible })
         .eq('id', storyId)
+        .select()
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Toggle error:', error)
+        throw error
+      }
 
-      // Update local state
-      setNewsStories(prev => prev.map(story =>
-        story.id === storyId ? { ...story } : story
-      ))
-
+      console.log(`✅ Story visibility toggled:`, data)
       await loadStoriesFromDatabase()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to toggle story visibility:', err)
+      setError(err.message || 'Failed to toggle story visibility')
     }
   }
 
