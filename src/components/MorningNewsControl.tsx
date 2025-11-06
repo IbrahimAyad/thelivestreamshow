@@ -169,6 +169,40 @@ export function MorningNewsControl() {
     }
   }
 
+  const showAllStories = async () => {
+    try {
+      const { error } = await supabase
+        .from('morning_news_stories')
+        .update({ is_visible: true })
+        .eq('is_visible', false)
+
+      if (error) throw error
+
+      await loadStoriesFromDatabase()
+      console.log('✅ All stories now visible')
+    } catch (err) {
+      console.error('Failed to show all stories:', err)
+      setError('Failed to show all stories')
+    }
+  }
+
+  const hideAllStories = async () => {
+    try {
+      const { error } = await supabase
+        .from('morning_news_stories')
+        .update({ is_visible: false })
+        .eq('is_visible', true)
+
+      if (error) throw error
+
+      await loadStoriesFromDatabase()
+      console.log('✅ All stories now hidden')
+    } catch (err) {
+      console.error('Failed to hide all stories:', err)
+      setError('Failed to hide all stories')
+    }
+  }
+
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'breaking': return Zap
@@ -262,12 +296,26 @@ export function MorningNewsControl() {
             </button>
           )
         })}
-        <button
-          onClick={clearAllStories}
-          className="ml-auto px-3 py-1 bg-red-900/30 text-red-400 rounded-md text-sm hover:bg-red-900/50 border border-red-500/30"
-        >
-          Clear All Stories
-        </button>
+        <div className="ml-auto flex gap-2">
+          <button
+            onClick={showAllStories}
+            className="px-3 py-1 bg-green-900/30 text-green-400 rounded-md text-sm hover:bg-green-900/50 border border-green-500/30"
+          >
+            Show All
+          </button>
+          <button
+            onClick={hideAllStories}
+            className="px-3 py-1 bg-gray-800 text-gray-400 rounded-md text-sm hover:bg-gray-700 border border-gray-600"
+          >
+            Hide All
+          </button>
+          <button
+            onClick={clearAllStories}
+            className="px-3 py-1 bg-red-900/30 text-red-400 rounded-md text-sm hover:bg-red-900/50 border border-red-500/30"
+          >
+            Clear All
+          </button>
+        </div>
       </div>
 
       {error && (
