@@ -599,25 +599,21 @@
         /* Main layout container */
         .main-container {
             position: fixed;
-            top: 160px;
-            left: 20px;
-            right: 20px;
-            bottom: 200px;
-            display: flex;
-            gap: 20px;
+            top: 0;
+            left: 0;
+            width: 1920px;
+            height: 1080px;
+            display: grid;
             z-index: 50;
+            pointer-events: none;
         }
 
         /* Left column - Panel and Camera */
         .left-column {
-            width: 35%;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            display: contents; /* Remove from layout flow */
         }
 
         .panel-section {
-            height: 40%;
             position: relative;
         }
 
@@ -661,7 +657,10 @@
         }
 
         .camera-section {
-            flex: 1;
+            position: relative;
+        }
+
+        .video-section {
             position: relative;
         }
 
@@ -980,29 +979,30 @@
 
         /* MODE 1: BLITZ (Default - Panel + Host left, Media right) */
         /* === LAYOUT 1: BLITZ (Hot Takes & Breaking News) === */
-        .layout-blitz .left-column {
-            width: 520px; /* Fixed width for camera column */
+        .layout-blitz .main-container {
+            grid-template-columns: 500px 20px 860px 1fr;
+            grid-template-rows: 150px 281px 24px 375px 1fr 100px;
+            grid-template-areas:
+                ". . . ."
+                "panel . media ."
+                ". . . ."
+                "host . media ."
+                ". . . ."
+                ". . . .";
         }
         .layout-blitz .panel-section {
-            position: absolute;
-            left: 20px;
-            top: 150px;
-            width: 500px;
-            height: 281px; /* 16:9 ratio */
+            grid-area: panel;
+            margin-left: 20px;
         }
         .layout-blitz .camera-section {
-            position: absolute;
-            left: 20px;
-            bottom: 100px;
-            width: 500px;
-            height: 375px; /* 4:3 ratio for better face framing */
+            grid-area: host;
+            margin-left: 20px;
         }
         .layout-blitz .video-section {
-            position: absolute;
-            left: 540px;
-            top: 150px;
-            width: 860px;
-            height: 680px;
+            grid-area: media;
+        }
+        .layout-blitz .video-frame:nth-child(2) {
+            display: none; /* Hide second video frame */
         }
         .layout-blitz .panel-frame {
             border: 3px solid #00FFFF; /* Cyan for panel */
@@ -1015,25 +1015,31 @@
         }
 
         /* === LAYOUT 2: SOLO SPOTLIGHT (Single Camera Full View) === */
-        .layout-out_of_context .left-column {
-            display: none;
+        .layout-out_of_context .main-container {
+            grid-template-columns: 60px 1800px 1fr 80px 20px;
+            grid-template-rows: 100px 880px 1fr;
+            grid-template-areas:
+                ". . . . ."
+                ". camera . media ."
+                ". . . . .";
         }
         .layout-out_of_context .panel-section {
             display: none;
         }
         .layout-out_of_context .camera-section {
-            position: absolute;
-            left: 60px;
-            top: 100px;
-            width: 1800px;
-            height: 880px; /* Near full-screen with safe margins */
+            grid-area: camera;
         }
         .layout-out_of_context .video-section {
-            position: absolute;
-            right: 20px;
-            top: 150px;
+            grid-area: media;
+            align-self: start;
+            margin-top: 50px;
+        }
+        .layout-out_of_context .video-frame:nth-child(1) {
             width: 80px;
-            height: 45px; /* Small media indicator */
+            height: 45px;
+        }
+        .layout-out_of_context .video-frame:nth-child(2) {
+            display: none;
         }
         .layout-out_of_context .camera-frame {
             border: 4px solid transparent;
@@ -1045,97 +1051,71 @@
         }
 
         /* === LAYOUT 3: TRIPLE THREAT (Panel Discussion) === */
-        .layout-3_camera .left-column {
-            display: none;
+        .layout-3_camera .main-container {
+            grid-template-columns: 20px 920px 20px 940px 20px;
+            grid-template-rows: 150px 360px 40px 360px 1fr 100px;
+            grid-template-areas:
+                ". . . . ."
+                ". host . guest1 ."
+                ". host . . ."
+                ". host . guest2 ."
+                ". . . . ."
+                ". . . . .";
         }
         .layout-3_camera .panel-section {
             display: none;
         }
         .layout-3_camera .camera-section {
-            position: absolute;
-            left: 20px;
-            top: 150px;
-            width: 920px;
-            height: 680px; /* Large host camera 60% width */
+            grid-area: host;
         }
         .layout-3_camera .video-section {
-            position: absolute;
-            right: 20px;
-            top: 150px;
-            width: 940px;
-            height: 780px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            display: contents; /* Allow children to be grid items */
         }
         .layout-3_camera .video-frame:nth-child(1) {
-            position: absolute;
-            top: 0;
-            width: 940px;
-            height: 360px; /* 16:9 ratio */
+            grid-area: guest1;
             border: 3px solid #FFD700; /* Gold for Guest 1 */
         }
         .layout-3_camera .video-frame:nth-child(2) {
-            position: absolute;
-            top: 400px; /* 360 + 40px gap */
-            width: 940px;
-            height: 360px; /* 16:9 ratio */
+            grid-area: guest2;
             border: 3px solid #00FF00; /* Green for Guest 2 */
+            display: block;
         }
         .layout-3_camera .camera-frame {
             border: 4px solid #00FFFF; /* Cyan for host */
         }
 
         /* === LAYOUT 4: QUAD SQUAD (4-Camera Grid) === */
-        .layout-4_camera .left-column {
-            display: none;
+        .layout-4_camera .main-container {
+            grid-template-columns: 20px 930px 40px 930px 20px;
+            grid-template-rows: 100px 480px 20px 480px 1fr;
+            grid-template-areas:
+                ". . . . ."
+                ". panel1 . host ."
+                ". . . . ."
+                ". panel2 . guest ."
+                ". . . . .";
         }
-        /* Top-left: Panel 1 */
         .layout-4_camera .panel-section {
-            position: absolute;
-            left: 20px;
-            top: 100px;
-            width: 930px;
-            height: 480px; /* 16:9 ratio */
+            grid-area: panel1;
         }
         .layout-4_camera .panel-frame {
             border: 3px solid #FF0000; /* Red for Panel 1 */
         }
-        /* Top-right: Host */
         .layout-4_camera .camera-section {
-            position: absolute;
-            right: 20px;
-            top: 100px;
-            width: 930px;
-            height: 480px; /* 16:9 ratio */
+            grid-area: host;
         }
         .layout-4_camera .camera-frame {
             border: 3px solid #00FFFF; /* Cyan for Host */
         }
-        /* Bottom row */
         .layout-4_camera .video-section {
-            position: absolute;
-            left: 20px;
-            bottom: 100px;
-            width: 100%;
-            height: 480px;
-            display: flex;
-            gap: 40px;
+            display: contents; /* Allow children to be grid items */
         }
-        /* Bottom-left: Panel 2 */
         .layout-4_camera .video-frame:nth-child(1) {
-            position: absolute;
-            left: 0;
-            width: 930px;
-            height: 480px; /* 16:9 ratio */
+            grid-area: panel2;
             border: 3px solid #FFD700; /* Gold for Panel 2 */
         }
-        /* Bottom-right: Guest */
         .layout-4_camera .video-frame:nth-child(2) {
-            position: absolute;
-            right: 0;
-            width: 930px;
-            height: 480px; /* 16:9 ratio */
+            grid-area: guest;
             border: 3px solid #00FF00; /* Green for Guest */
             display: block;
         }
