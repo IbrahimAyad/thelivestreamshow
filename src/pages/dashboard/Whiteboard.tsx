@@ -29,6 +29,7 @@ export default function Whiteboard() {
   const [showGrid, setShowGrid] = useState(false);
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
   const [toolsPanelCollapsed, setToolsPanelCollapsed] = useState(false);
+  const [canvasSize, setCanvasSize] = useState<'small' | 'large'>('small'); // Size when tools are collapsed
   const sessionId = useRef(`session-${Date.now()}`);
   const lastPressure = useRef(1);
   const isPressureSupported = useRef(false);
@@ -581,22 +582,41 @@ export default function Whiteboard() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
-      // Larger canvas size when tools are collapsed
-      // Expanded: 910x680 (fits nicely with tools)
-      // Collapsed: 1400x900 (much larger for drawing)
-      const width = toolsPanelCollapsed ? 1400 : 910;
-      const height = toolsPanelCollapsed ? 900 : 680;
+      // Three modes:
+      // Normal (tools visible): 910x680
+      // Compact (tools hidden, small): 910x680
+      // Maximized (tools hidden, large): 1400x900
+      let width: number;
+      let height: number;
+      let mode: string;
+
+      if (!toolsPanelCollapsed) {
+        // Normal mode - tools visible
+        width = 910;
+        height = 680;
+        mode = 'normal';
+      } else if (canvasSize === 'small') {
+        // Compact mode - tools hidden, small canvas
+        width = 910;
+        height = 680;
+        mode = 'compact';
+      } else {
+        // Maximized mode - tools hidden, large canvas
+        width = 1400;
+        height = 900;
+        mode = 'maximized';
+      }
 
       canvas.width = width;
       canvas.height = height;
 
       // Update canvas mode in database so broadcast can resize
-      updateCanvasMode(toolsPanelCollapsed ? 'maximized' : 'normal');
+      updateCanvasMode(mode);
 
       // Reload canvas content after resize
       reloadCanvas();
     }
-  }, [toolsPanelCollapsed]);
+  }, [toolsPanelCollapsed, canvasSize]);
 
   // Update canvas mode in database
   const updateCanvasMode = async (mode: string) => {
@@ -689,13 +709,24 @@ export default function Whiteboard() {
             onClick={() => setToolsPanelCollapsed(!toolsPanelCollapsed)}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all"
           >
-            {toolsPanelCollapsed ? '🔽 Show Tools & Expand Canvas' : '🔼 Hide Tools & Maximize Canvas'}
+            {toolsPanelCollapsed ? '🔽 Show Tools' : '🔼 Hide Tools'}
           </button>
           {toolsPanelCollapsed && (
-            <div className="text-gray-400 text-sm">
-              Canvas: 1400x900px (Large Mode) | Current: <span className="text-blue-400 font-bold">{currentTool}</span> |
-              Color: <span className="inline-block w-4 h-4 rounded ml-1" style={{ backgroundColor: currentColor, border: '1px solid #666' }}></span> |
-              Size: <span className="text-blue-400 font-bold">{currentSize}px</span>
+            <div className="flex items-center gap-4">
+              {/* Canvas Size Toggle */}
+              <button
+                onClick={() => setCanvasSize(canvasSize === 'small' ? 'large' : 'small')}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition-all"
+              >
+                {canvasSize === 'small' ? '📐 Switch to Large Canvas (1400x900)' : '📐 Switch to Small Canvas (910x680)'}
+              </button>
+              {/* Status Bar */}
+              <div className="text-gray-400 text-sm">
+                Canvas: <span className="text-purple-400 font-bold">{canvasSize === 'small' ? '910x680px' : '1400x900px'}</span> |
+                Current: <span className="text-blue-400 font-bold">{currentTool}</span> |
+                Color: <span className="inline-block w-4 h-4 rounded ml-1" style={{ backgroundColor: currentColor, border: '1px solid #666' }}></span> |
+                Size: <span className="text-blue-400 font-bold">{currentSize}px</span>
+              </div>
             </div>
           )}
         </div>

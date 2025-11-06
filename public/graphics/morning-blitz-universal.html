@@ -1590,7 +1590,7 @@
         let lastClearedAt = null;
         let lastStrokeTimestamp = null;
         let pollingInterval = null;
-        let currentCanvasMode = 'normal'; // 'normal' or 'maximized'
+        let currentCanvasMode = 'normal'; // 'normal', 'compact', or 'maximized'
 
         // Initialize whiteboard canvas
         function initWhiteboardCanvas() {
@@ -1611,6 +1611,10 @@
             const overlay = document.getElementById('whiteboardRealtimeOverlay');
             if (!overlay) return;
 
+            // Three modes:
+            // - normal: 910x680 (tools visible)
+            // - compact: 910x680 (tools hidden, small canvas)
+            // - maximized: 1400x900 (tools hidden, large canvas)
             if (mode === 'maximized') {
                 whiteboardCanvas.width = 1400;
                 whiteboardCanvas.height = 900;
@@ -1618,11 +1622,13 @@
                 overlay.style.height = '900px';
                 console.log('📐 Canvas resized to MAXIMIZED: 1400x900');
             } else {
+                // Both 'normal' and 'compact' use same size (910x680)
+                // The difference is just whether tools panel is shown in dashboard
                 whiteboardCanvas.width = 910;
                 whiteboardCanvas.height = 680;
                 overlay.style.width = '910px';
                 overlay.style.height = '680px';
-                console.log('📐 Canvas resized to NORMAL: 910x680');
+                console.log(`📐 Canvas resized to ${mode.toUpperCase()}: 910x680`);
             }
 
             currentCanvasMode = mode;

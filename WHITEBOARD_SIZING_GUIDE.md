@@ -2,27 +2,48 @@
 
 ## Current Setup
 
-### Dashboard Canvas Sizes:
+### Dashboard Canvas Sizes (3 Modes):
 - **Normal Mode (Tools Visible)**: 910x680px
-- **Maximized Mode (Tools Hidden)**: 1400x900px
+- **Compact Mode (Tools Hidden, Small)**: 910x680px
+- **Maximized Mode (Tools Hidden, Large)**: 1400x900px
 
 ### Broadcast Overlay:
-- **Current Size**: 910x680px (positioned at top: 140px, right: 20px)
+- **Syncs automatically** with dashboard mode via database
 - **Location**: `/Users/ibrahim/Desktop/thelivestreamshow/public/graphics/morning-blitz-universal.html`
-- **Lines to Update**: 1597-1598
+- **Positioning**: top: 140px, right: 20px
 
 ## How It Works
 
+### Three Display Modes:
+
+1. **Normal Mode** (default):
+   - Tools panel visible on left
+   - Canvas: 910x680px
+   - Best for quick edits and selections
+
+2. **Compact Mode** (tools hidden, small canvas):
+   - Tools panel hidden with status bar
+   - Canvas: 910x680px (same as normal)
+   - More drawing space without changing broadcast size
+   - Toggle with "Switch to Large Canvas" button
+
+3. **Maximized Mode** (tools hidden, large canvas):
+   - Tools panel hidden with status bar
+   - Canvas: 1400x900px (54% larger!)
+   - Broadcast automatically resizes to match
+   - Toggle with "Switch to Small Canvas" button
+
 ### Dashboard Drawing:
-1. User draws on canvas (910x680 or 1400x900)
+1. User draws on canvas (size depends on mode)
 2. Mouse coordinates are scaled: `(clientX - rect.left) * scaleX`
 3. Strokes saved to database with actual canvas coordinates
-4. Points are in absolute pixel positions (not percentages)
+4. Canvas mode saved to `whiteboard_state.canvas_mode`
 
 ### Broadcast Rendering:
-1. Receives stroke data from database
-2. Draws points at exact pixel coordinates
-3. **PROBLEM**: If dashboard canvas is 1400x900 but broadcast is 910x680, coordinates don't match!
+1. Subscribes to `whiteboard_state` changes
+2. Detects `canvas_mode` updates (normal/compact/maximized)
+3. Resizes canvas and overlay to match dashboard
+4. Reloads strokes at correct size - perfect coordinate match!
 
 ## Solutions for Larger Canvas
 
@@ -123,10 +144,14 @@
 
 ## Testing Checklist
 
-- [ ] Draw in normal mode - appears correctly in broadcast
-- [ ] Toggle to maximized mode
-- [ ] Draw in maximized mode - coordinates match
-- [ ] Toggle back to normal - still works
-- [ ] Undo/redo in both modes
-- [ ] Shapes (circles, arrows) match exactly
-- [ ] Grid and background visible in both modes
+- [ ] Draw in normal mode (tools visible) - appears correctly in broadcast
+- [ ] Click "Hide Tools" - tools collapse, canvas stays 910x680
+- [ ] Draw in compact mode - broadcast matches perfectly
+- [ ] Click "Switch to Large Canvas" - canvas expands to 1400x900
+- [ ] Draw in maximized mode - broadcast resizes and matches
+- [ ] Click "Switch to Small Canvas" - canvas shrinks back to 910x680
+- [ ] Click "Show Tools" - tools panel reappears
+- [ ] Undo/redo works in all 3 modes
+- [ ] Shapes (circles, arrows) match exactly in all modes
+- [ ] Grid and background visible in all modes
+- [ ] Canvas mode persists in database between sessions
