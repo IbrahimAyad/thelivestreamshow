@@ -124,15 +124,72 @@
             z-index: 200;
             overflow: hidden;
             box-shadow: 0 0 40px rgba(14, 165, 233, 0.3), inset 0 0 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.4s ease;
+        }
+
+        .news-box.collapsed {
+            width: auto;
+            max-height: none;
+            padding: 0;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+
+        .news-toggle-btn {
+            background: linear-gradient(135deg, #DC2626, #B91C1C);
+            color: white;
+            border: 3px solid rgba(220, 38, 38, 0.5);
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 30px rgba(220, 38, 38, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.3);
+            animation: glowPulse 2s ease-in-out infinite;
+            transition: all 0.3s;
+        }
+
+        .news-toggle-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 50px rgba(220, 38, 38, 0.8), inset 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .news-toggle-btn .pulse-dot {
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% {
+                box-shadow: 0 0 30px rgba(220, 38, 38, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 50px rgba(220, 38, 38, 1), inset 0 0 20px rgba(0, 0, 0, 0.3);
+            }
         }
 
         .news-box-header {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 10px;
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 2px solid rgba(14, 165, 233, 0.3);
+        }
+
+        .news-box.collapsed .news-box-header,
+        .news-box.collapsed .news-stories {
+            display: none;
         }
 
         .news-icon {
@@ -798,11 +855,23 @@
 
     <!-- News Box - Top Right -->
     <div class="news-box" id="newsBox">
+        <!-- Toggle Button (shown when collapsed) -->
+        <button class="news-toggle-btn" id="newsToggleBtn" onclick="toggleNewsBox()">
+            <span class="pulse-dot"></span>
+            <span>LIVE BREAKING NEWS</span>
+        </button>
+
+        <!-- News Content (hidden when collapsed) -->
         <div class="news-box-header">
-            <svg class="news-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-            </svg>
-            <div class="news-title">Lock In</div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <svg class="news-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
+                <div class="news-title">Lock In</div>
+            </div>
+            <button onclick="toggleNewsBox()" style="background: rgba(14, 165, 233, 0.2); border: 1px solid #0EA5E9; color: #0EA5E9; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">
+                Close
+            </button>
         </div>
         <div class="news-stories" id="newsStories">
             <!-- News stories will be loaded dynamically -->
@@ -1231,6 +1300,13 @@
                 });
         }
 
+        // Toggle News Box
+        function toggleNewsBox() {
+            const newsBox = document.getElementById('newsBox');
+            newsBox.classList.toggle('collapsed');
+            console.log('📰 News box toggled:', newsBox.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+        }
+
         // Initialize
         async function init() {
             console.log('🌅 Morning Show Overlay Initialized');
@@ -1238,6 +1314,9 @@
             await loadImages();
             await loadNewsStories();
             subscribeToChanges();
+
+            // Start with news box collapsed
+            document.getElementById('newsBox').classList.add('collapsed');
         }
 
         init();
