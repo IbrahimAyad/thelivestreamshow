@@ -1708,7 +1708,9 @@
                         }
                     }
                 )
-                .subscribe();
+                .subscribe((status) => {
+                    console.log('📡 State channel status:', status);
+                });
 
             // Subscribe to new strokes
             const strokesChannel = supabaseClient
@@ -1722,8 +1724,13 @@
                     },
                     (payload) => {
                         console.log('✏️ New stroke received:', payload);
+                        console.log('📊 Stroke data:', payload.new?.stroke_data);
                         if (payload.new && payload.new.is_visible) {
+                            console.log('🎨 Drawing stroke now...');
                             drawStroke(payload.new.stroke_data);
+                            console.log('✅ Stroke drawn successfully');
+                        } else {
+                            console.warn('⚠️ Stroke not visible or invalid:', payload.new);
                         }
                     }
                 )
@@ -1743,8 +1750,11 @@
                         }
                     }
                 )
-                .subscribe();
+                .subscribe((status) => {
+                    console.log('📡 Strokes channel status:', status);
+                });
 
+            console.log('✅ Whiteboard subscriptions active');
             whiteboardChannel = { stateChannel, strokesChannel };
         }
 

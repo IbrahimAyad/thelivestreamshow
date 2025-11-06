@@ -103,8 +103,11 @@ export default function Whiteboard() {
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Scale coordinates from display size to canvas size
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
 
     setIsDrawing(true);
     setCurrentStroke([{ x, y }]);
@@ -123,8 +126,11 @@ export default function Whiteboard() {
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Scale coordinates from display size to canvas size
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
 
     const newStroke = [...currentStroke, { x, y }];
     setCurrentStroke(newStroke);
@@ -164,13 +170,22 @@ export default function Whiteboard() {
       timestamp: Date.now()
     };
 
-    await supabase
+    console.log('💾 Saving stroke to database:', strokeData);
+
+    const { data, error } = await supabase
       .from('whiteboard_strokes')
       .insert({
         stroke_data: strokeData,
         session_id: sessionId.current,
         is_visible: true
-      });
+      })
+      .select();
+
+    if (error) {
+      console.error('❌ Error saving stroke:', error);
+    } else {
+      console.log('✅ Stroke saved successfully:', data);
+    }
 
     setCurrentStroke([]);
 
@@ -188,8 +203,9 @@ export default function Whiteboard() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
-      canvas.width = 1800;
-      canvas.height = 900;
+      // Match broadcast canvas size: 910x680
+      canvas.width = 910;
+      canvas.height = 680;
     }
   }, []);
 
