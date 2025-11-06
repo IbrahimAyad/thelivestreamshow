@@ -74,21 +74,23 @@ export function MorningNewsControl() {
         throw new Error('No stories returned from API')
       }
 
-      // Save to database
-      for (const story of stories) {
+      // Save to database and auto-show top 3 stories
+      for (let i = 0; i < stories.length; i++) {
+        const story = stories[i]
         await supabase.from('morning_news_stories').insert({
           headline: story.headline,
           summary: story.summary,
           category: story.category,
           source: story.source || 'Perplexity News',
           talking_points: story.talkingPoints,
-          is_visible: false
+          is_visible: i < 3, // Auto-show top 3 stories
+          display_order: i + 1
         })
       }
 
       setNewsStories(stories)
       setLastFetched(new Date())
-      console.log(`✅ Fetched and saved ${stories.length} news stories`)
+      console.log(`✅ Fetched and saved ${stories.length} news stories (top 3 auto-visible)`)
     } catch (err: any) {
       console.error('Failed to fetch news:', err)
       setError(err.message || 'Failed to fetch news')
@@ -104,20 +106,22 @@ export function MorningNewsControl() {
     try {
       const stories = await fetchCategoryNews(category)
 
-      // Save to database
-      for (const story of stories) {
+      // Save to database and auto-show all category stories
+      for (let i = 0; i < stories.length; i++) {
+        const story = stories[i]
         await supabase.from('morning_news_stories').insert({
           headline: story.headline,
           summary: story.summary,
           category: story.category,
           source: story.source || 'Perplexity News',
           talking_points: story.talkingPoints,
-          is_visible: false
+          is_visible: true, // Auto-show category stories
+          display_order: i + 1
         })
       }
 
       await loadStoriesFromDatabase()
-      console.log(`✅ Fetched ${stories.length} ${category} stories`)
+      console.log(`✅ Fetched ${stories.length} ${category} stories (all visible)`)
     } catch (err: any) {
       console.error(`Failed to fetch ${category} news:`, err)
       setError(err.message || `Failed to fetch ${category} news`)
