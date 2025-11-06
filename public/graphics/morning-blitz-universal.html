@@ -1076,6 +1076,9 @@
         async function loadNewsStories() {
             try {
                 console.log('📰 Loading news stories...');
+                console.log('📰 Using Supabase URL:', supabaseClient.supabaseUrl);
+                console.log('📰 Query: SELECT * FROM morning_news_stories WHERE is_visible = true');
+
                 const { data, error } = await supabaseClient
                     .from('morning_news_stories')
                     .select('*')
@@ -1085,13 +1088,18 @@
 
                 if (error) {
                     console.error('❌ Error loading news stories:', error.message, error);
+                    console.error('❌ Full error object:', JSON.stringify(error, null, 2));
                     newsStories = [];
                     renderNewsStories();
                     return;
                 }
 
+                console.log('📰 Raw data from database:', data);
                 newsStories = data || [];
                 console.log(`✅ Loaded ${newsStories.length} news stories`);
+                if (newsStories.length > 0) {
+                    console.log('📰 First story:', newsStories[0]);
+                }
                 renderNewsStories();
             } catch (error) {
                 console.error('❌ Failed to load news stories:', error);
@@ -1176,7 +1184,7 @@
 
             // Subscribe to news stories changes
             const newsChannel = supabaseClient
-                .channel('morning-news-stories')
+                .channel('morning-news-stories-channel')
                 .on(
                     'postgres_changes',
                     {
@@ -1185,11 +1193,18 @@
                         table: 'morning_news_stories'
                     },
                     (payload) => {
-                        console.log('📰 News stories updated:', payload);
+                        console.log('📰 News stories updated via realtime:', payload);
                         loadNewsStories();
                     }
                 )
-                .subscribe();
+                .subscribe((status) => {
+                    console.log('📡 News channel status:', status);
+                    if (status === 'SUBSCRIBED') {
+                        console.log('✅ News stories real-time subscription active');
+                        // Reload stories immediately when subscribed
+                        loadNewsStories();
+                    }
+                });
         }
 
         // Initialize
