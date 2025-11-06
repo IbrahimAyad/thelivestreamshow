@@ -177,6 +177,255 @@
             }
         }
 
+        /* ===== WHITEBOARD STYLES ===== */
+        .whiteboard-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 500;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .whiteboard-overlay.active {
+            display: flex;
+        }
+
+        .whiteboard-container {
+            position: relative;
+            width: calc(100% - 40px);
+            height: calc(100% - 40px);
+            background: linear-gradient(135deg, rgba(10, 25, 47, 0.98), rgba(20, 40, 60, 0.98));
+            border: 3px solid #00BFFF;
+            border-radius: 15px;
+            box-shadow:
+                0 0 30px rgba(0, 191, 255, 0.4),
+                inset 0 0 30px rgba(0, 0, 0, 0.5),
+                0 10px 40px rgba(0, 0, 0, 0.7);
+            animation: boardAppear 0.5s ease-out;
+        }
+
+        @keyframes boardAppear {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .wb-header {
+            background: linear-gradient(90deg, #1E3A5F, #2C5282);
+            padding: 12px 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #00BFFF;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wb-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 191, 255, 0.2), transparent);
+            animation: headerShine 4s infinite;
+        }
+
+        @keyframes headerShine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .wb-title {
+            font-size: 1.8em;
+            color: #00BFFF;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: bold;
+            text-shadow:
+                0 0 10px rgba(0, 191, 255, 0.5),
+                2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .wb-close-btn {
+            background: linear-gradient(135deg, #FF6B6B, #FF4444);
+            border: 2px solid #FF4444;
+            color: #FFF;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .wb-close-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
+        }
+
+        .wb-canvas-wrapper {
+            height: calc(100% - 150px);
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            margin: 10px;
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .wb-canvas-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+            display: block;
+            background: transparent;
+        }
+
+        .wb-tools-panel {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, rgba(20, 40, 60, 0.95), rgba(30, 58, 95, 0.95));
+            border: 2px solid #00BFFF;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .wb-tool-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .wb-tool-label {
+            color: #00BFFF;
+            font-size: 0.9em;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-right: 5px;
+        }
+
+        .wb-tool-btn {
+            background: linear-gradient(135deg, #1E3A5F, #2C5282);
+            border: 2px solid #00BFFF;
+            color: #00BFFF;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .wb-tool-btn:hover {
+            background: linear-gradient(135deg, #00BFFF, #0080FF);
+            color: #FFF;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 191, 255, 0.4);
+        }
+
+        .wb-tool-btn.active {
+            background: linear-gradient(135deg, #00BFFF, #0080FF);
+            color: #FFF;
+        }
+
+        .wb-color-option {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .wb-color-option:hover {
+            transform: scale(1.1);
+            border-color: #00BFFF;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .wb-color-option.active {
+            border-color: #00BFFF;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.6);
+        }
+
+        .wb-size-slider {
+            width: 100px;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: #1E3A5F;
+            border-radius: 3px;
+            outline: none;
+            border: 1px solid #00BFFF;
+        }
+
+        .wb-size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #00BFFF;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 191, 255, 0.5);
+        }
+
+        .wb-size-display {
+            color: #00BFFF;
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .lock-in-btn {
+            background: linear-gradient(135deg, #10B981, #059669);
+            border: 3px solid rgba(16, 185, 129, 0.5);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(0, 0, 0, 0.3);
+            margin-top: 10px;
+        }
+
+        .lock-in-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.6), inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
         .news-box-header {
             display: flex;
             align-items: center;
@@ -876,6 +1125,64 @@
         <div class="news-stories" id="newsStories">
             <!-- News stories will be loaded dynamically -->
         </div>
+        <button class="lock-in-btn" onclick="toggleWhiteboard()">
+            🔒 LOCK IN
+        </button>
+    </div>
+
+    <!-- Whiteboard Overlay -->
+    <div class="whiteboard-overlay" id="whiteboardOverlay">
+        <div class="whiteboard-container">
+            <!-- Header -->
+            <div class="wb-header">
+                <div class="wb-title">Professor UNC's Board</div>
+                <button class="wb-close-btn" onclick="toggleWhiteboard()">CLOSE</button>
+            </div>
+
+            <!-- Canvas area -->
+            <div class="wb-canvas-wrapper" id="wbCanvasWrapper">
+                <!-- Canvas layers will be dynamically added here -->
+            </div>
+
+            <!-- Drawing tools panel -->
+            <div class="wb-tools-panel">
+                <!-- Tools Group -->
+                <div class="wb-tool-group">
+                    <span class="wb-tool-label">Tools:</span>
+                    <button class="wb-tool-btn active" id="wbPenBtn" onclick="selectWbTool('pen')">PEN</button>
+                    <button class="wb-tool-btn" id="wbHighlighterBtn" onclick="selectWbTool('highlighter')">HIGHLIGHTER</button>
+                    <button class="wb-tool-btn" id="wbEraserBtn" onclick="selectWbTool('eraser')">ERASER</button>
+                    <button class="wb-tool-btn" id="wbTextBtn" onclick="selectWbTool('text')">TEXT</button>
+                    <button class="wb-tool-btn" id="wbLineBtn" onclick="selectWbTool('line')">LINE</button>
+                    <button class="wb-tool-btn" id="wbBoxBtn" onclick="selectWbTool('box')">BOX</button>
+                </div>
+
+                <!-- Colors Group -->
+                <div class="wb-tool-group">
+                    <span class="wb-tool-label">Color:</span>
+                    <div style="display: flex; gap: 5px;">
+                        <div class="wb-color-option active" style="background: #000;" onclick="selectWbColor('#000')"></div>
+                        <div class="wb-color-option" style="background: #FF0000;" onclick="selectWbColor('#FF0000')"></div>
+                        <div class="wb-color-option" style="background: #00FF00;" onclick="selectWbColor('#00FF00')"></div>
+                        <div class="wb-color-option" style="background: #0000FF;" onclick="selectWbColor('#0000FF')"></div>
+                        <div class="wb-color-option" style="background: #FFFF00;" onclick="selectWbColor('#FFFF00')"></div>
+                        <div class="wb-color-option" style="background: #FFF;" onclick="selectWbColor('#FFF')"></div>
+                    </div>
+                </div>
+
+                <!-- Size Group -->
+                <div class="wb-tool-group">
+                    <span class="wb-tool-label">Size:</span>
+                    <input type="range" class="wb-size-slider" id="wbSizeSlider" min="1" max="20" value="3" oninput="updateWbSize(this.value)">
+                    <span class="wb-size-display" id="wbSizeDisplay">3</span>
+                </div>
+
+                <!-- Actions Group -->
+                <div class="wb-tool-group">
+                    <button class="wb-tool-btn" style="background: linear-gradient(135deg, #FF6B6B, #FF4444); border-color: #FF4444;" onclick="clearWbCanvas()">CLEAR</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Image Boxes at Bottom -->
@@ -1305,6 +1612,184 @@
             const newsBox = document.getElementById('newsBox');
             newsBox.classList.toggle('collapsed');
             console.log('📰 News box toggled:', newsBox.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+        }
+
+        // ===== WHITEBOARD FUNCTIONALITY =====
+        let wbCanvas = null;
+        let wbCtx = null;
+        let wbDrawing = false;
+        let wbCurrentTool = 'pen';
+        let wbCurrentColor = '#000';
+        let wbCurrentSize = 3;
+        let wbLastX = 0;
+        let wbLastY = 0;
+
+        // Initialize whiteboard canvas
+        function initWhiteboardCanvas() {
+            const wrapper = document.getElementById('wbCanvasWrapper');
+            if (!wbCanvas) {
+                wbCanvas = document.createElement('canvas');
+                wbCanvas.className = 'wb-canvas-layer';
+                wbCanvas.width = wrapper.clientWidth;
+                wbCanvas.height = wrapper.clientHeight;
+                wrapper.appendChild(wbCanvas);
+                wbCtx = wbCanvas.getContext('2d');
+
+                // Set up event listeners
+                wbCanvas.addEventListener('mousedown', startWbDrawing);
+                wbCanvas.addEventListener('mousemove', wbDraw);
+                wbCanvas.addEventListener('mouseup', stopWbDrawing);
+                wbCanvas.addEventListener('mouseout', stopWbDrawing);
+
+                // Touch support
+                wbCanvas.addEventListener('touchstart', handleWbTouchStart);
+                wbCanvas.addEventListener('touchmove', handleWbTouchMove);
+                wbCanvas.addEventListener('touchend', stopWbDrawing);
+
+                console.log('🎨 Whiteboard canvas initialized');
+            }
+        }
+
+        // Toggle whiteboard visibility
+        function toggleWhiteboard() {
+            const overlay = document.getElementById('whiteboardOverlay');
+            const isActive = overlay.classList.contains('active');
+
+            if (isActive) {
+                overlay.classList.remove('active');
+                console.log('📋 Whiteboard closed');
+            } else {
+                overlay.classList.add('active');
+                initWhiteboardCanvas();
+                console.log('📋 Whiteboard opened');
+            }
+        }
+
+        // Select drawing tool
+        function selectWbTool(tool) {
+            wbCurrentTool = tool;
+
+            // Update button states
+            document.querySelectorAll('.wb-tool-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`wb${tool.charAt(0).toUpperCase() + tool.slice(1)}Btn`).classList.add('active');
+
+            console.log('🔧 Tool selected:', tool);
+        }
+
+        // Select color
+        function selectWbColor(color) {
+            wbCurrentColor = color;
+
+            // Update color button states
+            document.querySelectorAll('.wb-color-option').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            console.log('🎨 Color selected:', color);
+        }
+
+        // Update brush size
+        function updateWbSize(size) {
+            wbCurrentSize = parseInt(size);
+            document.getElementById('wbSizeDisplay').textContent = size;
+        }
+
+        // Clear canvas
+        function clearWbCanvas() {
+            if (wbCtx && wbCanvas) {
+                wbCtx.clearRect(0, 0, wbCanvas.width, wbCanvas.height);
+                console.log('🗑️ Canvas cleared');
+            }
+        }
+
+        // Start drawing
+        function startWbDrawing(e) {
+            wbDrawing = true;
+            const rect = wbCanvas.getBoundingClientRect();
+            wbLastX = e.clientX - rect.left;
+            wbLastY = e.clientY - rect.top;
+
+            if (wbCurrentTool === 'pen' || wbCurrentTool === 'highlighter') {
+                wbCtx.beginPath();
+                wbCtx.moveTo(wbLastX, wbLastY);
+            }
+        }
+
+        // Draw on canvas
+        function wbDraw(e) {
+            if (!wbDrawing) return;
+
+            const rect = wbCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (wbCurrentTool === 'pen') {
+                wbCtx.strokeStyle = wbCurrentColor;
+                wbCtx.lineWidth = wbCurrentSize;
+                wbCtx.lineCap = 'round';
+                wbCtx.lineJoin = 'round';
+                wbCtx.globalAlpha = 1;
+                wbCtx.lineTo(x, y);
+                wbCtx.stroke();
+            } else if (wbCurrentTool === 'highlighter') {
+                wbCtx.strokeStyle = wbCurrentColor;
+                wbCtx.lineWidth = wbCurrentSize * 3;
+                wbCtx.lineCap = 'round';
+                wbCtx.lineJoin = 'round';
+                wbCtx.globalAlpha = 0.3;
+                wbCtx.lineTo(x, y);
+                wbCtx.stroke();
+            } else if (wbCurrentTool === 'eraser') {
+                wbCtx.globalCompositeOperation = 'destination-out';
+                wbCtx.beginPath();
+                wbCtx.arc(x, y, wbCurrentSize * 2, 0, Math.PI * 2);
+                wbCtx.fill();
+                wbCtx.globalCompositeOperation = 'source-over';
+            } else if (wbCurrentTool === 'line') {
+                // Simple line drawing
+                wbCtx.beginPath();
+                wbCtx.moveTo(wbLastX, wbLastY);
+                wbCtx.lineTo(x, y);
+                wbCtx.strokeStyle = wbCurrentColor;
+                wbCtx.lineWidth = wbCurrentSize;
+                wbCtx.stroke();
+            } else if (wbCurrentTool === 'box') {
+                // Simple box drawing
+                wbCtx.strokeStyle = wbCurrentColor;
+                wbCtx.lineWidth = wbCurrentSize;
+                wbCtx.strokeRect(wbLastX, wbLastY, x - wbLastX, y - wbLastY);
+            }
+
+            wbLastX = x;
+            wbLastY = y;
+        }
+
+        // Stop drawing
+        function stopWbDrawing() {
+            wbDrawing = false;
+            if (wbCtx) {
+                wbCtx.globalAlpha = 1;
+            }
+        }
+
+        // Touch event handlers
+        function handleWbTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            wbCanvas.dispatchEvent(mouseEvent);
+        }
+
+        function handleWbTouchMove(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            wbCanvas.dispatchEvent(mouseEvent);
         }
 
         // Initialize
