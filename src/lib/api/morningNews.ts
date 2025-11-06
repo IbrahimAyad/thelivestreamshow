@@ -42,7 +42,7 @@ export async function fetchMorningNews(): Promise<NewsStory[]> {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
+        model: 'llama-3.1-sonar-small-128k-online',
         messages: [
           {
             role: 'system',
@@ -84,7 +84,9 @@ Only return the JSON array, no other text.`
     });
 
     if (!response.ok) {
-      throw new Error(`Perplexity API error: ${response.status} ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({}));
+      console.error('❌ Perplexity API error details:', errorData);
+      throw new Error(`Perplexity API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
     }
 
     const data = await response.json();
@@ -152,7 +154,7 @@ export async function fetchCategoryNews(category: string): Promise<NewsStory[]> 
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
+        model: 'llama-3.1-sonar-small-128k-online',
         messages: [
           {
             role: 'system',
