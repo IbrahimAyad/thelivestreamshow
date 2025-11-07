@@ -1015,41 +1015,58 @@
             border: 3px solid #FFD700; /* Gold for media */
         }
 
-        /* === LAYOUT 2: SOLO SPOTLIGHT (Single Camera Full View) === */
-        /* 4:3 ratio for natural face framing - no stretched faces */
+        /* === LAYOUT 2: OUT OF CONTEXT (2 Cameras + Image Gallery) === */
+        /* Left: 2 stacked cameras (4:3) | Right: Image display area with CS border */
         .layout-out_of_context .main-container {
-            grid-template-columns: 160px 1200px 1fr 80px 20px;
-            grid-template-rows: 100px 900px 1fr;
+            grid-template-columns: 20px 640px 40px 1fr 20px;
+            grid-template-rows: 150px 480px 40px 480px 1fr;
             grid-template-areas:
                 ". . . . ."
-                ". camera . media ."
+                ". camera1 . imagegallery ."
+                ". . . . ."
+                ". camera2 . imagegallery ."
                 ". . . . .";
         }
         .layout-out_of_context .panel-section {
-            display: none;
+            grid-area: camera1;
+        }
+        .layout-out_of_context .panel-frame {
+            border: 3px solid #00FFFF; /* Cyan for Camera 1 */
         }
         .layout-out_of_context .camera-section {
-            grid-area: camera;
+            grid-area: camera2;
+        }
+        .layout-out_of_context .camera-frame {
+            border: 3px solid #FFD700; /* Gold for Camera 2 */
         }
         .layout-out_of_context .video-section {
-            grid-area: media;
-            align-self: start;
-            margin-top: 50px;
+            grid-area: imagegallery;
+            position: relative;
         }
-        .layout-out_of_context .video-frame:nth-child(1) {
-            width: 80px;
-            height: 60px; /* 4:3 ratio */
+        .layout-out_of_context .video-frame {
+            width: 100%;
+            height: 100%;
+            border: 4px solid #FFD700;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.3);
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 0 20px rgba(255, 215, 0, 0.3),
+                inset 0 0 30px rgba(255, 215, 0, 0.1);
         }
         .layout-out_of_context .video-frame:nth-child(2) {
             display: none;
         }
-        .layout-out_of_context .camera-frame {
-            border: 4px solid transparent;
-            border-image: linear-gradient(45deg, #00FFFF, #FFD700) 1; /* Gradient border */
+        /* Image display area styling */
+        .layout-out_of_context .video-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: none;
         }
-        .layout-out_of_context .video-frame {
-            border: 2px solid #FFD700;
-            border-radius: 5px;
+        .layout-out_of_context .video-frame.has-image img {
+            display: block;
         }
 
         /* === LAYOUT 3: TRIPLE THREAT (Panel Discussion) === */
@@ -1378,7 +1395,55 @@
             // Flash effect
             createFlash();
 
+            // For OUT_OF_CONTEXT layout, display in the image gallery area
+            const currentLayout = document.getElementById('layoutContainer').className;
+            if (currentLayout.includes('out_of_context')) {
+                displayImageInGallery(imageId);
+            }
+
             console.log(`🖼️ Revealed image ${index + 1}`);
+        }
+
+        // Display image in the gallery area (for OUT_OF_CONTEXT layout)
+        function displayImageInGallery(imageId) {
+            const imageData = images.find(img => img.id === imageId);
+            if (!imageData) return;
+
+            const videoFrame = document.querySelector('.layout-out_of_context .video-frame:nth-child(1)');
+            if (!videoFrame) return;
+
+            // Create or get existing image element
+            let img = videoFrame.querySelector('img');
+            if (!img) {
+                img = document.createElement('img');
+                videoFrame.appendChild(img);
+            }
+
+            img.src = imageData.url;
+            img.alt = imageData.caption;
+            videoFrame.classList.add('has-image');
+
+            // Add caption overlay
+            let caption = videoFrame.querySelector('.gallery-caption');
+            if (!caption) {
+                caption = document.createElement('div');
+                caption.className = 'gallery-caption';
+                caption.style.position = 'absolute';
+                caption.style.bottom = '0';
+                caption.style.left = '0';
+                caption.style.right = '0';
+                caption.style.background = 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)';
+                caption.style.color = '#FFD700';
+                caption.style.padding = '20px';
+                caption.style.fontSize = '24px';
+                caption.style.fontWeight = 'bold';
+                caption.style.textAlign = 'center';
+                caption.style.textTransform = 'uppercase';
+                videoFrame.appendChild(caption);
+            }
+            caption.textContent = imageData.caption;
+
+            console.log(`📺 Displaying image in gallery: ${imageData.caption}`);
         }
 
         // Create flash effect
