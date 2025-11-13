@@ -444,7 +444,7 @@
     <!-- Bottom Bar -->
     <div class="bottom-bar">
         <div class="show-title">ALPHA WEDNESDAY</div>
-        <div class="show-subtitle">ADDRESS ALL THE SMOKE</div>
+        <div class="show-subtitle" id="episodeTopic">ADDRESS ALL THE SMOKE</div>
     </div>
 
     <script>
@@ -474,6 +474,7 @@
                 if (data) {
                     document.getElementById('episodeNumber').textContent = data.episode_number || '--';
                     document.getElementById('episodeTitle').textContent = data.episode_title || 'Alpha Wednesday';
+                    document.getElementById('episodeTopic').textContent = data.episode_topic || 'ADDRESS ALL THE SMOKE';
                 }
             } catch (error) {
                 console.error('Failed to load episode info:', error);

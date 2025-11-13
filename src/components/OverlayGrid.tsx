@@ -73,16 +73,11 @@ const OverlayGrid: React.FC<OverlayGridProps> = ({ onOverlaySelect }) => {
     if (event.ctrlKey || event.metaKey) {
       // Special handling for morning_blitz - redirect to GraphicsGallery
       if (overlay.graphic_type === 'morning_blitz') {
-        alert('⚠️ Morning Blitz Image Manager\n\nTo manage conversation starter images, please use the Morning Blitz section in the Graphics Overlays panel above.\n\nScroll up to find the "Morning Blitz" box and Cmd/Ctrl+Click it to open the image manager.');
+        alert('⚠️ Morning Blitz Image Manager\n\nTo manage conversation starter images, please use the Morning Blitz section in the Graphics Overlays panel above.\n\nScroll up to find the "Morning Blitz" box and click "📸 Manage Images" button.');
         return;
       }
 
-      // Special handling for alpha_wednesday - redirect to GraphicsGallery
-      if (overlay.graphic_type === 'alpha_wednesday') {
-        alert('⚠️ Alpha Wednesday Episode Editor\n\nTo edit episode info, please use the Alpha Wednesday section in the Graphics Overlays panel above.\n\nScroll up to find the "Alpha Wednesday" box and Cmd/Ctrl+Click it to open the episode editor.');
-        return;
-      }
-
+      // For alpha_wednesday, open modal normally - it will handle episode_info
       setEditingOverlay(overlay);
       setIsEditModalOpen(true);
       return;

@@ -51,7 +51,7 @@ const OverlayEditModal: React.FC<OverlayEditModalProps> = ({
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'chat' | 'audio' | 'display'>('content');
-  
+
   // Audio configuration state
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [selectedSoundDropId, setSelectedSoundDropId] = useState<string | null>(null);
@@ -59,22 +59,27 @@ const OverlayEditModal: React.FC<OverlayEditModalProps> = ({
   const [audioVolume, setAudioVolume] = useState(0.8);
   const [enableDucking, setEnableDucking] = useState(false);
   const [duckingLevel, setDuckingLevel] = useState(0.3);
-  
+
   // Display configuration state
   const [displayMode, setDisplayMode] = useState<'exclusive' | 'overlay' | 'background'>('exclusive');
   const [zIndex, setZIndex] = useState(1000);
+
+  // Alpha Wednesday episode info state
+  const [episodeTitle, setEpisodeTitle] = useState('');
+  const [episodeTopic, setEpisodeTopic] = useState('');
+  const [episodeNumber, setEpisodeNumber] = useState('');
 
   useEffect(() => {
     if (overlay) {
       setContent(overlay.config || {});
       // Chat messages not used in broadcast_graphics
       setChatMessages([]);
-      
+
       // Load audio configuration
       setAudioEnabled(!!overlay.sound_drop_id);
       setSelectedSoundDropId(overlay.sound_drop_id || null);
       setAutoPlaySound(overlay.auto_play_sound ?? true);
-      
+
       // Load audio settings from config if available
       const audioConfig = overlay.config?.audio as any;
       if (audioConfig) {
@@ -82,12 +87,40 @@ const OverlayEditModal: React.FC<OverlayEditModalProps> = ({
         setEnableDucking(audioConfig.enable_ducking ?? false);
         setDuckingLevel(audioConfig.ducking_level ?? 0.3);
       }
-      
+
       // Load display configuration
       setDisplayMode((overlay.display_mode as any) || 'exclusive');
       setZIndex(overlay.z_index || 1000);
+
+      // Load episode info for Alpha Wednesday
+      if (overlay.graphic_type === 'alpha_wednesday') {
+        loadEpisodeInfo();
+      }
     }
   }, [overlay]);
+
+  const loadEpisodeInfo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('episode_info')
+        .select('*')
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        console.error('Error loading episode info:', error);
+        return;
+      }
+
+      if (data) {
+        setEpisodeTitle(data.episode_title || '');
+        setEpisodeTopic(data.episode_topic || '');
+        setEpisodeNumber(data.episode_number || '');
+      }
+    } catch (err) {
+      console.error('Failed to load episode info:', err);
+    }
+  };
 
   const handleContentChange = (field: string, value: any) => {
     setContent(prev => ({
@@ -119,7 +152,7 @@ const OverlayEditModal: React.FC<OverlayEditModalProps> = ({
 
   const handleSave = async () => {
     if (!overlay) return;
-    
+
     setIsLoading(true);
     try {
       // Prepare audio configuration in config.audio
@@ -132,7 +165,7 @@ const OverlayEditModal: React.FC<OverlayEditModalProps> = ({
           ducking_level: duckingLevel,
         },
       };
-      
+
       // Update overlay in database with all fields
       const { error } = await supabase
         .from('broadcast_graphics')
@@ -145,9 +178,36 @@ const OverlayEditModal: React.FC<OverlayEditModalProps> = ({
           updated_at: new Date().toISOString(),
         })
         .eq('id', overlay.id);
-      
+
       if (error) throw error;
-      
+
+      // Special handling for Alpha Wednesday - update episode_info table
+      if (overlay.graphic_type === 'alpha_wednesday') {
+        const { data: episodeData, error: episodeCheckError } = await supabase
+          .from('episode_info')
+          .select('id')
+          .eq('is_active', true)
+          .single();
+
+        if (episodeCheckError) {
+          console.error('No active episode found:', episodeCheckError);
+          alert('⚠️ No active episode found. Episode info not updated.');
+        } else if (episodeData) {
+          const { error: episodeUpdateError } = await supabase
+            .from('episode_info')
+            .update({
+              episode_title: episodeTitle,
+              episode_topic: episodeTopic
+            })
+            .eq('id', episodeData.id);
+
+          if (episodeUpdateError) {
+            console.error('Error updating episode info:', episodeUpdateError);
+            alert('⚠️ Failed to update episode info');
+          }
+        }
+      }
+
       await onSave(overlay.id, updatedConfig, chatMessages);
       onClose();
     } catch (error) {
@@ -220,34 +280,86 @@ const OverlayEditModal: React.FC<OverlayEditModalProps> = ({
 
         <div className="overflow-y-auto max-h-[60vh]">
           {activeTab === 'content' && (
-            <div className="grid grid-cols-2 gap-4">
-              {Object.entries(content).map(([field, value]) => (
-                <div key={field} className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-300 capitalize">
-                    {field.replace(/_/g, ' ')}
-                  </label>
-                  <input
-                    type="text"
-                    value={value || ''}
-                    onChange={(e) => handleContentChange(field, e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-yellow-400"
-                  />
+            <div className="space-y-6">
+              {/* Alpha Wednesday Episode Info Section */}
+              {overlay?.graphic_type === 'alpha_wednesday' && (
+                <div className="bg-purple-900/20 border-2 border-purple-500/30 rounded-lg p-4 space-y-4">
+                  <h3 className="text-lg font-bold text-purple-400 mb-3">📺 Episode Information</h3>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-300">
+                      Episode Number (Read-only)
+                    </label>
+                    <input
+                      type="text"
+                      value={episodeNumber}
+                      disabled
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-gray-400"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-300">
+                      Episode Title
+                    </label>
+                    <input
+                      type="text"
+                      value={episodeTitle}
+                      onChange={(e) => setEpisodeTitle(e.target.value)}
+                      placeholder="e.g., Alpha Wednesday Returns"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-purple-400"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-300">
+                      Episode Topic (Subtitle)
+                    </label>
+                    <input
+                      type="text"
+                      value={episodeTopic}
+                      onChange={(e) => setEpisodeTopic(e.target.value)}
+                      placeholder="e.g., AI, Tech News & Community Discussion"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-purple-400"
+                    />
+                  </div>
+
+                  <div className="text-xs text-purple-300 bg-purple-900/30 p-2 rounded">
+                    💡 These fields update the overlay in real-time via the episode_info table
+                  </div>
                 </div>
-              ))}
-              
-              {/* Add new field */}
-              <div className="col-span-2 pt-4 border-t border-gray-700">
-                <button
-                  onClick={() => {
-                    const fieldName = prompt('Enter field name:');
-                    if (fieldName) {
-                      handleContentChange(fieldName, '');
-                    }
-                  }}
-                  className="text-yellow-400 hover:text-yellow-300 text-sm"
-                >
-                  + Add New Field
-                </button>
+              )}
+
+              {/* Regular Config Fields */}
+              <div className="grid grid-cols-2 gap-4">
+                {Object.entries(content).filter(([key]) => key !== 'audio').map(([field, value]) => (
+                  <div key={field} className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-300 capitalize">
+                      {field.replace(/_/g, ' ')}
+                    </label>
+                    <input
+                      type="text"
+                      value={value || ''}
+                      onChange={(e) => handleContentChange(field, e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-yellow-400"
+                    />
+                  </div>
+                ))}
+
+                {/* Add new field */}
+                <div className="col-span-2 pt-4 border-t border-gray-700">
+                  <button
+                    onClick={() => {
+                      const fieldName = prompt('Enter field name:');
+                      if (fieldName) {
+                        handleContentChange(fieldName, '');
+                      }
+                    }}
+                    className="text-yellow-400 hover:text-yellow-300 text-sm"
+                  >
+                    + Add New Field
+                  </button>
+                </div>
               </div>
             </div>
           )}
