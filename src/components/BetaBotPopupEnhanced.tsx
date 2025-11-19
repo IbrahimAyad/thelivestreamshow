@@ -96,6 +96,14 @@ const CHARACTERS = {
     borderColor: 'border-indigo-500/50',
     glowColor: 'shadow-indigo-500/40'
   },
+  Carlos: {
+    name: 'Carlos',
+    color: '#3B82F6', // blue
+    badge: '💬',
+    bgGradient: 'from-blue-900/20 to-blue-950/10',
+    borderColor: 'border-blue-500/50',
+    glowColor: 'shadow-blue-500/40'
+  },
   BetaBot: {
     name: 'BetaBot',
     color: '#FBBF24', // default yellow
