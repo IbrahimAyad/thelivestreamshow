@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
 interface EpisodeInfo {
-  episode_number: number
+  episode_number?: number
   episode_title: string
-  topic: string
+  episode_topic: string
   is_active: boolean
 }
 
@@ -21,12 +21,13 @@ export function AlphaWednesdayOverlay() {
   }, [])
 
   const loadEpisodeInfo = async () => {
-    const { data } = await supabase
-      .from('active_episodes')
+    const { data, error } = await supabase
+      .from('episode_info')
       .select('*')
       .eq('is_active', true)
       .single()
 
+    console.log('📺 Alpha Wednesday - Loading episode info:', { data, error })
     if (data) {
       setEpisodeInfo(data)
     }
@@ -67,8 +68,9 @@ export function AlphaWednesdayOverlay() {
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'active_episodes'
+        table: 'episode_info'
       }, () => {
+        console.log('📺 Episode info updated, reloading...')
         loadEpisodeInfo()
       })
       .subscribe()
@@ -127,7 +129,7 @@ export function AlphaWednesdayOverlay() {
       <div className="bottom-bar">
         <div className="show-branding">
           <div className="show-title">ALPHA WEDNESDAY</div>
-          <div className="show-subtitle">{episodeInfo?.topic || 'AI, Tech News & Community Discussion'}</div>
+          <div className="show-subtitle">{episodeInfo?.episode_topic || 'AI, Tech News & Community Discussion'}</div>
         </div>
         <div className="episode-meta">
           <div className="meta-episode">EP {episodeInfo?.episode_number || 1}</div>
