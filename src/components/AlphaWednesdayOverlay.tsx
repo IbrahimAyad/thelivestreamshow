@@ -127,11 +127,6 @@ export function AlphaWednesdayOverlay() {
           <div className="show-title">ALPHA WEDNESDAY</div>
           <div className="show-subtitle">{episodeInfo?.episode_topic || 'AI, Tech News & Community Discussion'}</div>
         </div>
-        <div className="episode-meta">
-          <div className="meta-episode">EP {episodeInfo?.episode_number || 1}</div>
-          <div className="meta-date">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-          <div className="meta-title">{episodeInfo?.episode_title || 'Alpha Wednesday Returns'}</div>
-        </div>
       </div>
 
       <style>{`
@@ -403,7 +398,7 @@ export function AlphaWednesdayOverlay() {
           );
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: center;
           padding: 0 40px;
           z-index: 90;
           border-top: 3px solid rgba(255, 0, 0, 0.5);
@@ -413,6 +408,7 @@ export function AlphaWednesdayOverlay() {
         .show-branding {
           display: flex;
           flex-direction: column;
+          align-items: center;
           gap: 5px;
         }
 
