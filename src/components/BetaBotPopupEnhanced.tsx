@@ -199,19 +199,28 @@ export const BetaBotPopupEnhanced: React.FC<BetaBotPopupEnhancedProps> = ({
   }
 
   const handlePlayTTS = async () => {
-    if (!question || !f5TTS.isConnected) {
-      console.warn('TTS not available')
+    if (!question || !question.tts_audio_url) {
+      console.warn('TTS not available - no audio URL')
       return
     }
 
     try {
       setIsTTSPlaying(true)
-      // Danny reads the full question
-      await f5TTS.speak(question.question_text, (state) => {
-        if (state === 'idle') {
-          setIsTTSPlaying(false)
-        }
-      })
+
+      // Play the pre-generated ElevenLabs audio
+      const audio = new Audio(question.tts_audio_url)
+      audio.volume = 1.0 // Full volume for broadcast
+
+      audio.onended = () => {
+        setIsTTSPlaying(false)
+      }
+
+      audio.onerror = (error) => {
+        console.error('Audio playback error:', error)
+        setIsTTSPlaying(false)
+      }
+
+      await audio.play()
     } catch (error) {
       console.error('TTS playback failed:', error)
       setIsTTSPlaying(false)
