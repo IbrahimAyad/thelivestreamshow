@@ -179,15 +179,17 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   }
 
   /** Transport */
-  const play = async (t?: Track) => {
+  const play = async (t?: Track | any) => {
     try {
       setError(undefined)
       setHasError(false)
       const el = getOrCreateMediaElement()
       getOrCreateAudioContext() // ensure context + graph
       if (t) {
-        setCurrent(t)
-        const url = await getPlayableUrl(t.path)  // ← exact DB key
+        // Support both Track objects and raw database objects
+        const track: Track = t.path ? t : musicTrackToTrack(t)
+        setCurrent(track)
+        const url = await getPlayableUrl(track.path)  // ← exact DB key
         // do not recreate <audio>, just swap src
         el.src = url
       } else if (!current) {
