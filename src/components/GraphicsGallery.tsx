@@ -416,13 +416,11 @@ export function GraphicsGallery() {
             return (
               <div key={config.type} className="col-span-2 md:col-span-3 lg:col-span-4">
                 <div
-                  onClick={handleAlphaWedClick}
-                  className={`relative rounded-lg border-2 p-4 transition-all cursor-pointer ${
+                  className={`relative rounded-lg border-2 p-4 transition-all ${
                     isActive
                       ? 'bg-gradient-to-br from-purple-900/40 to-indigo-900/40 border-purple-400 shadow-lg shadow-purple-500/60'
                       : 'bg-gray-900 border-gray-700'
                   }`}
-                  title="Click to edit episode info"
                 >
                   {/* Header with toggle */}
                   <div className="flex items-center justify-between mb-4">
@@ -437,16 +435,27 @@ export function GraphicsGallery() {
                         <p className="text-xs text-gray-500">AI, Tech News & Community Discussion</p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => graphic && toggleGraphic(graphic.id, isActive, config.htmlFile)}
-                      className={`px-6 py-2 rounded-lg font-bold transition-all ${
-                        isActive
-                          ? 'bg-purple-500 text-white hover:bg-purple-600'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      }`}
-                    >
-                      {isActive ? 'HIDE' : 'SHOW'}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleAlphaWedClick}
+                        className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-bold text-sm"
+                      >
+                        ✏️ Edit Episode
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          graphic && toggleGraphic(graphic.id, isActive, config.htmlFile)
+                        }}
+                        className={`px-6 py-2 rounded-lg font-bold transition-all ${
+                          isActive
+                            ? 'bg-purple-500 text-white hover:bg-purple-600'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        {isActive ? 'HIDE' : 'SHOW'}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Mode Switcher */}
@@ -457,7 +466,10 @@ export function GraphicsGallery() {
                         {['default', 'debate', 'presentation', 'gaming'].map(mode => (
                           <button
                             key={mode}
-                            onClick={() => changeAlphaWednesdayMode(mode)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              changeAlphaWednesdayMode(mode)
+                            }}
                             className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                               currentMode === mode
                                 ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/50'
