@@ -33,14 +33,19 @@ export function AlphaWednesdayOverlay() {
   }
 
   const loadOverlayMode = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('broadcast_graphics')
       .select('config')
       .eq('graphic_name', 'alpha-wednesday-universal')
       .single()
 
+    console.log('🎨 Alpha Wednesday - Loading mode:', { data, error })
+
     if (data?.config?.mode) {
+      console.log('✅ Mode set to:', data.config.mode)
       setMode(data.config.mode)
+    } else {
+      console.log('⚠️ No mode found, using default')
     }
   }
 
@@ -77,6 +82,11 @@ export function AlphaWednesdayOverlay() {
     presentation: 'PRESENTATION',
     gaming: 'CLEAN SLATE'
   }
+
+  // Log mode changes
+  useEffect(() => {
+    console.log('🎮 Current mode:', mode, '| Frames visible:', mode !== 'gaming')
+  }, [mode])
 
   return (
     <div className={`alpha-wednesday-overlay layout-${mode}`}>
