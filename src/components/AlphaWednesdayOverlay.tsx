@@ -110,10 +110,6 @@ export function AlphaWednesdayOverlay() {
         <div className="episode-title">
           {episodeInfo?.episode_title || 'Alpha Wednesday Returns'}
         </div>
-        <div className="mode-status">
-          <div className="mode-display">{modeNames[mode]}</div>
-          <div className="status-indicator"></div>
-        </div>
       </div>
 
       {/* Content Frames - Only visible in non-Clean Slate modes */}
