@@ -4,8 +4,18 @@ import {
   Radio, Coffee, Clock, AlertTriangle, Image,
   BarChart3, Trophy, MessageSquare, Sparkles,
   Award, Zap, UserPlus, Gauge, Swords, Target,
-  Tv
+  Tv, Send, Plus, Trash2, Loader2, Volume2
 } from 'lucide-react'
+
+interface ShowQuestion {
+  id: string
+  topic: string
+  question_text: string
+  tts_audio_url: string | null
+  tts_generated: boolean
+  position: number
+  show_on_overlay: boolean
+}
 
 const GRAPHIC_CONFIGS = [
   // Core Graphics
@@ -54,10 +64,19 @@ export function GraphicsGallery() {
   const [newImageCaption, setNewImageCaption] = useState('')
   const [uploadingImage, setUploadingImage] = useState(false)
 
+  // Ultra Chat state
+  const [questions, setQuestions] = useState<ShowQuestion[]>([])
+  const [showAddQuestion, setShowAddQuestion] = useState(false)
+  const [newQuestionTopic, setNewQuestionTopic] = useState('')
+  const [newQuestionText, setNewQuestionText] = useState('')
+  const [generatingTTS, setGeneratingTTS] = useState<string | null>(null)
+  const [addingQuestion, setAddingQuestion] = useState(false)
+
   useEffect(() => {
     loadGraphics()
+    loadQuestions()
 
-    const channel = supabase
+    const graphicsChannel = supabase
       .channel('graphics_gallery_changes')
       .on('postgres_changes', {
         event: '*',
@@ -68,8 +87,20 @@ export function GraphicsGallery() {
       })
       .subscribe()
 
+    const questionsChannel = supabase
+      .channel('ultra_chat_questions')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'show_questions'
+      }, () => {
+        loadQuestions()
+      })
+      .subscribe()
+
     return () => {
-      channel.unsubscribe()
+      graphicsChannel.unsubscribe()
+      questionsChannel.unsubscribe()
     }
   }, [])
 
@@ -315,6 +346,172 @@ export function GraphicsGallery() {
     setShowMorningBlitzModal(true)
   }
 
+  // Ultra Chat Functions
+  const loadQuestions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('show_questions')
+        .select('*')
+        .order('position', { ascending: true })
+        .limit(10)
+
+      if (error) throw error
+      if (data) setQuestions(data as ShowQuestion[])
+    } catch (err) {
+      console.error('Failed to load questions:', err)
+    }
+  }
+
+  const addQuestion = async () => {
+    if (!newQuestionTopic.trim() || !newQuestionText.trim()) {
+      setError('⚠️ Please enter both character name and question')
+      return
+    }
+
+    setAddingQuestion(true)
+    try {
+      const nextPosition = questions.length + 1
+
+      const { data, error } = await supabase
+        .from('show_questions')
+        .insert({
+          topic: newQuestionTopic.trim(),
+          question_text: newQuestionText.trim(),
+          position: nextPosition,
+          tts_generated: false,
+          show_on_overlay: false
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // Auto-generate TTS for new question
+      if (data) {
+        await generateQuestionTTS(data.id, data.question_text)
+      }
+
+      setNewQuestionTopic('')
+      setNewQuestionText('')
+      setShowAddQuestion(false)
+      await loadQuestions()
+    } catch (err: any) {
+      console.error('Failed to add question:', err)
+      setError(`❌ Failed to add question: ${err.message}`)
+    } finally {
+      setAddingQuestion(false)
+    }
+  }
+
+  const generateQuestionTTS = async (questionId: string, text: string) => {
+    setGeneratingTTS(questionId)
+    try {
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-tts`
+
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          text: text,
+          voiceId: 'DTKMou8ccj1ZaWGBiotd' // ElevenLabs BetaBot voice
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`TTS generation failed: ${response.status}`)
+      }
+
+      const result = await response.json()
+
+      if (result.error) {
+        throw new Error(result.error)
+      }
+
+      // Convert base64 to blob
+      const audioBlob = base64ToBlob(result.audioContent, 'audio/mpeg')
+      const fileName = `betabot-${questionId}-${Date.now()}.mp3`
+
+      const { error: uploadError } = await supabase.storage
+        .from('tts-audio')
+        .upload(fileName, audioBlob, {
+          contentType: 'audio/mpeg',
+          upsert: true
+        })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('tts-audio')
+        .getPublicUrl(fileName)
+
+      await supabase
+        .from('show_questions')
+        .update({
+          tts_generated: true,
+          tts_audio_url: publicUrl
+        })
+        .eq('id', questionId)
+
+    } catch (err: any) {
+      console.error('TTS generation error:', err)
+      setError(`⚠️ TTS generation failed: ${err.message}`)
+    } finally {
+      setGeneratingTTS(null)
+    }
+  }
+
+  const base64ToBlob = (base64: string, type: string): Blob => {
+    const byteCharacters = atob(base64)
+    const byteNumbers = new Array(byteCharacters.length)
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i)
+    }
+    const byteArray = new Uint8Array(byteNumbers)
+    return new Blob([byteArray], { type })
+  }
+
+  const sendQuestionToOverlay = async (questionId: string) => {
+    try {
+      // Clear any previously shown questions
+      await supabase
+        .from('show_questions')
+        .update({ show_on_overlay: false })
+        .eq('show_on_overlay', true)
+
+      // Set this question to show on overlay
+      const { error } = await supabase
+        .from('show_questions')
+        .update({
+          show_on_overlay: true,
+          overlay_triggered_at: new Date().toISOString()
+        })
+        .eq('id', questionId)
+
+      if (error) throw error
+    } catch (err) {
+      console.error('Error sending question:', err)
+      setError('Failed to send question to overlay')
+    }
+  }
+
+  const deleteQuestion = async (questionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('show_questions')
+        .delete()
+        .eq('id', questionId)
+
+      if (error) throw error
+      await loadQuestions()
+    } catch (err) {
+      console.error('Error deleting question:', err)
+      setError('Failed to delete question')
+    }
+  }
+
   const getGraphic = (type: string) => graphics.find(g => g.graphic_type === type)
   const getConfig = (type: string) => GRAPHIC_CONFIGS.find(c => c.type === type)
 
@@ -525,6 +722,129 @@ export function GraphicsGallery() {
             </button>
           )
         })}
+
+        {/* Ultra Chat Section */}
+        <div className="col-span-2 md:col-span-3 lg:col-span-4">
+          <div className="relative rounded-lg border-2 p-4 bg-gradient-to-br from-yellow-900/40 to-amber-900/40 border-yellow-400 shadow-lg shadow-yellow-500/60">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <MessageSquare className="w-8 h-8 text-yellow-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+                <div>
+                  <h3 className="font-bold text-lg text-white">💬 Ultra Chat</h3>
+                  <p className="text-xs text-gray-400">BetaBot Questions ({questions.length} queued)</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddQuestion(!showAddQuestion)}
+                className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-bold text-sm flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Question
+              </button>
+            </div>
+
+            {/* Add Question Form */}
+            {showAddQuestion && (
+              <div className="mb-4 p-4 bg-gray-900 border border-yellow-500/30 rounded-lg">
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Character Name</label>
+                    <input
+                      type="text"
+                      value={newQuestionTopic}
+                      onChange={(e) => setNewQuestionTopic(e.target.value)}
+                      placeholder="BetaBot, Alpha, AZ, etc."
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-yellow-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Question Text</label>
+                    <textarea
+                      value={newQuestionText}
+                      onChange={(e) => setNewQuestionText(e.target.value)}
+                      placeholder="Enter the question BetaBot will ask..."
+                      rows={3}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-yellow-400"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={addQuestion}
+                      disabled={addingQuestion}
+                      className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:bg-gray-700 font-bold transition-colors"
+                    >
+                      {addingQuestion ? 'Adding...' : 'Add & Generate TTS'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAddQuestion(false)
+                        setNewQuestionTopic('')
+                        setNewQuestionText('')
+                      }}
+                      className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Questions List */}
+            <div className="space-y-2">
+              {questions.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No questions queued. Click "Add Question" to get started.
+                </div>
+              ) : (
+                questions.map((q, index) => (
+                  <div
+                    key={q.id}
+                    className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-lg hover:border-yellow-500/50 transition-all"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-yellow-400 font-bold">#{index + 1}</span>
+                        <span className="text-xs text-gray-400 px-2 py-0.5 bg-gray-800 rounded">{q.topic}</span>
+                        {q.tts_generated && (
+                          <Volume2 className="w-3 h-3 text-green-400" title="TTS Ready" />
+                        )}
+                        {generatingTTS === q.id && (
+                          <Loader2 className="w-3 h-3 text-yellow-400 animate-spin" title="Generating TTS..." />
+                        )}
+                      </div>
+                      <p className="text-white text-sm line-clamp-2">{q.question_text}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => sendQuestionToOverlay(q.id)}
+                        disabled={!q.tts_generated}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white font-bold rounded transition-colors flex items-center gap-2"
+                        title={q.tts_generated ? 'Send to overlay' : 'TTS not ready'}
+                      >
+                        <Send className="w-4 h-4" />
+                        SEND
+                      </button>
+                      <button
+                        onClick={() => deleteQuestion(q.id)}
+                        className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                        title="Delete question"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Info */}
+            <div className="mt-4 text-xs text-gray-400 bg-yellow-900/20 p-2 rounded">
+              💡 Questions auto-generate ElevenLabs TTS. Click SEND when ready to show on stream.
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded text-sm text-red-300">
