@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Wednesday - Automated Streaming Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            background: transparent;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated Smoke Background */
+        .smoke-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.5;
+        }
+
+        .smoke {
+            position: absolute;
+            bottom: -100px;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(255, 0, 0, 0.4) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(30px);
+            animation: smokeRise 12s infinite;
+        }
+
+        .smoke:nth-child(1) { left: 5%; animation-delay: 0s; }
+        .smoke:nth-child(2) { left: 25%; animation-delay: 3s; }
+        .smoke:nth-child(3) { left: 45%; animation-delay: 6s; }
+        .smoke:nth-child(4) { left: 65%; animation-delay: 9s; }
+        .smoke:nth-child(5) { left: 85%; animation-delay: 12s; }
+
+        @keyframes smokeRise {
+            0% {
+                bottom: -100px;
+                transform: translateX(0) scale(1);
+                opacity: 0;
+            }
+            10% { opacity: 0.5; }
+            50% { transform: translateX(30px) scale(1.5); }
+            90% { opacity: 0.1; }
+            100% {
+                bottom: 110%;
+                transform: translateX(-30px) scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* Top Bar */
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to bottom, 
+                rgba(0, 0, 0, 0.95), 
+                rgba(0, 0, 0, 0.7),
+                rgba(0, 0, 0, 0));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 100;
+            border-bottom: 2px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .episode-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .season-badge {
+            background: linear-gradient(135deg, #FF0000, #8B0000);
+            color: #FFF;
+            padding: 6px 16px;
+            font-size: 0.85em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-radius: 3px;
+            box-shadow: 0 2px 15px rgba(255, 0, 0, 0.5);
+        }
+
+        .episode-number {
+            color: #FF6B6B;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Status Section */
+        .status-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .obs-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #666;
+            transition: all 0.3s ease;
+        }
+
+        .status-dot.connected {
+            background: #00FF00;
+            box-shadow: 0 0 10px #00FF00;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.streaming {
+            background: #FF0000;
+            box-shadow: 0 0 10px #FF0000;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-text {
+            color: #FFF;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        /* Main Layout Frames - Visual Guides */
+        .layout-container {
+            position: absolute;
+            top: 70px;
+            left: 10px;
+            right: 10px;
+            bottom: 130px;
+            display: flex;
+            gap: 15px;
+            z-index: 50;
+        }
+
+        /* Left Column - Discord + Camera Stack */
+        .left-stack {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Discord Frame */
+        .discord-frame {
+            height: 40%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 0, 0, 0.4);
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .discord-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: linear-gradient(135deg, #5865F2, #404EED);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            z-index: 10;
+        }
+
+        /* Camera Frame - BIGGER */
+        .camera-frame {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 3px solid #FF0000;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 0 30px rgba(0, 0, 0, 0.5),
+                0 0 40px rgba(255, 0, 0, 0.5);
+            animation: cameraGlow 4s ease-in-out infinite;
+        }
+
+        @keyframes cameraGlow {
+            0%, 100% { 
+                box-shadow: 
+                    inset 0 0 30px rgba(0, 0, 0, 0.5),
+                    0 0 40px rgba(255, 0, 0, 0.5);
+            }
+            50% { 
+                box-shadow: 
+                    inset 0 0 30px rgba(0, 0, 0, 0.5),
+                    0 0 60px rgba(255, 0, 0, 0.8);
+            }
+        }
+
+        .camera-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: linear-gradient(135deg, #FF0000, #8B0000);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            z-index: 10;
+        }
+
+        /* Right Side - Media Display */
+        .right-media {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 215, 0, 0.4);
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px;
+        }
+
+        .media-label {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            align-self: flex-start;
+        }
+
+        .media-content {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 215, 0, 0.3);
+            font-size: 1.5em;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+
+        /* Bottom Bar */
+        .bottom-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 25px 30px;
+            background: linear-gradient(to top, 
+                rgba(0, 0, 0, 0.95),
+                rgba(0, 0, 0, 0.8),
+                rgba(0, 0, 0, 0));
+            z-index: 90;
+            border-top: 2px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .show-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .show-titles {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .show-day {
+            color: #FF0000;
+            font-size: 0.8em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            opacity: 0.9;
+        }
+
+        .show-title {
+            color: #FFF;
+            font-size: 2.8em;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-shadow: 
+                2px 2px 0 #8B0000,
+                4px 4px 20px rgba(0, 0, 0, 0.8);
+            line-height: 0.9;
+        }
+
+        .show-tagline {
+            color: #FF6B6B;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* Control Panel */
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid #FF0000;
+            color: #FFF;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: #FF0000;
+            color: #000;
+            transform: scale(1.05);
+        }
+
+        .control-btn.active {
+            background: #FF0000;
+            color: #000;
+        }
+
+        /* WebSocket Control Panel */
+        .obs-control-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #FF0000;
+            border-radius: 10px;
+            padding: 30px;
+            z-index: 1000;
+            min-width: 500px;
+            max-width: 800px;
+            display: none;
+        }
+
+        .obs-control-panel.show {
+            display: block;
+        }
+
+        .panel-header {
+            color: #FF0000;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .connection-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            color: #FF6B6B;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .input-group input {
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            color: #FFF;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #FF0000;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+        }
+
+        .connect-btn {
+            padding: 12px;
+            background: linear-gradient(135deg, #FF0000, #8B0000);
+            color: #FFF;
+            border: none;
+            border-radius: 5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .connect-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 20px rgba(255, 0, 0, 0.5);
+        }
+
+        .connect-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Layout Presets */
+        .layout-presets {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .preset-btn {
+            padding: 15px;
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            color: #FFF;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .preset-btn:hover {
+            background: rgba(255, 0, 0, 0.3);
+            border-color: #FF0000;
+        }
+
+        .preset-btn.active {
+            background: #FF0000;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .preset-name {
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .preset-desc {
+            font-size: 0.7em;
+            opacity: 0.8;
+        }
+
+        /* Stats Display */
+        .stats-display {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 200px;
+            z-index: 80;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .stat-label {
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            color: #FF6B6B;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Message Display */
+        .message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #FF0000;
+            border-radius: 5px;
+            color: #FFF;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .message.show {
+            opacity: 1;
+        }
+
+        .message.success {
+            border-color: #00FF00;
+            color: #00FF00;
+        }
+
+        .message.error {
+            border-color: #FF0000;
+            color: #FF0000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Smoke Background -->
+    <div class="smoke-container">
+        <div class="smoke"></div>
+        <div class="smoke"></div>
+        <div class="smoke"></div>
+        <div class="smoke"></div>
+        <div class="smoke"></div>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="episode-info">
+            <div class="season-badge">SEASON 4</div>
+            <div class="episode-number">EPISODE <span id="episodeNum">31</span></div>
+        </div>
+        
+        <div class="status-section">
+            <div class="obs-status">
+                <div class="status-dot" id="obsStatusDot"></div>
+                <span class="status-text" id="obsStatusText">DISCONNECTED</span>
+            </div>
+            <div class="obs-status">
+                <div class="status-dot" id="streamStatusDot"></div>
+                <span class="status-text" id="streamStatusText">OFFLINE</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Layout Container -->
+    <div class="layout-container">
+        <!-- Left Stack: Discord on top, Camera on bottom -->
+        <div class="left-stack">
+            <!-- Discord Panel -->
+            <div class="discord-frame" id="discordFrame">
+                <div class="discord-label">DISCORD PANEL</div>
+            </div>
+            
+            <!-- Host Camera - BIGGER -->
+            <div class="camera-frame" id="cameraFrame">
+                <div class="camera-label">HOST CAMERA</div>
+            </div>
+        </div>
+
+        <!-- Right Side: Media Display -->
+        <div class="right-media" id="mediaFrame">
+            <div class="media-label">MEDIA / VIDEO</div>
+            <div class="media-content">
+                DROP CONTENT HERE
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="bottom-bar">
+        <div class="show-info">
+            <div class="show-titles">
+                <div class="show-day">WEDNESDAY NIGHTS</div>
+                <div class="show-title">ALPHA WEDNESDAY</div>
+                <div class="show-tagline">ADDRESS ALL THE SMOKE</div>
+            </div>
+            
+            <div class="control-buttons">
+                <button class="control-btn" onclick="toggleControlPanel()">⚙️ SETUP</button>
+                <button class="control-btn" onclick="switchLayout('default', this)">DEFAULT</button>
+                <button class="control-btn" onclick="switchLayout('solo', this)">SOLO</button>
+                <button class="control-btn" onclick="switchLayout('interview', this)">INTERVIEW</button>
+                <button class="control-btn" onclick="switchLayout('media', this)">MEDIA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Display -->
+    <div class="stats-display" id="statsDisplay" style="display: none;">
+        <div class="stat-row">
+            <span class="stat-label">Stream Time</span>
+            <span class="stat-value" id="streamTime">00:00:00</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">FPS</span>
+            <span class="stat-value" id="streamFPS">0</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Bitrate</span>
+            <span class="stat-value" id="streamBitrate">0 kbps</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">CPU</span>
+            <span class="stat-value" id="cpuUsage">0%</span>
+        </div>
+    </div>
+
+    <!-- OBS Control Panel -->
+    <div class="obs-control-panel" id="controlPanel">
+        <h2 class="panel-header">🔥 OBS WebSocket Setup</h2>
+        
+        <div class="connection-form">
+            <div class="input-group">
+                <label>Server IP:</label>
+                <input type="text" id="serverIp" value="localhost" placeholder="192.168.1.199">
+            </div>
+            
+            <div class="input-group">
+                <label>Server Port:</label>
+                <input type="text" id="serverPort" value="4455" placeholder="4455">
+            </div>
+            
+            <div class="input-group">
+                <label>Password:</label>
+                <input type="password" id="serverPassword" placeholder="Your password">
+            </div>
+            
+            <button class="connect-btn" id="connectBtn" onclick="connectToOBS()">
+                CONNECT TO OBS
+            </button>
+        </div>
+
+        <div class="layout-presets">
+            <button class="preset-btn" onclick="applyPreset('debate', this)">
+                <div class="preset-name">DEBATE MODE</div>
+                <div class="preset-desc">Full panel discussion</div>
+            </button>
+            <button class="preset-btn" onclick="applyPreset('presentation', this)">
+                <div class="preset-name">PRESENTATION</div>
+                <div class="preset-desc">Media focus</div>
+            </button>
+            <button class="preset-btn" onclick="applyPreset('gaming', this)">
+                <div class="preset-name">GAMING</div>
+                <div class="preset-desc">Game + camera</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Message Display -->
+    <div class="message" id="messageDisplay"></div>
+
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    
+    <!-- OBS WebSocket Library -->
+    <script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.3/dist/obs-ws.js"></script>
+    
+    <script>
+        // Wait for libraries to load
+        window.addEventListener('load', () => {
+            console.log('🔍 Checking libraries...');
+            console.log('Supabase:', typeof window.supabase);
+            console.log('OBSWebSocket:', typeof OBSWebSocket);
+            
+            if (typeof window.supabase === 'undefined') {
+                console.error('❌ Supabase library not loaded');
+                alert('ERROR: Supabase library failed to load. Please refresh the page.');
+            }
+            
+            if (typeof OBSWebSocket === 'undefined') {
+                console.error('❌ OBS WebSocket library not loaded');
+                alert('ERROR: OBS WebSocket library failed to load. Please refresh the page.');
+            } else {
+                console.log('✅ All libraries loaded successfully');
+            }
+        });
+        
+        // OBS WebSocket instance
+        let obs = null;
+        let isConnected = false;
+        let sourceIds = {};
+        let currentLayout = 'default';
+        let streamStartTime = null;
+        let statsInterval = null;
+
+        // Source names in OBS (customize these to match your OBS setup)
+        const OBS_SOURCES = {
+            discord: 'Discord',           // Your Discord browser source name
+            camera: 'Camera',             // Your camera source name
+            media: 'Media Source',        // Your media source name
+            facetime: 'FaceTime',         // Your FaceTime window capture name
+            game: 'Game Capture',         // Your game capture name
+            overlay: 'Alpha Wednesday'    // This HTML overlay name
+        };
+
+        // Layout configurations with exact positions
+        const LAYOUTS = {
+            default: {
+                name: 'Default Stack',
+                sources: {
+                    discord: {
+                        enabled: true,
+                        position: { x: 10, y: 70 },
+                        scale: { x: 0.58, y: 0.38 },
+                        crop: { top: 0, right: 0, bottom: 0, left: 0 }
+                    },
+                    camera: {
+                        enabled: true,
+                        position: { x: 10, y: 420 },
+                        scale: { x: 0.58, y: 0.52 },
+                        crop: { top: 0, right: 0, bottom: 0, left: 0 }
+                    },
+                    media: {
+                        enabled: true,
+                        position: { x: 1150, y: 70 },
+                        scale: { x: 0.38, y: 0.82 },
+                        crop: { top: 0, right: 0, bottom: 0, left: 0 }
+                    }
+                }
+            },
+            solo: {
+                name: 'Solo Host',
+                sources: {
+                    discord: {
+                        enabled: false
+                    },
+                    camera: {
+                        enabled: true,
+                        position: { x: 480, y: 200 },
+                        scale: { x: 0.5, y: 0.5 },
+                        crop: { top: 0, right: 0, bottom: 0, left: 0 }
+                    },
+                    media: {
+                        enabled: false
+                    }
+                }
+            },
+            interview: {
+                name: 'Interview Mode',
+                sources: {
+                    discord: {
+                        enabled: false
+                    },
+                    camera: {
+                        enabled: true,
+                        position: { x: 10, y: 100 },
+                        scale: { x: 0.48, y: 0.7 },
+                        crop: { top: 0, right: 0, bottom: 0, left: 0 }
+                    },
+                    facetime: {
+                        enabled: true,
+                        position: { x: 960, y: 100 },
+                        scale: { x: 0.48, y: 0.7 },
+                        crop: { top: 0, right: 0, bottom: 0, left: 0 }
+                    },
+                    media: {
+                        enabled: false
+                    }
+                }
+            },
+            media: {
+                name: 'Media Focus',
+                sources: {
+                    discord: {
+                        enabled: false
+                    },
+                    camera: {
+                        enabled: true,
+                        position: { x: 1400, y: 700 },
+                        scale: { x: 0.25, y: 0.25 },
+                        crop: { top: 0, right: 0, bottom: 0, left: 0 }
+                    },
+                    media: {
+                        enabled: true,
+                        position: { x: 160, y: 100 },
+                        scale: { x: 0.75, y: 0.75 },
+                        crop: { top: 0, right: 0, bottom: 0, left: 0 }
+                    }
+                }
+            },
+            debate: {
+                name: 'Full Debate',
+                sources: {
+                    discord: {
+                        enabled: true,
+                        position: { x: 10, y: 70 },
+                        scale: { x: 0.7, y: 0.82 },
+                        crop: { top: 0, right: 0, bottom: 0, left: 0 }
+                    },
+                    camera: {
+                        enabled: true,
+                        position: { x: 1370, y: 70 },
+                        scale: { x: 0.28, y: 0.35 },
+                        crop: { top: 0, right: 0, bottom: 0, left: 0 }
+                    },
+                    media: {
+                        enabled: true,
+                        position: { x: 1370, y: 480 },
+                        scale: { x: 0.28, y: 0.35 },
+                        crop: { top: 0, right: 0, bottom: 0, left: 0 }
+                    }
+                }
+            }
+        };
+
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://vcniezwtltraqramjlux.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbmllend0bHRyYXFyYW1qbHV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzMjQ1MTgsImV4cCI6MjA3NTkwMDUxOH0.5PDpv3-DVZzjOVFLdsWibzOk5A3-4PI1OthU1EQNhTQ';
+        
+        // Initialize Supabase client (with validation)
+        let supabase = null;
+        if (typeof window.supabase !== 'undefined') {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase client initialized');
+        } else {
+            console.error('❌ Cannot initialize Supabase - library not loaded');
+        }
+
+        // Database-driven episode management
+        async function loadEpisodeData() {
+            try {
+                const { data, error } = await supabase
+                    .from('episode_info')
+                    .select('*')
+                    .eq('is_active', true)
+                    .eq('is_visible', true)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') {
+                    console.error('Error loading episode data:', error);
+                    return;
+                }
+
+                if (data) {
+                    updateEpisodeDisplay(data);
+                    console.log('Episode data loaded:', data);
+                }
+            } catch (error) {
+                console.error('Database connection error:', error);
+            }
+        }
+
+        function updateEpisodeDisplay(episodeData) {
+            // Update episode number
+            const episodeNum = document.getElementById('episodeNum');
+            if (episodeNum && episodeData.episode_number) {
+                episodeNum.textContent = episodeData.episode_number;
+            }
+
+            // Update season if available
+            const seasonBadge = document.querySelector('.season-badge');
+            if (seasonBadge && episodeData.season) {
+                seasonBadge.textContent = episodeData.season.toUpperCase();
+            }
+
+            // Update show titles if available
+            if (episodeData.show_title) {
+                const showTitle = document.querySelector('.show-title');
+                if (showTitle) {
+                    showTitle.textContent = episodeData.show_title;
+                }
+            }
+
+            if (episodeData.show_tagline) {
+                const showTagline = document.querySelector('.show-tagline');
+                if (showTagline) {
+                    showTagline.textContent = episodeData.show_tagline;
+                }
+            }
+
+            if (episodeData.show_day) {
+                const showDay = document.querySelector('.show-day');
+                if (showDay) {
+                    showDay.textContent = episodeData.show_day.toUpperCase();
+                }
+            }
+        }
+
+        // Setup real-time subscription for episode updates
+        function setupEpisodeSubscription() {
+            const subscription = supabase
+                .channel('episode_info_changes')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'episode_info'
+                    },
+                    (payload) => {
+                        console.log('Episode data updated:', payload);
+                        if (payload.new && payload.new.is_active && payload.new.is_visible) {
+                            updateEpisodeDisplay(payload.new);
+                        }
+                    }
+                )
+                .subscribe();
+
+            return subscription;
+        }
+
+        // Connect to OBS WebSocket
+        async function connectToOBS() {
+            const ip = document.getElementById('serverIp').value || 'localhost';
+            const port = document.getElementById('serverPort').value || '4455';
+            const password = document.getElementById('serverPassword').value;
+
+            if (!password) {
+                showMessage('Please enter the OBS WebSocket password', 'error');
+                return;
+            }
+
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('connectBtn').textContent = 'CONNECTING...';
+
+            try {
+                // Check if OBSWebSocket library is loaded
+                if (typeof OBSWebSocket === 'undefined') {
+                    showMessage('OBS WebSocket library not loaded. Please refresh the page.', 'error');
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('connectBtn').textContent = 'CONNECT TO OBS';
+                    return;
+                }
+                
+                // Create OBS WebSocket instance if not exists
+                if (!obs) {
+                    obs = new OBSWebSocket();
+                }
+
+                // Connect to OBS
+                await obs.connect(`ws://${ip}:${port}`, password);
+                
+                isConnected = true;
+                showMessage('✅ Connected to OBS!', 'success');
+                
+                // Update UI
+                document.getElementById('obsStatusDot').classList.add('connected');
+                document.getElementById('obsStatusText').textContent = 'CONNECTED';
+                document.getElementById('statsDisplay').style.display = 'block';
+                
+                // Get source IDs
+                await getSourceIds();
+                
+                // Setup event listeners
+                setupOBSListeners();
+                
+                // Start monitoring
+                startStatsMonitoring();
+                
+                // Apply default layout
+                await switchLayout('default');
+                
+                // Close panel
+                setTimeout(() => {
+                    document.getElementById('controlPanel').classList.remove('show');
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Connection failed:', error);
+                showMessage(`❌ Connection failed: ${error.message}`, 'error');
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('connectBtn').textContent = 'CONNECT TO OBS';
+            }
+        }
+
+        // Get source IDs from OBS
+        async function getSourceIds() {
+            if (!obs || !isConnected) return;
+            
+            try {
+                const sceneList = await obs.call('GetSceneList');
+                const currentScene = sceneList.currentProgramSceneName;
+                
+                // Get all sources in current scene
+                const sceneItems = await obs.call('GetSceneItemList', { sceneName: currentScene });
+                
+                // Map source names to IDs
+                sceneItems.sceneItems.forEach(item => {
+                    const sourceName = item.sourceName;
+                    
+                    // Match to our source names
+                    Object.keys(OBS_SOURCES).forEach(key => {
+                        if (sourceName === OBS_SOURCES[key]) {
+                            sourceIds[key] = item.sceneItemId;
+                            console.log(`Found ${key}: ${sourceName} (ID: ${item.sceneItemId})`);
+                        }
+                    });
+                });
+                
+                console.log('Source IDs:', sourceIds);
+            } catch (error) {
+                console.error('Failed to get source IDs:', error);
+            }
+        }
+
+        // Apply source position and settings
+        async function applySourceSettings(sourceName, settings) {
+            if (!obs || !isConnected) return;
+            
+            const sourceId = sourceIds[sourceName];
+            if (!sourceId && sourceId !== 0) {
+                console.warn(`Source ${sourceName} not found`);
+                return;
+            }
+            
+            try {
+                // Get current scene name
+                const sceneList = await obs.call('GetSceneList');
+                const sceneName = sceneList.currentProgramSceneName;
+                
+                // Enable/disable source
+                if (settings.enabled !== undefined) {
+                    await obs.call('SetSceneItemEnabled', {
+                        sceneName: sceneName,
+                        sceneItemId: sourceId,
+                        sceneItemEnabled: settings.enabled
+                    });
+                }
+                
+                // If source is disabled, skip other settings
+                if (settings.enabled === false) return;
+                
+                // Apply transform if position or scale specified
+                if (settings.position || settings.scale) {
+                    const transform = {};
+                    
+                    if (settings.position) {
+                        transform.positionX = settings.position.x;
+                        transform.positionY = settings.position.y;
+                    }
+                    
+                    if (settings.scale) {
+                        transform.scaleX = settings.scale.x;
+                        transform.scaleY = settings.scale.y;
+                    }
+                    
+                    await obs.call('SetSceneItemTransform', {
+                        sceneName: sceneName,
+                        sceneItemId: sourceId,
+                        sceneItemTransform: transform
+                    });
+                }
+                
+                // Apply crop if specified
+                if (settings.crop) {
+                    await obs.call('SetSceneItemTransform', {
+                        sceneName: sceneName,
+                        sceneItemId: sourceId,
+                        sceneItemTransform: {
+                            cropTop: settings.crop.top,
+                            cropBottom: settings.crop.bottom,
+                            cropLeft: settings.crop.left,
+                            cropRight: settings.crop.right
+                        }
+                    });
+                }
+                
+                console.log(`Applied settings to ${sourceName}`);
+            } catch (error) {
+                console.error(`Failed to apply settings to ${sourceName}:`, error);
+            }
+        }
+
+        // Switch layout
+        async function switchLayout(layoutName, eventTarget = null) {
+            if (!LAYOUTS[layoutName]) return;
+            
+            currentLayout = layoutName;
+            const layout = LAYOUTS[layoutName];
+            
+            console.log(`Switching to layout: ${layout.name}`);
+            
+            // Update UI buttons (only if called from a button click)
+            if (eventTarget) {
+                document.querySelectorAll('.control-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                eventTarget.classList.add('active');
+            }
+            
+            // Update visual indicators
+            updateVisualLayout(layoutName);
+            
+            // If connected to OBS, apply the layout
+            if (isConnected && obs) {
+                showMessage(`Applying ${layout.name} layout...`, 'success');
+                
+                // Apply settings for each source
+                for (const [source, settings] of Object.entries(layout.sources)) {
+                    await applySourceSettings(source, settings);
+                }
+                
+                showMessage(`✅ ${layout.name} layout applied!`, 'success');
+            }
+        }
+
+        // Update visual indicators
+        function updateVisualLayout(layoutName) {
+            const layout = LAYOUTS[layoutName];
+            
+            // Update frame visibility
+            document.getElementById('discordFrame').style.opacity = 
+                layout.sources.discord?.enabled === false ? '0.3' : '1';
+            document.getElementById('cameraFrame').style.opacity = 
+                layout.sources.camera?.enabled === false ? '0.3' : '1';
+            document.getElementById('mediaFrame').style.opacity = 
+                layout.sources.media?.enabled === false ? '0.3' : '1';
+        }
+
+        // Apply preset configuration
+        async function applyPreset(presetName, eventTarget = null) {
+            // Update button states (only if called from a button click)
+            if (eventTarget) {
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                eventTarget.classList.add('active');
+            }
+            
+            // Switch to corresponding layout
+            await switchLayout(presetName === 'gaming' ? 'solo' : presetName === 'presentation' ? 'media' : 'debate');
+        }
+
+        // Setup OBS event listeners
+        function setupOBSListeners() {
+            if (!obs) return;
+            
+            // Stream status
+            obs.on('StreamStateChanged', (data) => {
+                const streaming = data.outputActive;
+                document.getElementById('streamStatusDot').classList.toggle('streaming', streaming);
+                document.getElementById('streamStatusText').textContent = streaming ? 'LIVE' : 'OFFLINE';
+                
+                if (streaming) {
+                    streamStartTime = Date.now();
+                    showMessage('🔴 Stream Started!', 'success');
+                } else {
+                    streamStartTime = null;
+                    showMessage('⏹️ Stream Ended', 'success');
+                }
+            });
+            
+            // Scene changes
+            obs.on('CurrentProgramSceneChanged', async (data) => {
+                console.log('Scene changed to:', data.sceneName);
+                await getSourceIds(); // Refresh source IDs
+            });
+            
+            // Connection lost
+            obs.on('ConnectionClosed', () => {
+                handleDisconnection();
+            });
+        }
+
+        // Start monitoring stats
+        function startStatsMonitoring() {
+            if (statsInterval) clearInterval(statsInterval);
+            
+            statsInterval = setInterval(async () => {
+                if (!obs || !isConnected) return;
+                
+                try {
+                    const stats = await obs.call('GetStats');
+                    
+                    // Update stats display
+                    document.getElementById('streamFPS').textContent = Math.round(stats.activeFps);
+                    document.getElementById('streamBitrate').textContent = Math.round(stats.outputKbitsPerSec) + ' kbps';
+                    document.getElementById('cpuUsage').textContent = Math.round(stats.cpuUsagePercent) + '%';
+                    
+                    // Update stream time if streaming
+                    if (streamStartTime) {
+                        const elapsed = Math.floor((Date.now() - streamStartTime) / 1000);
+                        const hours = Math.floor(elapsed / 3600);
+                        const minutes = Math.floor((elapsed % 3600) / 60);
+                        const seconds = elapsed % 60;
+                        document.getElementById('streamTime').textContent = 
+                            `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                } catch (error) {
+                    console.error('Failed to get stats:', error);
+                }
+            }, 1000);
+        }
+
+        // Handle disconnection
+        function handleDisconnection() {
+            isConnected = false;
+            document.getElementById('obsStatusDot').classList.remove('connected');
+            document.getElementById('obsStatusText').textContent = 'DISCONNECTED';
+            document.getElementById('streamStatusDot').classList.remove('streaming');
+            document.getElementById('streamStatusText').textContent = 'OFFLINE';
+            document.getElementById('statsDisplay').style.display = 'none';
+            
+            if (statsInterval) {
+                clearInterval(statsInterval);
+            }
+            
+            showMessage('❌ OBS Connection Lost', 'error');
+            
+            // Re-enable connect button
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('connectBtn').textContent = 'CONNECT TO OBS';
+        }
+
+        // Toggle control panel
+        function toggleControlPanel() {
+            document.getElementById('controlPanel').classList.toggle('show');
+        }
+
+        // Show message
+        function showMessage(text, type = '') {
+            const message = document.getElementById('messageDisplay');
+            message.textContent = text;
+            message.className = 'message show ' + type;
+            
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialize
+        console.log('🔥 Alpha Wednesday Streaming Control Tool Ready!');
+        console.log('Click SETUP to connect to OBS WebSocket');
+        
+        // Initialize Universal Episode System
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadEpisodeData();
+            setupEpisodeSubscription();
+            console.log('Universal Episode System initialized');
+        });
+        
+        // Auto-show control panel on load
+        setTimeout(() => {
+            if (!isConnected) {
+                document.getElementById('controlPanel').classList.add('show');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
