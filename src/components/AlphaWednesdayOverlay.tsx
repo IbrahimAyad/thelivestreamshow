@@ -37,7 +37,7 @@ export function AlphaWednesdayOverlay() {
     const { data, error } = await supabase
       .from('broadcast_graphics')
       .select('config')
-      .eq('type', 'alpha_wednesday')
+      .eq('graphic_type', 'alpha_wednesday')
       .single()
 
     console.log('🎨 Alpha Wednesday - Loading mode:', { data, error })
@@ -57,7 +57,7 @@ export function AlphaWednesdayOverlay() {
         event: '*',
         schema: 'public',
         table: 'broadcast_graphics',
-        filter: 'type=eq.alpha_wednesday'
+        filter: 'graphic_type=eq.alpha_wednesday'
       }, (payload: any) => {
         console.log('📡 Alpha Wednesday - Mode update received:', payload)
         if (payload.new?.config?.mode) {
