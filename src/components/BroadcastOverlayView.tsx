@@ -30,7 +30,7 @@ export function BroadcastOverlayView() {
   const [popupVisible, setPopupVisible] = useState(false)
   const [popupQuestion, setPopupQuestion] = useState<ShowQuestion | null>(null)
   const [popupDuration, setPopupDuration] = useState(15)
-  const [popupAutoReadTTS, setPopupAutoReadTTS] = useState(false)
+  const [popupAutoReadTTS, setPopupAutoReadTTS] = useState(true) // Auto-play TTS by default
   const [popupNotificationSound, setPopupNotificationSound] = useState(true)
 
   // Beta Bot Avatar state
@@ -99,7 +99,7 @@ export function BroadcastOverlayView() {
       if (saved) {
         const settings = JSON.parse(saved)
         setPopupDuration(settings.duration || 15)
-        setPopupAutoReadTTS(settings.auto_read_tts || false)
+        setPopupAutoReadTTS(settings.auto_read_tts !== false) // Default to true if not explicitly set to false
         setPopupNotificationSound(settings.notification_sound_enabled !== false)
       }
     }
