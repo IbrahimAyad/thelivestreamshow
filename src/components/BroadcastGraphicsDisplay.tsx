@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { audioLayerManager } from '../utils/audio/audioLayerManager'
+import { AlphaWednesdayOverlay } from './AlphaWednesdayOverlay'
 
 interface BroadcastGraphic {
   id: string
@@ -224,6 +225,9 @@ export function BroadcastGraphicsDisplay() {
 
     // Otherwise, render the default graphic types
     switch (graphic.graphic_type) {
+      case 'alpha_wednesday':
+        return <AlphaWednesdayOverlay key={graphic.id} />
+
       case 'live_indicator':
         return (
           <div key={graphic.id} className="live-indicator-graphic">
