@@ -325,18 +325,15 @@
             right: auto;
         }
 
-        /* Gaming Layout (Solo Host) */
+        /* Gaming Layout (Clean Slate - Just Branding) */
         .layout-gaming #discordFrame {
             opacity: 0;
             pointer-events: none;
         }
 
         .layout-gaming #cameraFrame {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 50%;
-            height: 50%;
+            opacity: 0;
+            pointer-events: none;
         }
 
         .layout-gaming #mediaFrame {
@@ -518,7 +515,7 @@
                 'default': 'Default',
                 'debate': 'Debate Mode',
                 'presentation': 'Presentation',
-                'gaming': 'Gaming Mode'
+                'gaming': 'Clean Slate'
             };
 
             document.getElementById('modeDisplay').textContent = modeNames[mode] || 'Default';

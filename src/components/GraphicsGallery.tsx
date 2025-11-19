@@ -463,20 +463,25 @@ export function GraphicsGallery() {
                     <div className="flex gap-2">
                       <span className="text-sm text-gray-400 flex items-center">Layout Mode:</span>
                       <div className="flex gap-2 flex-1">
-                        {['default', 'debate', 'presentation', 'gaming'].map(mode => (
+                        {[
+                          { id: 'default', label: 'DEFAULT' },
+                          { id: 'debate', label: 'DEBATE' },
+                          { id: 'presentation', label: 'PRESENTATION' },
+                          { id: 'gaming', label: 'CLEAN SLATE' }
+                        ].map(({ id, label }) => (
                           <button
-                            key={mode}
+                            key={id}
                             onClick={(e) => {
                               e.stopPropagation()
-                              changeAlphaWednesdayMode(mode)
+                              changeAlphaWednesdayMode(id)
                             }}
                             className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                              currentMode === mode
+                              currentMode === id
                                 ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/50'
                                 : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                             }`}
                           >
-                            {mode.toUpperCase()}
+                            {label}
                           </button>
                         ))}
                       </div>
