@@ -9,6 +9,7 @@ import LowerThirdOverlay from './LowerThirdOverlay'
 import { PiNamecardOverlay } from './broadcast/PiNamecardOverlay'
 import { BroadcastGraphicsDisplay } from './BroadcastGraphicsDisplay'
 import { ShowIntroOverlay } from './ShowIntroOverlay'
+import { AlphaWednesdayOverlay } from './AlphaWednesdayOverlay'
 import { useTTS } from '../hooks/useTTS'
 import { useF5TTS } from '../hooks/useF5TTS'
 
@@ -875,6 +876,9 @@ export function BroadcastOverlayView() {
 
       {/* PI NAMECARD OVERLAY - Universal Episode Info Display */}
       <PiNamecardOverlay />
+
+      {/* ALPHA WEDNESDAY OVERLAY - Show branding and layout frames */}
+      <AlphaWednesdayOverlay />
 
       {/* BROADCAST GRAPHICS DISPLAY - Various overlays */}
       <BroadcastGraphicsDisplay />
