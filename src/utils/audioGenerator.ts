@@ -165,37 +165,17 @@ export async function playSoundEffect(effectName: string) {
     audioGenerator = new AudioGenerator();
   }
 
-  // Special case: TTS Notification - load from database (check BEFORE cache)
+  // Special case: TTS Notification - use temporary hardcoded URL
   if (effectName === 'TTS Notification' || effectName === 'TTS-Notification') {
-    console.log('🔔 TTS Notification detected, loading from database...')
+    console.log('🔔 TTS Notification detected, using temporary sound...')
     try {
-      // Dynamically import supabase to avoid circular dependencies
-      const { supabase } = await import('../lib/supabase')
-
-      // Fetch the sound effect from database
-      const { data, error } = await supabase
-        .from('soundboard_effects')
-        .select('audio_url, volume')
-        .eq('effect_name', 'TTS Notification')
-        .single()
-
-      if (error || !data) {
-        console.error('❌ TTS Notification not found in database:', error)
-        return
-      }
-
-      console.log('✅ TTS Notification found:', data)
-
-      // Play the audio file
-      const audioPath = data.audio_url
-      if (!audioPath) {
-        console.error('❌ No audio path found for TTS Notification')
-        return
-      }
+      // TEMPORARY: Using a simple notification beep
+      // TODO: Replace with actual TTS-Notification file once uploaded correctly
+      const audioPath = 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg'
 
       console.log('▶️ Playing TTS Notification from:', audioPath)
       const audio = new Audio(audioPath)
-      audio.volume = data.volume ?? 0.7
+      audio.volume = 0.7
       await audio.play()
       console.log('✅ TTS Notification played successfully')
       return
