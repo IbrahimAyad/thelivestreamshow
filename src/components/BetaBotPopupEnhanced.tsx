@@ -335,12 +335,11 @@ export const BetaBotPopupEnhanced: React.FC<BetaBotPopupEnhancedProps> = ({
           top: 50%;
           transform: translateY(-50%);
           width: 480px;
-          background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(20, 20, 20, 0.95));
+          background: linear-gradient(135deg, rgba(0, 0, 0, 0.98), rgba(20, 20, 20, 0.98));
           border: 3px solid ${character.color};
           border-radius: 20px;
           padding: 24px;
           box-shadow: 0 0 40px ${character.color}40, 0 15px 50px rgba(0, 0, 0, 0.8);
-          backdrop-filter: blur(20px);
           z-index: 1000;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
         }
