@@ -131,7 +131,14 @@ export const BetaBotPopupEnhanced: React.FC<BetaBotPopupEnhancedProps> = ({
 
   // Auto-dismiss timer
   useEffect(() => {
-    if (!visible || !question) return
+    if (!visible || !question) {
+      console.log('🚫 Popup not showing:', { visible, hasQuestion: !!question })
+      return
+    }
+
+    console.log('✅ Popup showing question:', question)
+    console.log('🔊 Audio URL:', question.tts_audio_url)
+    console.log('⚙️ Settings:', { notificationSoundEnabled, autoReadTTS })
 
     setTimeRemaining(duration)
     setIsExiting(false)
@@ -161,8 +168,10 @@ export const BetaBotPopupEnhanced: React.FC<BetaBotPopupEnhancedProps> = ({
 
   const playNotificationSound = async () => {
     try {
+      console.log('🔔 Playing TTS Notification sound...')
       // Play the notification sound using audioGenerator
       await playSoundEffect('TTS Notification')
+      console.log('✅ TTS Notification sound played')
 
       // Also update database flag for other systems that might be listening
       await supabase
@@ -200,11 +209,12 @@ export const BetaBotPopupEnhanced: React.FC<BetaBotPopupEnhancedProps> = ({
 
   const handlePlayTTS = async () => {
     if (!question || !question.tts_audio_url) {
-      console.warn('TTS not available - no audio URL')
+      console.warn('⚠️ TTS not available - no audio URL')
       return
     }
 
     try {
+      console.log('🗣️ Playing TTS audio from:', question.tts_audio_url)
       setIsTTSPlaying(true)
 
       // Play the pre-generated ElevenLabs audio
@@ -212,17 +222,19 @@ export const BetaBotPopupEnhanced: React.FC<BetaBotPopupEnhancedProps> = ({
       audio.volume = 1.0 // Full volume for broadcast
 
       audio.onended = () => {
+        console.log('✅ TTS audio finished')
         setIsTTSPlaying(false)
       }
 
       audio.onerror = (error) => {
-        console.error('Audio playback error:', error)
+        console.error('❌ Audio playback error:', error)
         setIsTTSPlaying(false)
       }
 
       await audio.play()
+      console.log('▶️ TTS audio started')
     } catch (error) {
-      console.error('TTS playback failed:', error)
+      console.error('❌ TTS playback failed:', error)
       setIsTTSPlaying(false)
     }
   }

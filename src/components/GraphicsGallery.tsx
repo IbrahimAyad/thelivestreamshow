@@ -817,18 +817,28 @@ export function GraphicsGallery() {
                       <p className="text-white text-sm line-clamp-2">{q.question_text}</p>
                     </div>
                     <div className="flex gap-2">
+                      {!q.tts_generated && generatingTTS !== q.id && (
+                        <button
+                          onClick={() => generateQuestionTTS(q.id, q.question_text)}
+                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded transition-colors flex items-center gap-2"
+                          title="Generate TTS audio"
+                        >
+                          <Volume2 className="w-4 h-4" />
+                          Generate TTS
+                        </button>
+                      )}
                       <button
                         onClick={() => sendQuestionToOverlay(q.id)}
                         disabled={!q.tts_generated}
                         className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white font-bold rounded transition-colors flex items-center gap-2"
-                        title={q.tts_generated ? 'Send to overlay' : 'TTS not ready'}
+                        title={q.tts_generated ? 'Send to overlay' : 'Generate TTS first'}
                       >
                         <Send className="w-4 h-4" />
                         SEND
                       </button>
                       <button
                         onClick={() => deleteQuestion(q.id)}
-                        className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                        className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded transition-colors"
                         title="Delete question"
                       >
                         <Trash2 className="w-4 h-4" />

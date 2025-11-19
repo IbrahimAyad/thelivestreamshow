@@ -25,6 +25,7 @@ export function BroadcastOverlayView() {
   const [timelineTimeout, setTimelineTimeout] = useState<NodeJS.Timeout | null>(null)
   const [nextSegment, setNextSegment] = useState<ShowSegment | null>(null)
   const [showNextUp, setShowNextUp] = useState(false)
+  const [audioUnlocked, setAudioUnlocked] = useState(false)
 
   // BetaBot Popup state
   const [popupVisible, setPopupVisible] = useState(false)
@@ -68,11 +69,29 @@ export function BroadcastOverlayView() {
       f5TTS.loadVoices()
     }
 
+    // Unlock audio on first user interaction
+    const unlockAudio = () => {
+      if (!audioUnlocked) {
+        const silentAudio = new Audio()
+        silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'
+        silentAudio.play().then(() => {
+          console.log('✅ Audio unlocked for autoplay')
+          setAudioUnlocked(true)
+        }).catch(() => {
+          console.log('⚠️ Audio unlock failed')
+        })
+      }
+    }
+
+    // Listen for any click to unlock audio
+    document.addEventListener('click', unlockAudio, { once: true })
+
     return () => {
       document.body.classList.remove('broadcast-mode')
       document.documentElement.classList.remove('broadcast-mode')
+      document.removeEventListener('click', unlockAudio)
     }
-  }, [f5TTS.isConnected])
+  }, [f5TTS.isConnected, audioUnlocked])
 
   // Load initial data and subscribe to changes
   useEffect(() => {
