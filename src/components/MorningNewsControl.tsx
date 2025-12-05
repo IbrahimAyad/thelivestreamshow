@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchMorningNews, fetchCategoryNews, getDemoNews, NewsStory } from '../lib/api/morningNews'
-import { Newspaper, RefreshCw, TrendingUp, Zap, Tv, Trophy, Sparkles, Eye, EyeOff } from 'lucide-react'
+import { Newspaper, RefreshCw, TrendingUp, Zap, Tv, Trophy, Sparkles, Eye, EyeOff, Radio } from 'lucide-react'
 
 // Normalize categories to match database constraints
 const normalizeCategory = (cat: string): string => {
@@ -260,6 +260,35 @@ export function MorningNewsControl() {
     }
   }
 
+  const handleQueueForBroadcast = async (story: NewsStory) => {
+    try {
+      console.log('🎙️ Queueing story for broadcast:', story.headline)
+
+      const { error } = await supabase
+        .from('show_questions')
+        .insert({
+          topic: story.category,
+          question_text: story.headline,
+          source: 'news_feed',
+          author_name: 'Breaking News', // Fallback if column exists, otherwise ignored by Supabase if not in schema
+          context_metadata: {
+            summary: story.summary,
+            source: story.source,
+            talking_points: story.talkingPoints,
+            original_story_id: story.id
+          }
+        })
+
+      if (error) throw error
+
+      console.log('✅ Story queued successfully')
+      alert('Story queued for TTS Broadcast!')
+    } catch (err: any) {
+      console.error('Failed to queue story:', err)
+      setError(err.message || 'Failed to queue story')
+    }
+  }
+
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'breaking': return Zap
@@ -397,11 +426,10 @@ export function MorningNewsControl() {
             return (
               <div
                 key={story.id}
-                className={`bg-gray-800/50 border-2 rounded-lg p-4 transition-colors ${
-                  story.isVisible
-                    ? 'border-cyan-600/70 shadow-lg shadow-cyan-600/20'
-                    : 'border-gray-700 hover:border-gray-600'
-                }`}
+                className={`bg-gray-800/50 border-2 rounded-lg p-4 transition-colors ${story.isVisible
+                  ? 'border-cyan-600/70 shadow-lg shadow-cyan-600/20'
+                  : 'border-gray-700 hover:border-gray-600'
+                  }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -414,13 +442,20 @@ export function MorningNewsControl() {
                     )}
                   </div>
                   <button
-                    onClick={() => toggleStoryVisibility(story.id, story.isVisible || false)}
-                    className={`p-2 rounded-md transition-colors ${
-                      story.isVisible
-                        ? 'bg-cyan-600 hover:bg-cyan-700'
-                        : 'bg-gray-700 hover:bg-gray-600'
-                    }`}
-                    title={story.isVisible ? "Hide from overlay" : "Show on overlay"}
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey) {
+                        handleQueueForBroadcast(story)
+                      } else {
+                        toggleStoryVisibility(story.id, story.isVisible || false)
+                      }
+                    }}
+                    className={`p-2 rounded-md transition-colors ${story.isVisible
+                      ? 'bg-cyan-600 hover:bg-cyan-700'
+                      : 'bg-gray-700 hover:bg-gray-600'
+                      }`}
+                    title={story.isVisible
+                      ? "Click to hide from ticker (Cmd+Click to Queue for TTS)"
+                      : "Click to show on ticker (Cmd+Click to Queue for TTS)"}
                   >
                     {story.isVisible ? (
                       <Eye className="w-4 h-4 text-white" />

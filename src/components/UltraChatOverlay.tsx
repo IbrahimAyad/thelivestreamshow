@@ -1,93 +1,112 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { MessageSquare, User } from 'lucide-react'
+import { MessageSquare, User, Newspaper, Radio } from 'lucide-react'
 
 interface ShowQuestion {
-    id: string
-    question_text: string
-    author_name?: string
-    author_avatar?: string
-    is_played: boolean
+  id: string
+  question_text: string
+  author_name?: string
+  author_avatar?: string
+  is_played: boolean
+  source?: string
+  context_metadata?: any
 }
 
 export function UltraChatOverlay() {
-    const [activeQuestion, setActiveQuestion] = useState<ShowQuestion | null>(null)
-    const [isVisible, setIsVisible] = useState(false)
+  const [activeQuestion, setActiveQuestion] = useState<ShowQuestion | null>(null)
+  const [isVisible, setIsVisible] = useState(false)
 
-    useEffect(() => {
-        // Check for currently playing question
-        checkActiveQuestion()
+  useEffect(() => {
+    // Check for currently playing question
+    checkActiveQuestion()
 
-        // Subscribe to changes
-        const channel = supabase
-            .channel('ultra_chat_overlay')
-            .on('postgres_changes', {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'show_questions'
-            }, (payload) => {
-                const newQuestion = payload.new as ShowQuestion
-                if (newQuestion.is_played) {
-                    setActiveQuestion(newQuestion)
-                    setIsVisible(true)
-                } else if (activeQuestion?.id === newQuestion.id && !newQuestion.is_played) {
-                    setIsVisible(false)
-                    setTimeout(() => setActiveQuestion(null), 500) // Wait for exit animation
-                }
-            })
-            .subscribe()
-
-        return () => {
-            channel.unsubscribe()
+    // Subscribe to changes
+    const channel = supabase
+      .channel('ultra_chat_overlay')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'show_questions'
+      }, (payload) => {
+        const newQuestion = payload.new as ShowQuestion
+        if (newQuestion.is_played) {
+          setActiveQuestion(newQuestion)
+          setIsVisible(true)
+        } else if (activeQuestion?.id === newQuestion.id && !newQuestion.is_played) {
+          setIsVisible(false)
+          setTimeout(() => setActiveQuestion(null), 500) // Wait for exit animation
         }
-    }, [activeQuestion])
+      })
+      .subscribe()
 
-    const checkActiveQuestion = async () => {
-        const { data } = await supabase
-            .from('show_questions')
-            .select('*')
-            .eq('is_played', true)
-            .maybeSingle()
-
-        if (data) {
-            setActiveQuestion(data as ShowQuestion)
-            setIsVisible(true)
-        }
+    return () => {
+      channel.unsubscribe()
     }
+  }, [activeQuestion])
 
-    if (!activeQuestion && !isVisible) return null
+  const checkActiveQuestion = async () => {
+    const { data } = await supabase
+      .from('show_questions')
+      .select('*')
+      .eq('is_played', true)
+      .maybeSingle()
 
-    return (
-        <div className={`ultra-chat-container ${isVisible ? 'visible' : 'hidden'}`}>
-            <div className="ultra-chat-card">
-                <div className="ultra-chat-header">
-                    <div className="avatar-container">
-                        {activeQuestion?.author_avatar ? (
-                            <img src={activeQuestion.author_avatar} alt="User" className="avatar-img" />
-                        ) : (
-                            <div className="avatar-placeholder">
-                                <User className="w-6 h-6 text-white" />
-                            </div>
-                        )}
-                    </div>
-                    <div className="author-info">
-                        <span className="author-name">{activeQuestion?.author_name || 'Viewer Question'}</span>
-                        <span className="badge">ULTRA CHAT</span>
-                    </div>
-                    <MessageSquare className="w-6 h-6 text-white opacity-80" />
-                </div>
+    if (data) {
+      setActiveQuestion(data as ShowQuestion)
+      setIsVisible(true)
+    }
+  }
 
-                <div className="ultra-chat-body">
-                    <p className="question-text">{activeQuestion?.question_text}</p>
-                </div>
-            </div>
+  if (!activeQuestion && !isVisible) return null
 
-            <style>{`
+  const isNews = activeQuestion?.source === 'news_feed'
+
+  return (
+    <div className={`ultra-chat-container ${isVisible ? 'visible' : 'hidden'}`}>
+      <div className={`ultra-chat-card ${isNews ? 'news-mode' : ''}`}>
+        <div className={`ultra-chat-header ${isNews ? 'news-header' : ''}`}>
+          <div className="avatar-container">
+            {isNews ? (
+              <div className="avatar-placeholder news-icon">
+                <Newspaper className="w-6 h-6 text-white" />
+              </div>
+            ) : activeQuestion?.author_avatar ? (
+              <img src={activeQuestion.author_avatar} alt="User" className="avatar-img" />
+            ) : (
+              <div className="avatar-placeholder">
+                <User className="w-6 h-6 text-white" />
+              </div>
+            )}
+          </div>
+          <div className="author-info">
+            <span className="author-name">
+              {isNews ? 'BREAKING NEWS' : (activeQuestion?.author_name || 'Viewer Question')}
+            </span>
+            <span className="badge">
+              {isNews ? 'LIVE REPORT' : 'ULTRA CHAT'}
+            </span>
+          </div>
+          {isNews ? (
+            <Radio className="w-6 h-6 text-white opacity-80 animate-pulse" />
+          ) : (
+            <MessageSquare className="w-6 h-6 text-white opacity-80" />
+          )}
+        </div>
+
+        <div className="ultra-chat-body">
+          <p className="question-text">{activeQuestion?.question_text}</p>
+          {isNews && activeQuestion?.context_metadata?.summary && (
+            <p className="news-summary">{activeQuestion.context_metadata.summary}</p>
+          )}
+        </div>
+      </div>
+
+      <style>{`
         .ultra-chat-container {
           position: absolute;
-          bottom: 180px; /* Positioned above the lower third area */
+          bottom: 180px;
           right: 60px;
-          width: 500px;
+          width: 600px; /* Wider for news */
           perspective: 1000px;
           z-index: 200;
           transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -106,13 +125,21 @@ export function UltraChatOverlay() {
 
         .ultra-chat-card {
           background: rgba(15, 23, 42, 0.95);
-          border: 2px solid #ec4899; /* Pink border for "Ultra" feel */
+          border: 2px solid #ec4899;
           border-radius: 20px;
           overflow: hidden;
           box-shadow: 
             0 10px 30px rgba(0, 0, 0, 0.5),
             0 0 20px rgba(236, 72, 153, 0.3),
             inset 0 0 20px rgba(236, 72, 153, 0.1);
+        }
+
+        .ultra-chat-card.news-mode {
+          border-color: #06b6d4; /* Cyan for news */
+          box-shadow: 
+            0 10px 30px rgba(0, 0, 0, 0.5),
+            0 0 20px rgba(6, 182, 212, 0.3),
+            inset 0 0 20px rgba(6, 182, 212, 0.1);
         }
 
         .ultra-chat-header {
@@ -122,6 +149,10 @@ export function UltraChatOverlay() {
           align-items: center;
           gap: 12px;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ultra-chat-header.news-header {
+          background: linear-gradient(90deg, #0891b2, #06b6d4);
         }
 
         .avatar-container {
@@ -147,6 +178,10 @@ export function UltraChatOverlay() {
           align-items: center;
           justify-content: center;
           background: #333;
+        }
+
+        .news-icon {
+          background: #0e7490;
         }
 
         .author-info {
@@ -180,12 +215,21 @@ export function UltraChatOverlay() {
 
         .question-text {
           color: white;
-          font-size: 20px;
-          font-weight: 600;
-          line-height: 1.4;
+          font-size: 24px;
+          font-weight: 700;
+          line-height: 1.3;
           text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+          margin-bottom: 8px;
+        }
+
+        .news-summary {
+          color: #cbd5e1;
+          font-size: 16px;
+          line-height: 1.5;
+          border-left: 3px solid #06b6d4;
+          padding-left: 12px;
         }
       `}</style>
-        </div>
-    )
+    </div>
+  )
 }
