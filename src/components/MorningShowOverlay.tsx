@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { UltraChatOverlay } from './UltraChatOverlay'
+import { Newspaper, TrendingUp } from 'lucide-react'
 
 interface EpisodeInfo {
   episode_number?: number
@@ -8,44 +10,84 @@ interface EpisodeInfo {
   is_active: boolean
 }
 
+interface NewsStory {
+  id: string
+  headline: string
+  category: string
+  source: string
+  is_visible: boolean
+}
+
 export function MorningShowOverlay() {
   const [episodeInfo, setEpisodeInfo] = useState<EpisodeInfo | null>(null)
+  const [newsStories, setNewsStories] = useState<NewsStory[]>([])
+  const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
 
   useEffect(() => {
     loadEpisodeInfo()
+    loadNewsStories()
     subscribeToChanges()
   }, [])
 
+  // Rotate news stories every 8 seconds
+  useEffect(() => {
+    if (newsStories.length === 0) return
+
+    const interval = setInterval(() => {
+      setCurrentNewsIndex(prev => (prev + 1) % newsStories.length)
+    }, 8000)
+
+    return () => clearInterval(interval)
+  }, [newsStories.length])
+
   const loadEpisodeInfo = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('episode_info')
       .select('*')
       .eq('is_active', true)
       .single()
 
-    console.log('☀️ Morning Show - Loading episode info:', { data, error })
-    if (data) {
-      setEpisodeInfo(data)
-    }
+    if (data) setEpisodeInfo(data)
+  }
+
+  const loadNewsStories = async () => {
+    const { data } = await supabase
+      .from('morning_news_stories')
+      .select('*')
+      .eq('is_visible', true)
+      .order('display_order', { ascending: true })
+
+    if (data) setNewsStories(data)
   }
 
   const subscribeToChanges = () => {
-    const channel = supabase
-      .channel('morning-show-overlay')
+    // Episode Info Subscription
+    const episodeChannel = supabase
+      .channel('morning-show-info')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'episode_info'
-      }, () => {
-        console.log('☀️ Episode info updated, reloading...')
-        loadEpisodeInfo()
-      })
+      }, () => loadEpisodeInfo())
+      .subscribe()
+
+    // News Stories Subscription
+    const newsChannel = supabase
+      .channel('morning-show-news')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'morning_news_stories'
+      }, () => loadNewsStories())
       .subscribe()
 
     return () => {
-      channel.unsubscribe()
+      episodeChannel.unsubscribe()
+      newsChannel.unsubscribe()
     }
   }
+
+  const currentStory = newsStories[currentNewsIndex]
 
   return (
     <div className="morning-show-overlay">
@@ -57,7 +99,7 @@ export function MorningShowOverlay() {
         <div className="particle particle-4"></div>
       </div>
 
-      {/* Top Bar */}
+      {/* Top Bar - Minimalist */}
       <div className="top-bar">
         <div className="episode-badge">
           EP {episodeInfo?.episode_number || 1}
@@ -67,11 +109,31 @@ export function MorningShowOverlay() {
         </div>
       </div>
 
-      {/* Bottom Bar */}
+      {/* Ultra Chat Overlay - Appears when active */}
+      <UltraChatOverlay />
+
+      {/* Bottom Bar - News Ticker & Branding */}
       <div className="bottom-bar">
-        <div className="show-branding">
-          <div className="show-title">THE MORNING SHOW</div>
-          <div className="show-subtitle">{episodeInfo?.episode_topic || 'Starting Your Day Right'}</div>
+        <div className="bottom-content">
+          {/* Left: Show Branding */}
+          <div className="show-branding">
+            <div className="show-title">THE MORNING SHOW</div>
+            <div className="show-subtitle">{episodeInfo?.episode_topic || 'Starting Your Day Right'}</div>
+          </div>
+
+          {/* Right: News Ticker */}
+          {currentStory && (
+            <div className="news-ticker">
+              <div className="news-label">
+                <TrendingUp className="w-5 h-5 text-white" />
+                <span>LATEST NEWS</span>
+              </div>
+              <div className="news-content">
+                <span className="news-category">{currentStory.category}</span>
+                <span className="news-headline">{currentStory.headline}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -82,7 +144,7 @@ export function MorningShowOverlay() {
           width: 1920px;
           height: 1080px;
           pointer-events: none;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         /* Animated Background Particles */
@@ -97,147 +159,169 @@ export function MorningShowOverlay() {
           position: absolute;
           width: 200px;
           height: 200px;
-          background: radial-gradient(circle, rgba(6, 182, 212, 0.2) 0%, transparent 70%);
+          background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, transparent 70%);
           border-radius: 50%;
           filter: blur(40px);
           animation: particleFloat 15s infinite ease-in-out;
           opacity: 0.5;
         }
 
-        .particle-1 {
-          left: 10%;
-          top: 15%;
-          animation-duration: 18s;
-          animation-delay: 0s;
-        }
-
-        .particle-2 {
-          right: 15%;
-          top: 50%;
-          animation-duration: 22s;
-          animation-delay: 4s;
-        }
-
-        .particle-3 {
-          left: 40%;
-          bottom: 20%;
-          animation-duration: 20s;
-          animation-delay: 8s;
-        }
-
-        .particle-4 {
-          right: 35%;
-          top: 10%;
-          animation-duration: 25s;
-          animation-delay: 12s;
-        }
+        .particle-1 { left: 10%; top: 15%; animation-duration: 18s; }
+        .particle-2 { right: 15%; top: 50%; animation-duration: 22s; animation-delay: 4s; }
+        .particle-3 { left: 40%; bottom: 20%; animation-duration: 20s; animation-delay: 8s; }
+        .particle-4 { right: 35%; top: 10%; animation-duration: 25s; animation-delay: 12s; }
 
         @keyframes particleFloat {
-          0%, 100% {
-            transform: translate(0, 0) scale(1);
-            opacity: 0.4;
-          }
-          25% {
-            transform: translate(30px, -30px) scale(1.1);
-            opacity: 0.6;
-          }
-          50% {
-            transform: translate(-20px, 20px) scale(0.9);
-            opacity: 0.5;
-          }
-          75% {
-            transform: translate(25px, 25px) scale(1.05);
-            opacity: 0.55;
-          }
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+          25% { transform: translate(30px, -30px) scale(1.1); opacity: 0.6; }
+          50% { transform: translate(-20px, 20px) scale(0.9); opacity: 0.5; }
+          75% { transform: translate(25px, 25px) scale(1.05); opacity: 0.55; }
         }
 
         /* Top Bar */
         .top-bar {
           position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 100px;
-          background: linear-gradient(to bottom,
-            rgba(6, 182, 212, 0.95) 0%,
-            rgba(8, 145, 178, 0.8) 40%,
-            rgba(6, 182, 212, 0.3) 100%
-          );
+          top: 40px;
+          left: 40px;
           display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          padding: 15px 30px 0 30px;
+          align-items: center;
+          gap: 20px;
           z-index: 100;
-          border-bottom: 3px solid rgba(6, 182, 212, 0.6);
-          box-shadow: 0 4px 20px rgba(6, 182, 212, 0.4);
         }
 
         .episode-badge {
           background: linear-gradient(135deg, #0891b2, #06b6d4);
           color: white;
-          padding: 10px 20px;
+          padding: 8px 16px;
           border-radius: 8px;
-          font-size: 20px;
+          font-size: 18px;
           font-weight: 800;
-          letter-spacing: 2px;
-          box-shadow: 0 4px 15px rgba(6, 182, 212, 0.5);
+          letter-spacing: 1px;
+          box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
         }
 
         .episode-title {
-          flex: 1;
-          text-align: center;
           color: white;
-          font-size: 32px;
-          font-weight: 900;
+          font-size: 24px;
+          font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 3px;
-          text-shadow: 0 3px 10px rgba(0, 0, 0, 0.8);
+          letter-spacing: 2px;
+          text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+          background: rgba(0, 0, 0, 0.4);
           padding: 8px 20px;
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(4px);
         }
 
         /* Bottom Bar */
         .bottom-bar {
           position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 130px;
-          background: linear-gradient(to top,
-            rgba(6, 182, 212, 0.95) 0%,
-            rgba(8, 145, 178, 0.8) 40%,
-            rgba(6, 182, 212, 0.3) 100%
-          );
+          bottom: 40px;
+          left: 40px;
+          right: 40px;
+          height: 100px;
+          z-index: 90;
+          display: flex;
+          align-items: flex-end;
+        }
+
+        .bottom-content {
+          width: 100%;
           display: flex;
           align-items: center;
-          justify-content: center;
-          padding: 0 40px;
-          z-index: 90;
-          border-top: 3px solid rgba(6, 182, 212, 0.6);
-          box-shadow: 0 -4px 20px rgba(6, 182, 212, 0.4);
+          justify-content: space-between;
+          background: linear-gradient(90deg, 
+            rgba(8, 145, 178, 0.9) 0%, 
+            rgba(6, 182, 212, 0.8) 40%, 
+            rgba(15, 23, 42, 0.9) 100%
+          );
+          border-radius: 16px;
+          padding: 0 30px;
+          height: 90px;
+          border: 2px solid rgba(6, 182, 212, 0.4);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(10px);
         }
 
         .show-branding {
           display: flex;
           flex-direction: column;
-          align-items: center;
-          gap: 5px;
+          justify-content: center;
         }
 
         .show-title {
-          font-size: 60px;
+          font-size: 36px;
           font-weight: 900;
           color: white;
-          letter-spacing: 8px;
-          text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+          letter-spacing: 2px;
           line-height: 1;
+          margin-bottom: 4px;
         }
 
         .show-subtitle {
           font-size: 14px;
-          color: rgba(255, 255, 255, 0.9);
-          letter-spacing: 3px;
+          color: rgba(255, 255, 255, 0.8);
+          letter-spacing: 1px;
           text-transform: uppercase;
-          margin-top: -5px;
+          font-weight: 600;
+        }
+
+        /* News Ticker */
+        .news-ticker {
+          flex: 1;
+          margin-left: 60px;
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .news-label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(255, 255, 255, 0.1);
+          padding: 8px 16px;
+          border-radius: 8px;
+          color: #22d3ee;
+          font-weight: 700;
+          font-size: 14px;
+          letter-spacing: 1px;
+          white-space: nowrap;
+        }
+
+        .news-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          animation: slideIn 0.5s ease-out;
+        }
+
+        .news-category {
+          background: #ec4899;
+          color: white;
+          padding: 4px 10px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+
+        .news-headline {
+          color: white;
+          font-size: 20px;
+          font-weight: 500;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 800px;
+        }
+
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
