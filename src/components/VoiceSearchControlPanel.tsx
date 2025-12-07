@@ -15,54 +15,83 @@ export function VoiceSearchControlPanel({ isActive, onToggle }: VoiceSearchContr
   // Handle session state changes
   useEffect(() => {
     const updateSession = async () => {
-      if (isActive) {
-        // Create or update session to active
-        const { data: existingSession } = await supabase
-          .from('voice_search_sessions')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
+      try {
+        if (isActive) {
+          console.log('🎤 [VoiceSearchControl] Activating voice search...')
 
-        if (existingSession) {
-          // Update existing session
-          await supabase
+          // Create or update session to active
+          const { data: existingSession, error: fetchError } = await supabase
+            .from('voice_search_sessions')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+          if (fetchError) {
+            console.error('❌ [VoiceSearchControl] Table not found. Run SQL from /tmp/create_voice_search.sql')
+            console.error('Error:', fetchError.message)
+            return
+          }
+
+          if (existingSession) {
+            // Update existing session
+            const { error: updateError } = await supabase
+              .from('voice_search_sessions')
+              .update({
+                session_active: true,
+                started_at: new Date().toISOString()
+              })
+              .eq('id', existingSession.id)
+
+            if (updateError) {
+              console.error('❌ [VoiceSearchControl] Failed to update session:', updateError)
+              return
+            }
+
+            setSessionId(existingSession.id)
+            console.log('✅ [VoiceSearchControl] Session activated:', existingSession.id)
+          } else {
+            // Create new session
+            const { data: newSession, error: createError } = await supabase
+              .from('voice_search_sessions')
+              .insert({
+                session_active: true,
+                started_at: new Date().toISOString()
+              })
+              .select()
+              .single()
+
+            if (createError) {
+              console.error('❌ [VoiceSearchControl] Failed to create session:', createError)
+              return
+            }
+
+            if (newSession) {
+              setSessionId(newSession.id)
+              console.log('✅ [VoiceSearchControl] New session created:', newSession.id)
+            }
+          }
+        } else if (sessionId) {
+          console.log('🛑 [VoiceSearchControl] Deactivating voice search...')
+
+          // Deactivate session
+          const { error: deactivateError } = await supabase
             .from('voice_search_sessions')
             .update({
-              session_active: true,
-              started_at: new Date().toISOString()
+              session_active: false,
+              ended_at: new Date().toISOString()
             })
-            .eq('id', existingSession.id)
+            .eq('id', sessionId)
 
-          setSessionId(existingSession.id)
-          console.log('🎤 Voice search session activated:', existingSession.id)
-        } else {
-          // Create new session
-          const { data: newSession } = await supabase
-            .from('voice_search_sessions')
-            .insert({
-              session_active: true,
-              started_at: new Date().toISOString()
-            })
-            .select()
-            .single()
-
-          if (newSession) {
-            setSessionId(newSession.id)
-            console.log('🎤 New voice search session created:', newSession.id)
+          if (deactivateError) {
+            console.error('❌ [VoiceSearchControl] Failed to deactivate:', deactivateError)
+            return
           }
-        }
-      } else if (sessionId) {
-        // Deactivate session
-        await supabase
-          .from('voice_search_sessions')
-          .update({
-            session_active: false,
-            ended_at: new Date().toISOString()
-          })
-          .eq('id', sessionId)
 
-        console.log('🛑 Voice search session deactivated:', sessionId)
+          console.log('✅ [VoiceSearchControl] Session deactivated:', sessionId)
+        }
+      } catch (err) {
+        console.error('❌ [VoiceSearchControl] Unexpected error:', err)
       }
     }
 

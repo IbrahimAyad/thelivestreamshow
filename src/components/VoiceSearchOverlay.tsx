@@ -9,6 +9,7 @@ interface VoiceSearchSession {
 
 export function VoiceSearchOverlay() {
   const [isActive, setIsActive] = useState(false)
+  const [hasLoggedError, setHasLoggedError] = useState(false)
 
   useEffect(() => {
     // Subscribe to voice search session status
@@ -22,24 +23,55 @@ export function VoiceSearchOverlay() {
           table: 'voice_search_sessions'
         },
         (payload) => {
-          console.log('🎤 Voice search session update:', payload)
+          console.log('🎤 [VoiceSearchOverlay] Session update:', payload)
           const session = payload.new as VoiceSearchSession
-          setIsActive(session?.session_active || false)
+          const newActiveState = session?.session_active || false
+          console.log('🎤 [VoiceSearchOverlay] Setting active state to:', newActiveState)
+          setIsActive(newActiveState)
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ [VoiceSearchOverlay] Subscribed to voice_search_sessions')
+          setHasLoggedError(false)
+        } else if (status === 'CHANNEL_ERROR') {
+          if (!hasLoggedError) {
+            console.warn('⚠️ [VoiceSearchOverlay] Channel error - table may not exist yet. Run SQL setup from /tmp/create_voice_search.sql')
+            setHasLoggedError(true)
+          }
+        }
+      })
 
     // Fetch initial state
     const fetchInitialState = async () => {
-      const { data, error } = await supabase
-        .from('voice_search_sessions')
-        .select('session_active')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
+      try {
+        const { data, error } = await supabase
+          .from('voice_search_sessions')
+          .select('session_active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
 
-      if (data && !error) {
-        setIsActive(data.session_active || false)
+        if (error) {
+          if (!hasLoggedError) {
+            console.warn('⚠️ [VoiceSearchOverlay] Table not found:', error.message)
+            console.warn('📋 Run this SQL: /tmp/create_voice_search.sql')
+            setHasLoggedError(true)
+          }
+          return
+        }
+
+        if (data) {
+          console.log('🎤 [VoiceSearchOverlay] Initial state:', data.session_active)
+          setIsActive(data.session_active || false)
+        } else {
+          console.log('🎤 [VoiceSearchOverlay] No session found, defaulting to inactive')
+        }
+      } catch (err) {
+        if (!hasLoggedError) {
+          console.error('❌ [VoiceSearchOverlay] Error fetching initial state:', err)
+          setHasLoggedError(true)
+        }
       }
     }
 
