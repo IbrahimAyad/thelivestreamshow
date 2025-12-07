@@ -25,45 +25,77 @@ export function VoiceSearchControlPanel({ isActive, onToggle }: VoiceSearchContr
       return
     }
 
+    let debounceTimer: NodeJS.Timeout | null = null
+    let lastInterimQuery = ''
+
     // Set up callback to handle transcripts
     const handleTranscript = (segment: { id: string, transcript: string, confidence: number, timestamp: Date, isFinal: boolean }) => {
-      if (!segment.isFinal) return
-
       const query = segment.transcript.trim()
       if (!query) return
 
-      console.log(`🎯 [VoiceSearch] Mode: ${activeMode}, Query: "${query}"`)
+      // Update last query for display
       setLastQuery(query)
 
-      // Execute search based on active mode (don't await - let it run async)
-      const executeSearch = async () => {
-        try {
-          if (activeMode === 'alakazam') {
-            console.log('🔍 Executing Perplexity search...')
-            await handlePerplexitySearch(query)
-          } else if (activeMode === 'kadabra') {
-            console.log('🎥 Executing YouTube search...')
-            await handleVideoSearch(query)
-          } else if (activeMode === 'abra') {
-            console.log('🖼️ Executing Unsplash search...')
-            await handleImageSearch(query)
-          }
+      // If final, execute immediately
+      if (segment.isFinal) {
+        console.log(`🎯 [VoiceSearch] FINAL transcript - Mode: ${activeMode}, Query: "${query}"`)
 
-          // Clear mode after executing
-          setActiveMode(null)
-          console.log('✅ [VoiceSearch] Search completed, mode cleared')
-        } catch (error) {
-          console.error('❌ [VoiceSearch] Search failed:', error)
+        // Clear any pending debounce
+        if (debounceTimer) {
+          clearTimeout(debounceTimer)
+          debounceTimer = null
         }
+
+        executeSearchNow(query)
+        return
       }
 
-      executeSearch()
+      // For interim results, debounce to wait for more speech
+      console.log(`💭 [VoiceSearch] Interim transcript: "${query}"`)
+      lastInterimQuery = query
+
+      // Clear previous timer
+      if (debounceTimer) {
+        clearTimeout(debounceTimer)
+      }
+
+      // Wait 2 seconds after last speech before executing interim query
+      debounceTimer = setTimeout(() => {
+        if (lastInterimQuery && lastInterimQuery.length > 3) {
+          console.log(`🎯 [VoiceSearch] Executing interim query after pause: "${lastInterimQuery}"`)
+          executeSearchNow(lastInterimQuery)
+        }
+      }, 2000)
+    }
+
+    const executeSearchNow = async (query: string) => {
+      try {
+        if (activeMode === 'alakazam') {
+          console.log('🔍 Executing Perplexity search...')
+          await handlePerplexitySearch(query)
+        } else if (activeMode === 'kadabra') {
+          console.log('🎥 Executing YouTube search...')
+          await handleVideoSearch(query)
+        } else if (activeMode === 'abra') {
+          console.log('🖼️ Executing Unsplash search...')
+          await handleImageSearch(query)
+        }
+
+        // Clear mode after executing
+        setActiveMode(null)
+        console.log('✅ [VoiceSearch] Search completed, mode cleared')
+      } catch (error) {
+        console.error('❌ [VoiceSearch] Search failed:', error)
+      }
     }
 
     transcriptListener.onTranscript(handleTranscript)
 
     return () => {
-      // Cleanup callback
+      // Cleanup callback and timers
+      if (debounceTimer) {
+        clearTimeout(debounceTimer)
+      }
       if (transcriptListener) {
         transcriptListener.onTranscript(() => {})
       }
