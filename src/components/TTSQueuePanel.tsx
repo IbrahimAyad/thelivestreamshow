@@ -55,9 +55,9 @@ export function TTSQueuePanel() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           text: text,
-          voiceId: 'en-US-GuyNeural' // Maps to Matthew: Professional male voice, clear and authoritative
+          voiceId: 'DTKMou8ccj1ZaWGBiotd' // ElevenLabs: Jamahal - Professional male voice
         }),
       });
 
