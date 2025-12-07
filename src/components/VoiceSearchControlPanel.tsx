@@ -26,7 +26,7 @@ export function VoiceSearchControlPanel({ isActive, onToggle }: VoiceSearchContr
     }
 
     // Set up callback to handle transcripts
-    const handleTranscript = async (segment: { transcript: string, isFinal: boolean }) => {
+    const handleTranscript = (segment: { id: string, transcript: string, confidence: number, timestamp: Date, isFinal: boolean }) => {
       if (!segment.isFinal) return
 
       const query = segment.transcript.trim()
@@ -35,32 +35,38 @@ export function VoiceSearchControlPanel({ isActive, onToggle }: VoiceSearchContr
       console.log(`🎯 [VoiceSearch] Mode: ${activeMode}, Query: "${query}"`)
       setLastQuery(query)
 
-      // Execute search based on active mode
-      try {
-        if (activeMode === 'alakazam') {
-          console.log('🔍 Executing Perplexity search...')
-          await handlePerplexitySearch(query)
-        } else if (activeMode === 'kadabra') {
-          console.log('🎥 Executing YouTube search...')
-          await handleVideoSearch(query)
-        } else if (activeMode === 'abra') {
-          console.log('🖼️ Executing Unsplash search...')
-          await handleImageSearch(query)
-        }
+      // Execute search based on active mode (don't await - let it run async)
+      const executeSearch = async () => {
+        try {
+          if (activeMode === 'alakazam') {
+            console.log('🔍 Executing Perplexity search...')
+            await handlePerplexitySearch(query)
+          } else if (activeMode === 'kadabra') {
+            console.log('🎥 Executing YouTube search...')
+            await handleVideoSearch(query)
+          } else if (activeMode === 'abra') {
+            console.log('🖼️ Executing Unsplash search...')
+            await handleImageSearch(query)
+          }
 
-        // Clear mode after executing
-        setActiveMode(null)
-        console.log('✅ [VoiceSearch] Search completed, mode cleared')
-      } catch (error) {
-        console.error('❌ [VoiceSearch] Search failed:', error)
+          // Clear mode after executing
+          setActiveMode(null)
+          console.log('✅ [VoiceSearch] Search completed, mode cleared')
+        } catch (error) {
+          console.error('❌ [VoiceSearch] Search failed:', error)
+        }
       }
+
+      executeSearch()
     }
 
     transcriptListener.onTranscript(handleTranscript)
 
     return () => {
       // Cleanup callback
-      transcriptListener.onTranscript(() => {})
+      if (transcriptListener) {
+        transcriptListener.onTranscript(() => {})
+      }
     }
   }, [activeMode, isActive, transcriptListener, handlePerplexitySearch, handleVideoSearch, handleImageSearch])
 
