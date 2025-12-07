@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { MorningNewsControl } from './MorningNewsControl'
 import { TTSQueuePanel } from './TTSQueuePanel'
 import { EpisodeInfoPanel } from './EpisodeInfoPanel'
-import { Layout, MessageSquare, Newspaper, Info } from 'lucide-react'
+import { VoiceSearchControlPanel } from './VoiceSearchControlPanel'
+import { Layout, MessageSquare, Newspaper, Info, Mic } from 'lucide-react'
 
 export function MorningShowDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'news' | 'chat'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'news' | 'chat' | 'voice'>('overview')
+  const [voiceSearchActive, setVoiceSearchActive] = useState(false)
 
   return (
     <div className="bg-gray-900 border-2 border-cyan-900/50 rounded-xl overflow-hidden shadow-2xl">
@@ -49,13 +51,25 @@ export function MorningShowDashboard() {
             <button
               onClick={() => setActiveTab('chat')}
               className={`px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${
-                activeTab === 'chat' 
-                  ? 'bg-cyan-600 text-white shadow-lg' 
+                activeTab === 'chat'
+                  ? 'bg-cyan-600 text-white shadow-lg'
                   : 'text-gray-400 hover:text-white hover:bg-gray-800'
               }`}
             >
               <MessageSquare className="w-4 h-4" />
               Ultra Chat
+            </button>
+            <button
+              onClick={() => setActiveTab('voice')}
+              className={`px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${
+                activeTab === 'voice'
+                  ? 'bg-cyan-600 text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              <Mic className="w-4 h-4" />
+              Voice Search
+              {voiceSearchActive && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
             </button>
           </div>
         </div>
@@ -86,6 +100,15 @@ export function MorningShowDashboard() {
         {activeTab === 'chat' && (
           <div className="h-full">
             <TTSQueuePanel />
+          </div>
+        )}
+
+        {activeTab === 'voice' && (
+          <div className="h-full">
+            <VoiceSearchControlPanel
+              isActive={voiceSearchActive}
+              onToggle={() => setVoiceSearchActive(!voiceSearchActive)}
+            />
           </div>
         )}
       </div>

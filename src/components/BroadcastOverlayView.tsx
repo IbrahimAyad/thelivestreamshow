@@ -5,6 +5,7 @@ import { BetaBotPopupEnhanced } from './BetaBotPopupEnhanced'
 import { BetaBotAvatar } from './BetaBotAvatar'
 import { VisualContentDisplay } from './VisualContentDisplay'
 import { MediaBrowserOverlay } from './MediaBrowserOverlay'
+import { VoiceSearchOverlay } from './VoiceSearchOverlay'
 import LowerThirdOverlay from './LowerThirdOverlay'
 import { PiNamecardOverlay } from './broadcast/PiNamecardOverlay'
 import { BroadcastGraphicsDisplay } from './BroadcastGraphicsDisplay'
@@ -889,6 +890,9 @@ export function BroadcastOverlayView() {
 
       {/* SHOW INTRO OVERLAY - Automated intro sequence (DJ visualizer + game) */}
       <ShowIntroOverlay />
+
+      {/* VOICE SEARCH OVERLAY - Shows when voice search is active */}
+      <VoiceSearchOverlay />
 
       <style>{`
         /* Premium Color Palette */
