@@ -151,10 +151,18 @@ export function BroadcastOverlayView() {
         filter: 'show_on_overlay=eq.true'
       }, (payload) => {
         const question = payload.new as ShowQuestion
+        console.log('🎯 [BroadcastOverlay] Question triggered for overlay:', {
+          id: question.id,
+          text: question.question_text,
+          show_on_overlay: question.show_on_overlay,
+          tts_generated: question.tts_generated,
+          tts_audio_url: question.tts_audio_url
+        })
         setPopupQuestion(question)
         setPopupVisible(true)
         // Auto-clear the trigger after showing
         setTimeout(() => {
+          console.log('🔄 [BroadcastOverlay] Clearing show_on_overlay for:', question.id)
           supabase
             .from('show_questions')
             .update({ show_on_overlay: false })

@@ -53,6 +53,12 @@ Deno.serve(async (req) => {
 
     if (!ttsResponse.ok) {
       const errorText = await ttsResponse.text();
+      console.error('ElevenLabs API Error:', {
+        status: ttsResponse.status,
+        error: errorText,
+        text: text,
+        voiceId: ELEVENLABS_VOICE_ID
+      });
       throw new Error(`ElevenLabs API error: ${ttsResponse.status} - ${errorText}`);
     }
 
