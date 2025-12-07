@@ -263,15 +263,16 @@ export function MorningNewsControl() {
   const handleQueueForBroadcast = async (story: NewsStory) => {
     try {
       console.log('🎙️ Queueing story for broadcast:', story.headline)
+      setError('🤖 Generating conversational summary...')
 
-      // Format the question text with news context
-      const questionText = `[BREAKING NEWS] ${story.headline}`
+      // Use Perplexity AI to create a conversational, TTS-friendly summary
+      const conversationalText = await generateConversationalSummary(story)
 
       const { error } = await supabase
         .from('show_questions')
         .insert({
           topic: story.category,
-          question_text: questionText,
+          question_text: conversationalText,
           tts_generated: false,
           is_played: false,
           show_on_overlay: false,
@@ -281,10 +282,65 @@ export function MorningNewsControl() {
       if (error) throw error
 
       console.log('✅ Story queued successfully')
-      alert('📰 News story queued for TTS!')
+      setError('')
+      alert('📰 News story queued for TTS with AI summary!')
     } catch (err: any) {
       console.error('Failed to queue story:', err)
       setError(err.message || 'Failed to queue story')
+    }
+  }
+
+  const generateConversationalSummary = async (story: NewsStory): Promise<string> => {
+    const apiKey = import.meta.env.VITE_PERPLEXITY_API_KEY
+
+    if (!apiKey) {
+      // Fallback to simple format if no API key
+      return `Breaking news in ${story.category}: ${story.headline}. ${story.summary}`
+    }
+
+    try {
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'sonar',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a professional broadcast news anchor. Convert news stories into natural, conversational speech for text-to-speech delivery. Keep it under 400 characters, engaging, and easy to understand when spoken aloud. Use a casual, friendly tone like you\'re telling a friend about interesting news.'
+            },
+            {
+              role: 'user',
+              content: `Convert this news story into a natural spoken announcement:\n\nHeadline: ${story.headline}\nSummary: ${story.summary}\n\nMake it conversational and under 400 characters.`
+            }
+          ],
+          max_tokens: 200,
+          temperature: 0.7
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Perplexity API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const conversationalText = data.choices[0]?.message?.content?.trim()
+
+      if (!conversationalText) {
+        throw new Error('No response from AI')
+      }
+
+      // Ensure it's under 500 chars for TTS
+      return conversationalText.slice(0, 500)
+
+    } catch (error) {
+      console.error('AI summary generation failed:', error)
+      // Fallback to manual format
+      const fallback = `Hey, breaking news in ${story.category}. ${story.headline}. ${story.summary.slice(0, 300)}`
+      return fallback.slice(0, 500)
     }
   }
 
