@@ -925,3 +925,4 @@
 # F5-TTS Voice Models (too large for GitHub)
 f5-tts-server/voices/*.onnx
 f5-tts-server/voices/*.onnx.json
+_OLD_DUPLICATE_BACKUP_DELETE_ME/
