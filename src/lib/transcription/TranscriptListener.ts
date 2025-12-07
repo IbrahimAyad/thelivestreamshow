@@ -243,7 +243,10 @@ export class TranscriptListener {
 
         // Trigger automation if engine is set
         if (this.automationEngine) {
+          console.log('[TranscriptListener] 🔍 Processing keywords with AutomationEngine...')
           this.processKeywords(transcript, confidence)
+        } else {
+          console.warn('[TranscriptListener] ⚠️ No AutomationEngine set - keywords will not be detected!')
         }
 
         // Call callback if set
@@ -260,17 +263,23 @@ export class TranscriptListener {
    * Process transcript for keywords and trigger automation
    */
   private async processKeywords(transcript: string, confidence: number): Promise<void> {
-    if (!this.automationEngine) return
+    if (!this.automationEngine) {
+      console.warn('[TranscriptListener] processKeywords called but no AutomationEngine!')
+      return
+    }
 
     try {
       // Normalize transcript for keyword matching
       const normalizedTranscript = transcript.toLowerCase().trim()
+      console.log('[TranscriptListener] Normalized transcript:', normalizedTranscript)
 
       // Pass to AutomationEngine for keyword detection
+      console.log('[TranscriptListener] Calling AutomationEngine.processTranscript()...')
       await this.automationEngine.processTranscript(normalizedTranscript, {
         confidence,
         timestamp: new Date()
       })
+      console.log('[TranscriptListener] ✅ AutomationEngine.processTranscript() completed')
     } catch (error) {
       console.error('[TranscriptListener] Error processing keywords:', error)
     }
