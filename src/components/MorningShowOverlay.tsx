@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { UltraChatOverlay } from './UltraChatOverlay'
-import { Newspaper, TrendingUp } from 'lucide-react'
+import { TrendingUp } from 'lucide-react'
 
 interface EpisodeInfo {
   episode_number?: number
@@ -108,9 +107,6 @@ export function MorningShowOverlay() {
           {episodeInfo?.episode_title || 'Good Morning!'}
         </div>
       </div>
-
-      {/* Ultra Chat Overlay - Appears when active */}
-      <UltraChatOverlay />
 
       {/* Bottom Bar - News Ticker & Branding */}
       <div className="bottom-bar">

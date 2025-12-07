@@ -9,6 +9,7 @@ import LowerThirdOverlay from './LowerThirdOverlay'
 import { PiNamecardOverlay } from './broadcast/PiNamecardOverlay'
 import { BroadcastGraphicsDisplay } from './BroadcastGraphicsDisplay'
 import { ShowIntroOverlay } from './ShowIntroOverlay'
+import { UltraChatOverlay } from './UltraChatOverlay'
 import { useTTS } from '../hooks/useTTS'
 import { useF5TTS } from '../hooks/useF5TTS'
 
@@ -878,6 +879,9 @@ export function BroadcastOverlayView() {
 
       {/* BROADCAST GRAPHICS DISPLAY - Various overlays (includes Alpha Wednesday when toggled) */}
       <BroadcastGraphicsDisplay />
+
+      {/* ULTRA CHAT OVERLAY - New TTS-enabled question display (works with all shows) */}
+      <UltraChatOverlay />
 
       {/* SHOW INTRO OVERLAY - Automated intro sequence (DJ visualizer + game) */}
       <ShowIntroOverlay />
