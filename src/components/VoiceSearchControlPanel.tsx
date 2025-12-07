@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Mic, MicOff, Search, Video, Image } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { useAutomationEngine } from '../hooks/useAutomationEngine'
 
 interface VoiceSearchControlPanelProps {
   isActive: boolean
@@ -11,6 +12,22 @@ export function VoiceSearchControlPanel({ isActive, onToggle }: VoiceSearchContr
   const [lastQuery, setLastQuery] = useState<string>('')
   const [lastKeyword, setLastKeyword] = useState<string>('')
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [isListening, setIsListening] = useState(false)
+
+  const { transcriptListener } = useAutomationEngine()
+
+  // Start/stop microphone when voice search is toggled
+  useEffect(() => {
+    if (isActive && transcriptListener && !isListening) {
+      console.log('🎤 [VoiceSearchControl] Starting microphone...')
+      transcriptListener.start()
+      setIsListening(true)
+    } else if (!isActive && transcriptListener && isListening) {
+      console.log('🛑 [VoiceSearchControl] Stopping microphone...')
+      transcriptListener.stop()
+      setIsListening(false)
+    }
+  }, [isActive, transcriptListener])
 
   // Handle session state changes
   useEffect(() => {
