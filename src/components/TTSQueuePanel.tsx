@@ -150,11 +150,12 @@ export function TTSQueuePanel() {
       return;
     }
 
-    // Mark as playing in database (triggers broadcast overlay)
+    // Mark as playing in database (triggers broadcast overlay via show_on_overlay)
     await supabase
       .from('show_questions')
-      .update({ 
+      .update({
         is_played: true,
+        show_on_overlay: true,  // This triggers BetaBotPopupEnhanced on broadcast view
         updated_at: new Date().toISOString()
       })
       .eq('id', questionId);
