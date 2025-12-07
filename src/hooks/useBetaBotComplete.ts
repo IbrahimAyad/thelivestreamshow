@@ -237,6 +237,24 @@ export function useBetaBotComplete(): UseBetaBotComplete {
       { contextMetadata: { type: 'perplexity_search', query } }
     );
 
+    // Trigger overlay display
+    try {
+      await supabase.from('betabot_media_browser').insert({
+        search_query: query,
+        content_type: 'images', // Perplexity uses images type for AI search
+        is_visible: true,
+        session_id: null,
+        metadata: {
+          answer: result.answer,
+          citations: result.citations,
+          searchType: 'perplexity'
+        }
+      });
+      console.log('✅ Triggered Perplexity search overlay');
+    } catch (error) {
+      console.error('❌ Failed to trigger overlay:', error);
+    }
+
     return {
       text: result.answer,
       type: 'search',
@@ -263,6 +281,23 @@ export function useBetaBotComplete(): UseBetaBotComplete {
       { contextMetadata: { type: 'video_search', query } }
     );
 
+    // Trigger overlay display
+    try {
+      await supabase.from('betabot_media_browser').insert({
+        search_query: query,
+        content_type: 'videos',
+        is_visible: true,
+        session_id: null,
+        metadata: {
+          videoCount: videos.length,
+          searchType: 'youtube'
+        }
+      });
+      console.log('✅ Triggered video search overlay');
+    } catch (error) {
+      console.error('❌ Failed to trigger overlay:', error);
+    }
+
     return {
       text: responseText,
       type: 'video',
@@ -288,6 +323,23 @@ export function useBetaBotComplete(): UseBetaBotComplete {
       `User asked for images: "${query}". BetaBot found ${images.length} images.`,
       { contextMetadata: { type: 'image_search', query } }
     );
+
+    // Trigger overlay display
+    try {
+      await supabase.from('betabot_media_browser').insert({
+        search_query: query,
+        content_type: 'images',
+        is_visible: true,
+        session_id: null,
+        metadata: {
+          imageCount: images.length,
+          searchType: 'unsplash'
+        }
+      });
+      console.log('✅ Triggered image search overlay');
+    } catch (error) {
+      console.error('❌ Failed to trigger overlay:', error);
+    }
 
     return {
       text: responseText,
