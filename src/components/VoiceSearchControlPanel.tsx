@@ -2,18 +2,67 @@ import { useState, useEffect } from 'react'
 import { Mic, MicOff, Search, Video, Image } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAutomationEngine } from '../hooks/useAutomationEngine'
+import { useBetaBotComplete } from '../hooks/useBetaBotComplete'
 
 interface VoiceSearchControlPanelProps {
   isActive: boolean
   onToggle: () => void
 }
 
+type SearchMode = 'alakazam' | 'kadabra' | 'abra' | null
+
 export function VoiceSearchControlPanel({ isActive, onToggle }: VoiceSearchControlPanelProps) {
   const { transcriptListener } = useAutomationEngine()
+  const { handlePerplexitySearch, handleVideoSearch, handleImageSearch } = useBetaBotComplete()
   const [lastQuery, setLastQuery] = useState<string>('')
-  const [lastKeyword, setLastKeyword] = useState<string>('')
+  const [activeMode, setActiveMode] = useState<SearchMode>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [isListening, setIsListening] = useState(false)
+
+  // Listen for transcripts and execute search when mode is active
+  useEffect(() => {
+    if (!transcriptListener || !activeMode || !isActive) {
+      return
+    }
+
+    // Set up callback to handle transcripts
+    const handleTranscript = async (segment: { transcript: string, isFinal: boolean }) => {
+      if (!segment.isFinal) return
+
+      const query = segment.transcript.trim()
+      if (!query) return
+
+      console.log(`🎯 [VoiceSearch] Mode: ${activeMode}, Query: "${query}"`)
+      setLastQuery(query)
+
+      // Execute search based on active mode
+      try {
+        if (activeMode === 'alakazam') {
+          console.log('🔍 Executing Perplexity search...')
+          await handlePerplexitySearch(query)
+        } else if (activeMode === 'kadabra') {
+          console.log('🎥 Executing YouTube search...')
+          await handleVideoSearch(query)
+        } else if (activeMode === 'abra') {
+          console.log('🖼️ Executing Unsplash search...')
+          await handleImageSearch(query)
+        }
+
+        // Clear mode after executing
+        setActiveMode(null)
+        console.log('✅ [VoiceSearch] Search completed, mode cleared')
+      } catch (error) {
+        console.error('❌ [VoiceSearch] Search failed:', error)
+      }
+    }
+
+    transcriptListener.onTranscript(handleTranscript)
+
+    return () => {
+      // Cleanup callback
+      transcriptListener.onTranscript(() => {})
+    }
+  }, [activeMode, isActive, transcriptListener, handlePerplexitySearch, handleVideoSearch, handleImageSearch])
 
   // Start/stop microphone when voice search is toggled
   useEffect(() => {
@@ -49,6 +98,17 @@ export function VoiceSearchControlPanel({ isActive, onToggle }: VoiceSearchContr
       console.log('🎤 [VoiceSearchControl] No action needed - already in desired state')
     }
   }, [isActive, isListening, transcriptListener])
+
+  // Handle feature card clicks
+  const handleFeatureClick = (mode: SearchMode) => {
+    if (!isActive) {
+      console.warn('⚠️ Voice search must be activated first!')
+      return
+    }
+
+    console.log(`🎯 [VoiceSearch] Activating mode: ${mode}`)
+    setActiveMode(mode)
+  }
 
   // Handle session state changes
   useEffect(() => {
@@ -188,65 +248,105 @@ export function VoiceSearchControlPanel({ isActive, onToggle }: VoiceSearchContr
       </div>
 
       {/* Status Display */}
-      {isActive && lastQuery && (
-        <div className="mb-6 bg-gray-900/50 border border-purple-500/30 rounded-lg p-4">
-          <div className="text-sm text-gray-400 mb-1">Last Detected:</div>
-          <div className="text-white font-mono text-sm">
-            "Hey BetaBot {lastKeyword} {lastQuery}"
+      {isActive && activeMode && (
+        <div className="mb-6 bg-gradient-to-r from-purple-900/50 to-pink-900/50 border border-purple-400/50 rounded-lg p-4 voice-search-pulse">
+          <div className="text-sm text-purple-300 mb-1 font-bold">🎤 LISTENING FOR:</div>
+          <div className="text-white font-mono text-lg">
+            {activeMode === 'alakazam' && '🔍 Perplexity Search Query'}
+            {activeMode === 'kadabra' && '🎥 YouTube Video Query'}
+            {activeMode === 'abra' && '🖼️ Image Search Query'}
           </div>
+          <div className="text-xs text-gray-400 mt-2">Speak your query now...</div>
+        </div>
+      )}
+
+      {isActive && lastQuery && !activeMode && (
+        <div className="mb-6 bg-gray-900/50 border border-green-500/30 rounded-lg p-4">
+          <div className="text-sm text-gray-400 mb-1">Last Query:</div>
+          <div className="text-white font-mono text-sm">"{lastQuery}"</div>
         </div>
       )}
 
       {/* Features List */}
       <div className="space-y-3">
         <div className="text-sm font-semibold text-gray-300 mb-3">
-          {isActive ? 'Active Features:' : 'Available Features:'}
+          {isActive ? 'Click a feature to activate:' : 'Available Features:'}
         </div>
 
-        <div className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-          isActive
-            ? 'bg-purple-900/20 border-purple-500/30'
-            : 'bg-gray-800/30 border-gray-700/30'
-        }`}>
-          <Search className={`w-5 h-5 ${isActive ? 'text-purple-300' : 'text-gray-500'}`} />
-          <div className="flex-1">
-            <div className={`font-semibold ${isActive ? 'text-purple-200' : 'text-gray-400'}`}>
+        <button
+          onClick={() => handleFeatureClick('alakazam')}
+          disabled={!isActive}
+          className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-all ${
+            activeMode === 'alakazam'
+              ? 'bg-gradient-to-r from-purple-600 to-pink-600 border-purple-400 shadow-xl voice-search-pulse transform scale-105'
+              : isActive
+              ? 'bg-purple-900/20 border-purple-500/30 hover:bg-purple-800/30 hover:border-purple-400/50 cursor-pointer transform hover:scale-102'
+              : 'bg-gray-800/30 border-gray-700/30 cursor-not-allowed opacity-50'
+          }`}
+        >
+          <Search className={`w-5 h-5 ${activeMode === 'alakazam' ? 'text-white' : isActive ? 'text-purple-300' : 'text-gray-500'}`} />
+          <div className="flex-1 text-left">
+            <div className={`font-semibold ${activeMode === 'alakazam' ? 'text-white' : isActive ? 'text-purple-200' : 'text-gray-400'}`}>
               Alakazam
             </div>
-            <div className="text-xs text-gray-500">Perplexity Search</div>
+            <div className="text-xs text-gray-400">Perplexity Search</div>
           </div>
-          {isActive && <span className="text-green-400 text-xs font-bold">✓ READY</span>}
-        </div>
+          {activeMode === 'alakazam' ? (
+            <span className="text-white text-xs font-bold animate-pulse">🎤 LISTENING</span>
+          ) : isActive ? (
+            <span className="text-green-400 text-xs font-bold">✓ CLICK TO ACTIVATE</span>
+          ) : null}
+        </button>
 
-        <div className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-          isActive
-            ? 'bg-purple-900/20 border-purple-500/30'
-            : 'bg-gray-800/30 border-gray-700/30'
-        }`}>
-          <Video className={`w-5 h-5 ${isActive ? 'text-purple-300' : 'text-gray-500'}`} />
-          <div className="flex-1">
-            <div className={`font-semibold ${isActive ? 'text-purple-200' : 'text-gray-400'}`}>
+        <button
+          onClick={() => handleFeatureClick('kadabra')}
+          disabled={!isActive}
+          className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-all ${
+            activeMode === 'kadabra'
+              ? 'bg-gradient-to-r from-purple-600 to-pink-600 border-purple-400 shadow-xl voice-search-pulse transform scale-105'
+              : isActive
+              ? 'bg-purple-900/20 border-purple-500/30 hover:bg-purple-800/30 hover:border-purple-400/50 cursor-pointer transform hover:scale-102'
+              : 'bg-gray-800/30 border-gray-700/30 cursor-not-allowed opacity-50'
+          }`}
+        >
+          <Video className={`w-5 h-5 ${activeMode === 'kadabra' ? 'text-white' : isActive ? 'text-purple-300' : 'text-gray-500'}`} />
+          <div className="flex-1 text-left">
+            <div className={`font-semibold ${activeMode === 'kadabra' ? 'text-white' : isActive ? 'text-purple-200' : 'text-gray-400'}`}>
               Kadabra
             </div>
-            <div className="text-xs text-gray-500">YouTube Videos</div>
+            <div className="text-xs text-gray-400">YouTube Videos</div>
           </div>
-          {isActive && <span className="text-green-400 text-xs font-bold">✓ READY</span>}
-        </div>
+          {activeMode === 'kadabra' ? (
+            <span className="text-white text-xs font-bold animate-pulse">🎤 LISTENING</span>
+          ) : isActive ? (
+            <span className="text-green-400 text-xs font-bold">✓ CLICK TO ACTIVATE</span>
+          ) : null}
+        </button>
 
-        <div className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-          isActive
-            ? 'bg-purple-900/20 border-purple-500/30'
-            : 'bg-gray-800/30 border-gray-700/30'
-        }`}>
-          <Image className={`w-5 h-5 ${isActive ? 'text-purple-300' : 'text-gray-500'}`} />
-          <div className="flex-1">
-            <div className={`font-semibold ${isActive ? 'text-purple-200' : 'text-gray-400'}`}>
+        <button
+          onClick={() => handleFeatureClick('abra')}
+          disabled={!isActive}
+          className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-all ${
+            activeMode === 'abra'
+              ? 'bg-gradient-to-r from-purple-600 to-pink-600 border-purple-400 shadow-xl voice-search-pulse transform scale-105'
+              : isActive
+              ? 'bg-purple-900/20 border-purple-500/30 hover:bg-purple-800/30 hover:border-purple-400/50 cursor-pointer transform hover:scale-102'
+              : 'bg-gray-800/30 border-gray-700/30 cursor-not-allowed opacity-50'
+          }`}
+        >
+          <Image className={`w-5 h-5 ${activeMode === 'abra' ? 'text-white' : isActive ? 'text-purple-300' : 'text-gray-500'}`} />
+          <div className="flex-1 text-left">
+            <div className={`font-semibold ${activeMode === 'abra' ? 'text-white' : isActive ? 'text-purple-200' : 'text-gray-400'}`}>
               Abra
             </div>
-            <div className="text-xs text-gray-500">Unsplash Images</div>
+            <div className="text-xs text-gray-400">Unsplash Images</div>
           </div>
-          {isActive && <span className="text-green-400 text-xs font-bold">✓ READY</span>}
-        </div>
+          {activeMode === 'abra' ? (
+            <span className="text-white text-xs font-bold animate-pulse">🎤 LISTENING</span>
+          ) : isActive ? (
+            <span className="text-green-400 text-xs font-bold">✓ CLICK TO ACTIVATE</span>
+          ) : null}
+        </button>
       </div>
 
       {/* CSS Animations */}
