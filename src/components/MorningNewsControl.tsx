@@ -264,25 +264,24 @@ export function MorningNewsControl() {
     try {
       console.log('🎙️ Queueing story for broadcast:', story.headline)
 
+      // Format the question text with news context
+      const questionText = `[BREAKING NEWS] ${story.headline}`
+
       const { error } = await supabase
         .from('show_questions')
         .insert({
           topic: story.category,
-          question_text: story.headline,
-          source: 'news_feed',
-          author_name: 'Breaking News', // Fallback if column exists, otherwise ignored by Supabase if not in schema
-          context_metadata: {
-            summary: story.summary,
-            source: story.source,
-            talking_points: story.talkingPoints,
-            original_story_id: story.id
-          }
+          question_text: questionText,
+          tts_generated: false,
+          is_played: false,
+          show_on_overlay: false,
+          position: 0
         })
 
       if (error) throw error
 
       console.log('✅ Story queued successfully')
-      alert('Story queued for TTS Broadcast!')
+      alert('📰 News story queued for TTS!')
     } catch (err: any) {
       console.error('Failed to queue story:', err)
       setError(err.message || 'Failed to queue story')

@@ -5,11 +5,10 @@ import { MessageSquare, User, Newspaper, Radio } from 'lucide-react'
 interface ShowQuestion {
   id: string
   question_text: string
-  author_name?: string
-  author_avatar?: string
+  topic: string
   is_played: boolean
-  source?: string
-  context_metadata?: any
+  tts_generated: boolean
+  tts_audio_url: string | null
 }
 
 export function UltraChatOverlay() {
@@ -59,7 +58,13 @@ export function UltraChatOverlay() {
 
   if (!activeQuestion && !isVisible) return null
 
-  const isNews = activeQuestion?.source === 'news_feed'
+  // Detect if this is a news story by checking for [BREAKING NEWS] prefix
+  const isNews = activeQuestion?.question_text?.startsWith('[BREAKING NEWS]') || false
+
+  // Clean up the question text (remove prefix if news)
+  const displayText = isNews
+    ? activeQuestion?.question_text?.replace('[BREAKING NEWS]', '').trim()
+    : activeQuestion?.question_text
 
   return (
     <div className={`ultra-chat-container ${isVisible ? 'visible' : 'hidden'}`}>
@@ -70,8 +75,6 @@ export function UltraChatOverlay() {
               <div className="avatar-placeholder news-icon">
                 <Newspaper className="w-6 h-6 text-white" />
               </div>
-            ) : activeQuestion?.author_avatar ? (
-              <img src={activeQuestion.author_avatar} alt="User" className="avatar-img" />
             ) : (
               <div className="avatar-placeholder">
                 <User className="w-6 h-6 text-white" />
@@ -80,7 +83,7 @@ export function UltraChatOverlay() {
           </div>
           <div className="author-info">
             <span className="author-name">
-              {isNews ? 'BREAKING NEWS' : (activeQuestion?.author_name || 'Viewer Question')}
+              {isNews ? 'BREAKING NEWS' : 'VIEWER QUESTION'}
             </span>
             <span className="badge">
               {isNews ? 'LIVE REPORT' : 'ULTRA CHAT'}
@@ -94,10 +97,8 @@ export function UltraChatOverlay() {
         </div>
 
         <div className="ultra-chat-body">
-          <p className="question-text">{activeQuestion?.question_text}</p>
-          {isNews && activeQuestion?.context_metadata?.summary && (
-            <p className="news-summary">{activeQuestion.context_metadata.summary}</p>
-          )}
+          <p className="question-text">{displayText}</p>
+          <p className="topic-badge">{activeQuestion?.topic?.toUpperCase()}</p>
         </div>
       </div>
 
@@ -219,15 +220,19 @@ export function UltraChatOverlay() {
           font-weight: 700;
           line-height: 1.3;
           text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-          margin-bottom: 8px;
+          margin-bottom: 12px;
         }
 
-        .news-summary {
-          color: #cbd5e1;
-          font-size: 16px;
-          line-height: 1.5;
-          border-left: 3px solid #06b6d4;
-          padding-left: 12px;
+        .topic-badge {
+          display: inline-block;
+          color: #fbbf24;
+          font-size: 12px;
+          font-weight: 800;
+          background: rgba(251, 191, 36, 0.2);
+          padding: 4px 12px;
+          border-radius: 4px;
+          border: 1px solid rgba(251, 191, 36, 0.4);
+          letter-spacing: 1px;
         }
       `}</style>
     </div>
