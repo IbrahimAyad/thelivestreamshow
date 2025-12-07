@@ -310,14 +310,14 @@ export function MorningNewsControl() {
           messages: [
             {
               role: 'system',
-              content: 'You are a professional broadcast news anchor. Convert news stories into natural, conversational speech for text-to-speech delivery. Keep it under 400 characters, engaging, and easy to understand when spoken aloud. Use a casual, friendly tone like you\'re telling a friend about interesting news.'
+              content: 'You are a broadcast news anchor. Create SHORT, punchy TTS announcements. Maximum 100 characters. Be conversational and engaging. Focus ONLY on the main point.'
             },
             {
               role: 'user',
-              content: `Convert this news story into a natural spoken announcement:\n\nHeadline: ${story.headline}\nSummary: ${story.summary}\n\nMake it conversational and under 400 characters.`
+              content: `Make this headline into a SHORT 80-100 character announcement:\n\n${story.headline}\n\nBe brief, conversational, and engaging.`
             }
           ],
-          max_tokens: 200,
+          max_tokens: 50,
           temperature: 0.7
         })
       })
@@ -333,14 +333,19 @@ export function MorningNewsControl() {
         throw new Error('No response from AI')
       }
 
-      // Ensure it's under 500 chars for TTS
-      return conversationalText.slice(0, 500)
+      console.log('🤖 AI Summary (raw):', conversationalText)
+      console.log('📏 Length:', conversationalText.length)
+
+      // Ensure it's under 120 chars for short TTS clips
+      const shortened = conversationalText.slice(0, 120)
+      console.log('✂️ Shortened to:', shortened)
+      return shortened
 
     } catch (error) {
       console.error('AI summary generation failed:', error)
-      // Fallback to manual format
-      const fallback = `Hey, breaking news in ${story.category}. ${story.headline}. ${story.summary.slice(0, 300)}`
-      return fallback.slice(0, 500)
+      // Fallback to simple headline announcement
+      const fallback = `Breaking: ${story.headline.slice(0, 90)}`
+      return fallback.slice(0, 120)
     }
   }
 

@@ -83,10 +83,17 @@ Deno.serve(async (req) => {
       throw new Error('Empty audio response from ElevenLabs');
     }
 
-    // Convert to base64 for consistent API response
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(audioBuffer))
-    );
+    // Convert to base64 efficiently (avoid stack overflow with large files)
+    const bytes = new Uint8Array(audioBuffer);
+    let binary = '';
+    const chunkSize = 8192; // Process in chunks to avoid stack overflow
+
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+
+    const base64Audio = btoa(binary);
 
     return new Response(
       JSON.stringify({

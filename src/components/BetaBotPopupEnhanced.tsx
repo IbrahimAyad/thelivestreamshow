@@ -270,20 +270,37 @@ export const BetaBotPopupEnhanced: React.FC<BetaBotPopupEnhancedProps> = ({
 
   if (!visible || !question) return null
 
+  // Detect if this is a news story (check for "real_estate", "business", etc. topics or BREAKING NEWS prefix)
+  const isNews = question.topic && ['real_estate', 'business', 'tech', 'sports', 'entertainment', 'breaking', 'politics', 'general'].includes(question.topic.toLowerCase())
+  const isBreakingNews = question.question_text?.includes('[BREAKING NEWS]') || isNews
+
+  console.log('🔍 News detection:', {
+    topic: question.topic,
+    isNews,
+    hasBreakingNewsPrefix: question.question_text?.includes('[BREAKING NEWS]'),
+    isBreakingNews
+  })
+
   return (
-    <div className={`betabot-popup-enhanced ${isExiting ? 'exiting' : 'entering'}`}>
+    <div className={`betabot-popup-enhanced ${isBreakingNews ? 'news-mode' : 'chat-mode'} ${isExiting ? 'exiting' : 'entering'}`}>
       {/* Character Header */}
       <div className="popup-header">
         <div className="character-badge">
-          <span className="badge-icon">{character.badge}</span>
+          <span className="badge-icon">{isBreakingNews ? '🚨' : character.badge}</span>
         </div>
         <div className="header-content">
           <span className="character-name" style={{ color: character.color }}>
-            {character.name}
+            {isBreakingNews ? 'BREAKING NEWS' : character.name}
           </span>
-          <span className="popup-subtitle">says...</span>
+          <span className="popup-subtitle">{isBreakingNews ? 'LIVE REPORT' : 'says...'}</span>
         </div>
-        <span className="popup-timer">{timeRemaining}s</span>
+        {isBreakingNews && (
+          <span className="live-indicator">
+            <span className="live-dot"></span>
+            LIVE
+          </span>
+        )}
+        {!isBreakingNews && <span className="popup-timer">{timeRemaining}s</span>}
       </div>
 
       <div className="popup-divider" style={{
@@ -293,7 +310,7 @@ export const BetaBotPopupEnhanced: React.FC<BetaBotPopupEnhancedProps> = ({
       {/* Message Content */}
       <div className="popup-content">
         <div className={`popup-message ${isTTSPlaying ? 'tts-playing' : ''}`}>
-          {question.question_text}
+          {question.question_text?.replace('[BREAKING NEWS]', '').trim()}
         </div>
       </div>
 
@@ -329,7 +346,8 @@ export const BetaBotPopupEnhanced: React.FC<BetaBotPopupEnhancedProps> = ({
       </div>
 
       <style>{`
-        .betabot-popup-enhanced {
+        /* CHAT MODE - Slide in from right, centered vertically */
+        .betabot-popup-enhanced.chat-mode {
           position: fixed;
           right: 40px;
           top: 50%;
@@ -344,12 +362,42 @@ export const BetaBotPopupEnhanced: React.FC<BetaBotPopupEnhancedProps> = ({
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
         }
 
-        .betabot-popup-enhanced.entering {
+        /* NEWS MODE - Slide up from bottom, centered horizontally */
+        .betabot-popup-enhanced.news-mode {
+          position: fixed;
+          left: 50%;
+          bottom: 120px;
+          transform: translateX(-50%);
+          width: 900px;
+          max-width: 90vw;
+          background: linear-gradient(135deg, rgba(139, 0, 0, 0.98), rgba(0, 0, 0, 0.98));
+          border: 4px solid #EF4444;
+          border-radius: 16px;
+          padding: 28px;
+          box-shadow:
+            0 0 60px rgba(239, 68, 68, 0.6),
+            0 20px 60px rgba(0, 0, 0, 0.9),
+            inset 0 0 40px rgba(239, 68, 68, 0.1);
+          z-index: 1000;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+        }
+
+        /* CHAT ANIMATIONS */
+        .betabot-popup-enhanced.chat-mode.entering {
           animation: slideInBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
 
-        .betabot-popup-enhanced.exiting {
-          animation: fadeOutSlideDown 0.3s ease-out forwards;
+        .betabot-popup-enhanced.chat-mode.exiting {
+          animation: fadeOutSlideRight 0.3s ease-out forwards;
+        }
+
+        /* NEWS ANIMATIONS */
+        .betabot-popup-enhanced.news-mode.entering {
+          animation: slideUpFromBottom 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .betabot-popup-enhanced.news-mode.exiting {
+          animation: slideDownToBottom 0.4s ease-in forwards;
         }
 
         .popup-header {
@@ -410,6 +458,40 @@ export const BetaBotPopupEnhanced: React.FC<BetaBotPopupEnhancedProps> = ({
           text-align: center;
         }
 
+        .live-indicator {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 18px;
+          font-weight: 900;
+          color: #FFFFFF;
+          background: rgba(220, 38, 38, 0.3);
+          padding: 8px 18px;
+          border-radius: 24px;
+          border: 2px solid #EF4444;
+          letter-spacing: 2px;
+        }
+
+        .live-dot {
+          width: 12px;
+          height: 12px;
+          background: #EF4444;
+          border-radius: 50%;
+          animation: livePulse 1.5s ease-in-out infinite;
+          box-shadow: 0 0 10px #EF4444;
+        }
+
+        @keyframes livePulse {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.4;
+            transform: scale(0.8);
+          }
+        }
+
         .popup-divider {
           height: 3px;
           margin-bottom: 20px;
@@ -427,6 +509,18 @@ export const BetaBotPopupEnhanced: React.FC<BetaBotPopupEnhancedProps> = ({
           background: rgba(255, 255, 255, 0.03);
           border-radius: 12px;
           border-left: 4px solid ${character.color};
+        }
+
+        /* News mode: larger, bolder text */
+        .news-mode .popup-message {
+          font-size: 32px;
+          font-weight: 800;
+          line-height: 1.4;
+          text-align: center;
+          padding: 24px;
+          border-left: none;
+          border: 2px solid rgba(239, 68, 68, 0.3);
+          background: rgba(139, 0, 0, 0.2);
         }
 
         .popup-message.tts-playing {
@@ -518,13 +612,39 @@ export const BetaBotPopupEnhanced: React.FC<BetaBotPopupEnhancedProps> = ({
           }
         }
 
-        @keyframes fadeOutSlideDown {
+        @keyframes fadeOutSlideRight {
           from {
             transform: translateY(-50%) translateX(0);
             opacity: 1;
           }
           to {
-            transform: translateY(-50%) translateX(0) translateY(30px);
+            transform: translateY(-50%) translateX(100px);
+            opacity: 0;
+          }
+        }
+
+        /* NEWS ANIMATIONS */
+        @keyframes slideUpFromBottom {
+          0% {
+            transform: translateX(-50%) translateY(200px);
+            opacity: 0;
+          }
+          60% {
+            transform: translateX(-50%) translateY(-10px);
+          }
+          100% {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideDownToBottom {
+          from {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+          }
+          to {
+            transform: translateX(-50%) translateY(150px);
             opacity: 0;
           }
         }
