@@ -18,7 +18,7 @@ interface MediaBrowserOverlayProps {
     domains?: string[];
     model?: 'sonar' | 'sonar-pro';
     answer?: string; // Pre-fetched answer from voice search
-    sources?: string[]; // Pre-fetched sources from voice search
+    sources?: Array<string | { title: string; url: string }>; // Pre-fetched sources (string URLs or objects)
     searchType?: 'perplexity' | 'youtube' | 'unsplash';
     videoCount?: number;
     imageCount?: number;
@@ -51,7 +51,7 @@ export function MediaBrowserOverlay({
   // Text mode state (Perplexity)
   const [answer, setAnswer] = useState('')
   const [streamingAnswer, setStreamingAnswer] = useState('') // For progressive display
-  const [sources, setSources] = useState<string[]>([])
+  const [sources, setSources] = useState<Array<string | { title: string; url: string }>>([])
   const [responseTime, setResponseTime] = useState<number | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   const [recency, setRecency] = useState<'day' | 'week' | 'month' | 'year' | undefined>(undefined)
@@ -635,13 +635,19 @@ export function MediaBrowserOverlay({
               <div className="sources-section">
                 <h3 className="sources-title">📚 Sources</h3>
                 <ul className="sources-list">
-                  {sources.map((source, index) => (
-                    <li key={index} className="source-item">
-                      <a href={source} target="_blank" rel="noopener noreferrer">
-                        {source}
-                      </a>
-                    </li>
-                  ))}
+                  {sources.map((source, index) => {
+                    // Handle both string sources and object sources {title, url}
+                    const sourceUrl = typeof source === 'string' ? source : source.url
+                    const sourceTitle = typeof source === 'string' ? source : (source.title || sourceUrl)
+
+                    return (
+                      <li key={index} className="source-item">
+                        <a href={sourceUrl} target="_blank" rel="noopener noreferrer">
+                          {sourceTitle}
+                        </a>
+                      </li>
+                    )
+                  })}
                 </ul>
               </div>
             )}
