@@ -35,6 +35,11 @@ export function MediaBrowserOverlay({
   metadata
 }: MediaBrowserOverlayProps) {
   console.log('🎬 MediaBrowserOverlay mounted with:', { query, type, durationSeconds })
+  console.log('📦 Metadata prop:', metadata ? 'PRESENT' : 'MISSING')
+  if (metadata) {
+    console.log('   📝 metadata.answer:', metadata.answer ? `${metadata.answer.substring(0, 50)}...` : 'MISSING')
+    console.log('   📚 metadata.sources:', metadata.sources ? `${metadata.sources.length} sources` : 'MISSING')
+  }
   const [timeRemaining, setTimeRemaining] = useState(durationSeconds)
 
   // Detect if running in OBS browser source (can't interact with UI)

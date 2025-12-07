@@ -229,7 +229,11 @@ export function BroadcastOverlayView() {
           console.log('ℹ️ If type is "videos" → YouTube/Reddit search')
 
           if (metadata) {
-            console.log('🎤 Voice-activated filters received:', metadata)
+            console.log('🎤 Metadata received:', metadata)
+            console.log('📝 Metadata.answer:', metadata.answer ? `${metadata.answer.substring(0, 100)}...` : 'MISSING')
+            console.log('📚 Metadata.sources:', metadata.sources ? `${metadata.sources.length} sources` : 'MISSING')
+          } else {
+            console.warn('⚠️ NO METADATA RECEIVED - overlay will re-search!')
           }
 
           setMediaBrowser({
@@ -238,7 +242,7 @@ export function BroadcastOverlayView() {
             metadata: metadata || undefined
           })
 
-          console.log('✅ [BROADCAST] MediaBrowser state updated successfully')
+          console.log('✅ [BROADCAST] MediaBrowser state updated successfully with metadata:', !!metadata)
         } else {
           console.warn('⚠️ [BROADCAST] Browser request has is_visible=false, skipping overlay')
         }
