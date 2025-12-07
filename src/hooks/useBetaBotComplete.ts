@@ -51,6 +51,11 @@ export interface UseBetaBotComplete {
   // Methods
   speakProducerQuestion: (question: ProducerAIQuestion) => Promise<void>;
   stopSpeaking: () => void;
+
+  // Voice search handlers
+  handlePerplexitySearch: (query: string) => Promise<BetaBotResponse>;
+  handleVideoSearch: (query: string) => Promise<BetaBotResponse>;
+  handleImageSearch: (query: string) => Promise<BetaBotResponse>;
 }
 
 export function useBetaBotComplete(): UseBetaBotComplete {
@@ -505,6 +510,10 @@ export function useBetaBotComplete(): UseBetaBotComplete {
     timing,
     emotion,
     speakProducerQuestion,
-    stopSpeaking
+    stopSpeaking,
+    // Voice search handlers
+    handlePerplexitySearch,
+    handleVideoSearch,
+    handleImageSearch
   };
 }
