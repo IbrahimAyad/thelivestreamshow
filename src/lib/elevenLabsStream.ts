@@ -28,7 +28,10 @@ export async function speakLiveStream(options: StreamTTSOptions): Promise<HTMLAu
   } = options
 
   try {
-    console.log('🎤 [ElevenLabs Stream] Speaking:', text.substring(0, 50) + '...')
+    console.log('🎤 [ElevenLabs Stream] Starting TTS...')
+    console.log(`📝 Text length: ${text.length} chars`)
+    console.log(`🎙️ Voice ID: ${voiceId}`)
+    console.log(`📄 Text preview: "${text.substring(0, 100)}..."`)
 
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
