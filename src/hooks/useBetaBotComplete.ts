@@ -14,6 +14,7 @@ import { detectKeywords, KeywordMatch } from '../lib/keywordDetection';
 import { searchPerplexity, PerplexityResult } from '../lib/perplexitySearch';
 import { searchVideos, VideoResult } from '../lib/videoSearch';
 import { searchImages, ImageResult } from '../lib/imageSearch';
+import { speakPerplexityAnswer, speakVideoResults, speakImageResults } from '../lib/elevenLabsStream';
 import { useBetaBotConversationWithMemory } from './useBetaBotConversationWithMemory';
 import { useBetaBotFeedback } from './useBetaBotFeedback';
 import { useConversationTiming } from './useConversationTiming';
@@ -237,6 +238,14 @@ export function useBetaBotComplete(): UseBetaBotComplete {
       { contextMetadata: { type: 'perplexity_search', query } }
     );
 
+    // Speak the answer with streaming TTS
+    try {
+      await speakPerplexityAnswer(result.answer);
+      console.log('✅ Speaking Perplexity answer with streaming TTS');
+    } catch (error) {
+      console.error('❌ Failed to speak answer:', error);
+    }
+
     // Trigger overlay display
     try {
       await supabase.from('betabot_media_browser').insert({
@@ -281,6 +290,14 @@ export function useBetaBotComplete(): UseBetaBotComplete {
       { contextMetadata: { type: 'video_search', query } }
     );
 
+    // Speak the result with streaming TTS
+    try {
+      await speakVideoResults(query, videos.length);
+      console.log('✅ Speaking video results with streaming TTS');
+    } catch (error) {
+      console.error('❌ Failed to speak results:', error);
+    }
+
     // Trigger overlay display
     try {
       await supabase.from('betabot_media_browser').insert({
@@ -323,6 +340,14 @@ export function useBetaBotComplete(): UseBetaBotComplete {
       `User asked for images: "${query}". BetaBot found ${images.length} images.`,
       { contextMetadata: { type: 'image_search', query } }
     );
+
+    // Speak the result with streaming TTS
+    try {
+      await speakImageResults(query, images.length);
+      console.log('✅ Speaking image results with streaming TTS');
+    } catch (error) {
+      console.error('❌ Failed to speak results:', error);
+    }
 
     // Trigger overlay display
     try {
