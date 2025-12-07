@@ -17,6 +17,11 @@ interface MediaBrowserOverlayProps {
     recency?: 'day' | 'week' | 'month' | 'year';
     domains?: string[];
     model?: 'sonar' | 'sonar-pro';
+    answer?: string; // Pre-fetched answer from voice search
+    sources?: string[]; // Pre-fetched sources from voice search
+    searchType?: 'perplexity' | 'youtube' | 'unsplash';
+    videoCount?: number;
+    imageCount?: number;
   };
 }
 
@@ -176,55 +181,73 @@ export function MediaBrowserOverlay({
           }
         }
       } else {
-        // Text mode: fetch Perplexity answer with streaming
-        console.log('🤖 Taking PERPLEXITY search path (AI-powered answer)')
-        console.log('🔍 Fetching Perplexity answer for:', query)
+        // Text mode: Check if answer is already in metadata (from voice search)
+        if (metadata?.answer) {
+          // ✅ OPTION 1: Use pre-fetched answer from metadata (no double API call)
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+          console.log('✅ [MediaBrowserOverlay] Using pre-fetched answer from metadata')
+          console.log('📋 Answer preview:', metadata.answer.substring(0, 100) + '...')
+          console.log('📚 Sources count:', metadata.sources?.length || 0)
+          console.log('🚀 Skipping API call - answer already available!')
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
-        const startTime = Date.now()
+          if (isMounted) {
+            setAnswer(metadata.answer)
+            setSources(metadata.sources || [])
+            setStreamingAnswer('') // No streaming needed
+            setResponseTime(null) // Response already generated
+          }
+        } else {
+          // ❌ FALLBACK: Fetch Perplexity answer with streaming (if no metadata answer)
+          console.log('🤖 Taking PERPLEXITY search path (AI-powered answer)')
+          console.log('🔍 Fetching Perplexity answer for:', query)
 
-        // Reset streaming state
-        setStreamingAnswer('')
+          const startTime = Date.now()
 
-        // Use voice-activated filters if provided
-        let result: any
-        if (metadata && (metadata.recency || metadata.domains || metadata.model)) {
-          console.log('🎤 Using voice-activated filters:', metadata)
-          result = await searchWithFilters(query, {
-            recency: metadata.recency,
-            domains: metadata.domains,
-            model: metadata.model || 'sonar',
-            onStreamChunk: (chunk) => {
+          // Reset streaming state
+          setStreamingAnswer('')
+
+          // Use voice-activated filters if provided
+          let result: any
+          if (metadata && (metadata.recency || metadata.domains || metadata.model)) {
+            console.log('🎤 Using voice-activated filters:', metadata)
+            result = await searchWithFilters(query, {
+              recency: metadata.recency,
+              domains: metadata.domains,
+              model: metadata.model || 'sonar',
+              onStreamChunk: (chunk) => {
+                if (isMounted) {
+                  setStreamingAnswer((prev) => prev + chunk)
+                }
+              }
+            })
+          } else {
+            console.log('🔍 Using standard search (no filters)')
+            result = await search(query, (chunk) => {
+              // Streaming callback - update answer as chunks arrive
               if (isMounted) {
                 setStreamingAnswer((prev) => prev + chunk)
               }
-            }
-          })
-        } else {
-          console.log('🔍 Using standard search (no filters)')
-          result = await search(query, (chunk) => {
-            // Streaming callback - update answer as chunks arrive
-            if (isMounted) {
-              setStreamingAnswer((prev) => prev + chunk)
-            }
-          })
-        }
+            })
+          }
 
-        const endTime = Date.now()
-        const responseTime = endTime - startTime
+          const endTime = Date.now()
+          const responseTime = endTime - startTime
 
-        console.log('✅ Got answer:', result)
+          console.log('✅ Got answer:', result)
 
-        if (isMounted) {
-          console.log('💾 Setting answer state:', {
-            answerLength: result.answer?.length || 0,
-            sourcesCount: result.sources?.length || 0,
-            answerPreview: result.answer?.substring(0, 100),
-            responseTime: `${responseTime}ms`
-          })
-          setAnswer(result.answer)
-          setSources(result.sources || [])
-          setResponseTime(responseTime)
-          setStreamingAnswer('') // Clear streaming state when complete
+          if (isMounted) {
+            console.log('💾 Setting answer state:', {
+              answerLength: result.answer?.length || 0,
+              sourcesCount: result.sources?.length || 0,
+              answerPreview: result.answer?.substring(0, 100),
+              responseTime: `${responseTime}ms`
+            })
+            setAnswer(result.answer)
+            setSources(result.sources || [])
+            setResponseTime(responseTime)
+            setStreamingAnswer('') // Clear streaming state when complete
+          }
         }
       }
     }
