@@ -20,12 +20,25 @@ export function VoiceSearchControlPanel({ isActive, onToggle }: VoiceSearchContr
   useEffect(() => {
     if (isActive && transcriptListener && !isListening) {
       console.log('🎤 [VoiceSearchControl] Starting microphone...')
-      transcriptListener.start()
-      setIsListening(true)
+      console.log('🎤 [VoiceSearchControl] TranscriptListener available:', !!transcriptListener)
+
+      try {
+        transcriptListener.start()
+        setIsListening(true)
+        console.log('✅ [VoiceSearchControl] Microphone started successfully')
+      } catch (error) {
+        console.error('❌ [VoiceSearchControl] Failed to start microphone:', error)
+      }
     } else if (!isActive && transcriptListener && isListening) {
       console.log('🛑 [VoiceSearchControl] Stopping microphone...')
-      transcriptListener.stop()
-      setIsListening(false)
+
+      try {
+        transcriptListener.stop()
+        setIsListening(false)
+        console.log('✅ [VoiceSearchControl] Microphone stopped successfully')
+      } catch (error) {
+        console.error('❌ [VoiceSearchControl] Failed to stop microphone:', error)
+      }
     }
   }, [isActive, transcriptListener])
 
