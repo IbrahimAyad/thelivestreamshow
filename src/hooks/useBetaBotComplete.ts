@@ -253,18 +253,26 @@ export function useBetaBotComplete(): UseBetaBotComplete {
 
     // Trigger overlay display
     try {
-      await supabase.from('betabot_media_browser').insert({
+      const insertData = {
         search_query: query,
         content_type: 'images', // Perplexity uses images type for AI search
         is_visible: true,
         session_id: null,
         metadata: {
           answer: result.answer,
-          citations: result.citations,
+          sources: result.sources,
           searchType: 'perplexity'
         }
-      });
-      console.log('✅ Triggered Perplexity search overlay');
+      };
+      console.log('🎯 Inserting into betabot_media_browser:', insertData);
+
+      const { data, error } = await supabase.from('betabot_media_browser').insert(insertData).select();
+
+      if (error) {
+        console.error('❌ Database insert error:', error);
+      } else {
+        console.log('✅ Triggered Perplexity search overlay - Insert successful:', data);
+      }
     } catch (error) {
       console.error('❌ Failed to trigger overlay:', error);
     }
@@ -305,7 +313,7 @@ export function useBetaBotComplete(): UseBetaBotComplete {
 
     // Trigger overlay display
     try {
-      await supabase.from('betabot_media_browser').insert({
+      const insertData = {
         search_query: query,
         content_type: 'videos',
         is_visible: true,
@@ -314,8 +322,16 @@ export function useBetaBotComplete(): UseBetaBotComplete {
           videoCount: videos.length,
           searchType: 'youtube'
         }
-      });
-      console.log('✅ Triggered video search overlay');
+      };
+      console.log('🎯 Inserting into betabot_media_browser:', insertData);
+
+      const { data, error } = await supabase.from('betabot_media_browser').insert(insertData).select();
+
+      if (error) {
+        console.error('❌ Database insert error:', error);
+      } else {
+        console.log('✅ Triggered video search overlay - Insert successful:', data);
+      }
     } catch (error) {
       console.error('❌ Failed to trigger overlay:', error);
     }
@@ -356,7 +372,7 @@ export function useBetaBotComplete(): UseBetaBotComplete {
 
     // Trigger overlay display
     try {
-      await supabase.from('betabot_media_browser').insert({
+      const insertData = {
         search_query: query,
         content_type: 'images',
         is_visible: true,
@@ -365,8 +381,16 @@ export function useBetaBotComplete(): UseBetaBotComplete {
           imageCount: images.length,
           searchType: 'unsplash'
         }
-      });
-      console.log('✅ Triggered image search overlay');
+      };
+      console.log('🎯 Inserting into betabot_media_browser:', insertData);
+
+      const { data, error } = await supabase.from('betabot_media_browser').insert(insertData).select();
+
+      if (error) {
+        console.error('❌ Database insert error:', error);
+      } else {
+        console.log('✅ Triggered image search overlay - Insert successful:', data);
+      }
     } catch (error) {
       console.error('❌ Failed to trigger overlay:', error);
     }
