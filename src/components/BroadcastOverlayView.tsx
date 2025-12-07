@@ -202,6 +202,8 @@ export function BroadcastOverlayView() {
 
   // Subscribe to Media Browser triggers (new approach)
   useEffect(() => {
+    console.log('📡 [BROADCAST] Setting up MediaBrowser realtime subscription...')
+
     const mediaBrowserChannel = supabase
       .channel('betabot_media_browser_channel')
       .on('postgres_changes', {
@@ -210,10 +212,13 @@ export function BroadcastOverlayView() {
         table: 'betabot_media_browser'
       }, (payload) => {
         const browserRequest = payload.new as any
-        console.log('🌐 Media browser request received:', browserRequest)
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+        console.log('🌐 [BROADCAST] Media browser request received!')
         console.log('📋 Query:', browserRequest.search_query)
         console.log('🎯 Content Type:', browserRequest.content_type)
         console.log('👁️ Is Visible:', browserRequest.is_visible)
+        console.log('📦 Full payload:', browserRequest)
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
         if (browserRequest.is_visible) {
           const overlayType = browserRequest.content_type
@@ -232,11 +237,27 @@ export function BroadcastOverlayView() {
             type: overlayType,
             metadata: metadata || undefined
           })
+
+          console.log('✅ [BROADCAST] MediaBrowser state updated successfully')
+        } else {
+          console.warn('⚠️ [BROADCAST] Browser request has is_visible=false, skipping overlay')
         }
       })
-      .subscribe()
+      .subscribe((status) => {
+        console.log('📡 [BROADCAST] MediaBrowser channel status:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ [BROADCAST] Successfully subscribed to betabot_media_browser realtime events')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ [BROADCAST] MediaBrowser channel error!')
+        } else if (status === 'TIMED_OUT') {
+          console.error('❌ [BROADCAST] MediaBrowser channel timed out!')
+        }
+      })
+
+    console.log('📡 [BROADCAST] MediaBrowser channel created, waiting for subscription...')
 
     return () => {
+      console.log('🔌 [BROADCAST] Unsubscribing from MediaBrowser channel')
       mediaBrowserChannel.unsubscribe()
     }
   }, [])
