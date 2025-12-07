@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { Mic, Play, Loader2, Volume2 } from 'lucide-react'
 
+// CACHE BUSTER: Updated 2025-12-07 04:57 UTC - Voice ID fixed to ElevenLabs
+
 interface ShowQuestion {
   id: string
   question_text: string

@@ -18,6 +18,12 @@ Deno.serve(async (req) => {
   try {
     const { text, voiceId = 'DTKMou8ccj1ZaWGBiotd' } = await req.json();
 
+    console.log('🎤 TTS Request received:', {
+      textLength: text?.length,
+      voiceIdReceived: voiceId,
+      timestamp: new Date().toISOString()
+    });
+
     if (!text) {
       return new Response(
         JSON.stringify({ error: 'Text parameter is required' }),
@@ -25,9 +31,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ElevenLabs API Configuration
+    // IMPORTANT: Only accept ElevenLabs voice IDs
     const ELEVENLABS_API_KEY = 'sk_9446a36f0833f85e429ae212ff70f3af4095ce86f113a267';
     const ELEVENLABS_VOICE_ID = voiceId;
+
+    // Reject Microsoft Azure voice IDs
+    if (voiceId.includes('en-US-') || voiceId.includes('Neural')) {
+      console.error('❌ REJECTED: Microsoft Azure voice ID sent to ElevenLabs endpoint');
+      throw new Error(`Invalid voice ID for ElevenLabs: "${voiceId}". Expected ElevenLabs voice ID like "DTKMou8ccj1ZaWGBiotd"`);
+    }
+
+    console.log('✅ Using ElevenLabs voice ID:', ELEVENLABS_VOICE_ID);
 
     // ElevenLabs Text-to-Speech API endpoint
     const elevenLabsUrl = `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`;
@@ -88,12 +102,19 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('ElevenLabs TTS generation error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
 
     return new Response(
       JSON.stringify({
         error: error.message || 'Failed to generate speech',
         provider: 'ElevenLabs',
-        details: 'Please check API key and voice ID'
+        details: 'Please check API key and voice ID',
+        errorType: error.name,
+        fullError: String(error)
       }),
       {
         status: 500,
