@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Mic, MicOff, Search, Video, Image } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { useAutomationEngine } from '../hooks/useAutomationEngine'
+import { getGlobalTranscriptListener } from '../lib/transcription/TranscriptListener'
 
 interface VoiceSearchControlPanelProps {
   isActive: boolean
@@ -14,23 +14,65 @@ export function VoiceSearchControlPanel({ isActive, onToggle }: VoiceSearchContr
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [isListening, setIsListening] = useState(false)
 
-  const { transcriptListener } = useAutomationEngine()
-
   // Start/stop microphone when voice search is toggled
   useEffect(() => {
-    if (isActive && transcriptListener && !isListening) {
-      console.log('🎤 [VoiceSearchControl] Starting microphone...')
-      console.log('🎤 [VoiceSearchControl] TranscriptListener available:', !!transcriptListener)
+    console.log('🎤 [VoiceSearchControl] Effect triggered - isActive:', isActive, 'isListening:', isListening)
+
+    const transcriptListener = getGlobalTranscriptListener()
+    console.log('🎤 [VoiceSearchControl] Global listener check:', transcriptListener ? 'FOUND' : 'NULL')
+
+    if (isActive && !isListening) {
+      console.log('🎤 [VoiceSearchControl] Activating microphone...')
+
+      if (!transcriptListener) {
+        console.error('❌ [VoiceSearchControl] No global TranscriptListener found! Waiting for automation engine...')
+
+        // Retry up to 3 times with increasing delays
+        let retryCount = 0
+        const maxRetries = 3
+
+        const retryInterval = setInterval(() => {
+          retryCount++
+          console.log(`🔄 [VoiceSearchControl] Retry ${retryCount}/${maxRetries}...`)
+
+          const retryListener = getGlobalTranscriptListener()
+
+          if (retryListener) {
+            console.log('✅ [VoiceSearchControl] Found TranscriptListener on retry!')
+            clearInterval(retryInterval)
+
+            try {
+              retryListener.start()
+              setIsListening(true)
+              console.log('✅ [VoiceSearchControl] Microphone started successfully')
+            } catch (error) {
+              console.error('❌ [VoiceSearchControl] Failed to start:', error)
+            }
+          } else if (retryCount >= maxRetries) {
+            console.error('❌ [VoiceSearchControl] Failed after 3 retries - automation engine may not be initialized')
+            clearInterval(retryInterval)
+          }
+        }, 1000)
+
+        return () => clearInterval(retryInterval)
+      }
 
       try {
+        console.log('🎤 [VoiceSearchControl] Calling transcriptListener.start()...')
         transcriptListener.start()
         setIsListening(true)
         console.log('✅ [VoiceSearchControl] Microphone started successfully')
       } catch (error) {
         console.error('❌ [VoiceSearchControl] Failed to start microphone:', error)
       }
-    } else if (!isActive && transcriptListener && isListening) {
-      console.log('🛑 [VoiceSearchControl] Stopping microphone...')
+    } else if (!isActive && isListening) {
+      console.log('🛑 [VoiceSearchControl] Deactivating microphone...')
+
+      if (!transcriptListener) {
+        console.warn('⚠️ [VoiceSearchControl] No TranscriptListener to stop')
+        setIsListening(false)
+        return
+      }
 
       try {
         transcriptListener.stop()
@@ -39,8 +81,10 @@ export function VoiceSearchControlPanel({ isActive, onToggle }: VoiceSearchContr
       } catch (error) {
         console.error('❌ [VoiceSearchControl] Failed to stop microphone:', error)
       }
+    } else {
+      console.log('🎤 [VoiceSearchControl] No action needed - already in desired state')
     }
-  }, [isActive, transcriptListener])
+  }, [isActive, isListening])
 
   // Handle session state changes
   useEffect(() => {

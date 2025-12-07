@@ -69,6 +69,9 @@ export interface TranscriptListenerStatus {
   lastTranscript?: string
 }
 
+// Global instance for easy access
+let globalTranscriptListener: TranscriptListener | null = null
+
 export class TranscriptListener {
   private recognition: SpeechRecognition | null = null
   private isListening: boolean = false
@@ -80,6 +83,11 @@ export class TranscriptListener {
   constructor(automationEngine?: AutomationEngine) {
     this.automationEngine = automationEngine || null
     this.initializeRecognition()
+
+    // Store global reference
+    globalTranscriptListener = this
+    console.log('[TranscriptListener] ✅ Stored global reference')
+    console.log('[TranscriptListener] Global instance now available:', !!globalTranscriptListener)
   }
 
   /**
@@ -334,4 +342,11 @@ export class TranscriptListener {
       .map(s => s.transcript)
       .join(' ')
   }
+}
+
+/**
+ * Get global TranscriptListener instance
+ */
+export function getGlobalTranscriptListener(): TranscriptListener | null {
+  return globalTranscriptListener
 }
