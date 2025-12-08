@@ -5,13 +5,13 @@ import { Sparkles, FileText, Loader2, CheckCircle2, AlertCircle, Brain } from 'l
 import { ScriptImporter } from './episode-prep/ScriptImporter'
 import { PrepProgress } from './episode-prep/PrepProgress'
 import { SegmentsList } from './episode-prep/SegmentsList'
-import { AIContentReview } from './episode-prep/AIContentReview'
+import { ShowScript } from './episode-prep/ShowScript'
 
 export function AIPrepTab() {
   const { episodeInfo } = useEpisodeInfo()
   const [prepProgress, setPrepProgress] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [activeSubTab, setActiveSubTab] = useState<'import' | 'segments' | 'review'>('import')
+  const [activeSubTab, setActiveSubTab] = useState<'import' | 'segments' | 'script'>('import')
 
   useEffect(() => {
     if (episodeInfo) {
@@ -168,16 +168,16 @@ export function AIPrepTab() {
           Segments ({prepProgress?.total_segments || 0})
         </button>
         <button
-          onClick={() => setActiveSubTab('review')}
+          onClick={() => setActiveSubTab('script')}
           className={`flex-1 px-4 py-2.5 rounded-md text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
-            activeSubTab === 'review'
+            activeSubTab === 'script'
               ? 'bg-purple-600 text-white shadow-lg'
               : 'text-gray-400 hover:text-white hover:bg-gray-800'
           }`}
           disabled={!prepProgress || prepProgress.total_ai_content_generated === 0}
         >
           <CheckCircle2 className="w-4 h-4" />
-          Review Content ({prepProgress?.ai_content_approved || 0}/{prepProgress?.total_ai_content_generated || 0})
+          Show Script
         </button>
       </div>
 
@@ -198,15 +198,14 @@ export function AIPrepTab() {
             episodeId={episodeInfo.id}
             onContentGenerated={() => {
               loadPrepProgress()
-              setActiveSubTab('review')
+              setActiveSubTab('script')
             }}
           />
         )}
 
-        {activeSubTab === 'review' && (
-          <AIContentReview
+        {activeSubTab === 'script' && (
+          <ShowScript
             episodeId={episodeInfo.id}
-            onApprovalChange={() => loadPrepProgress()}
           />
         )}
       </div>
