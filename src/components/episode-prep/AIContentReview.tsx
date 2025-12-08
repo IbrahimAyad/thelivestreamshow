@@ -158,12 +158,18 @@ export function AIContentReview({ episodeId, onApprovalChange }: AIContentReview
       }
     }
 
+    // Show result
     if (errorCount > 0) {
-      alert(`Queued ${successCount} stories successfully, ${errorCount} failed. Check console for errors.`)
+      alert(`⚠️ Queued ${successCount} stories successfully, ${errorCount} failed. Check console for errors.`)
+    } else if (successCount > 0) {
+      alert(`✅ Successfully queued ${successCount} news ${successCount === 1 ? 'story' : 'stories'} for broadcast!\n\nCheck the News Feed tab to see them.`)
     }
   }
 
   const queueQuestions = async (questions: any[]) => {
+    let successCount = 0
+    let errorCount = 0
+
     for (const item of questions) {
       const q = item.content_data
 
@@ -180,7 +186,9 @@ export function AIContentReview({ episodeId, onApprovalChange }: AIContentReview
 
       if (error) {
         console.error('Error queueing question:', error)
+        errorCount++
       } else {
+        console.log('✅ Queued question:', q.question.substring(0, 50) + '...')
         // Mark as queued
         await supabase
           .from('episode_ai_content')
@@ -189,7 +197,16 @@ export function AIContentReview({ episodeId, onApprovalChange }: AIContentReview
             queued_at: new Date().toISOString()
           })
           .eq('id', item.id)
+
+        successCount++
       }
+    }
+
+    // Show result
+    if (errorCount > 0) {
+      alert(`⚠️ Queued ${successCount} questions successfully, ${errorCount} failed. Check console for errors.`)
+    } else if (successCount > 0) {
+      alert(`✅ Successfully queued ${successCount} ${successCount === 1 ? 'question' : 'questions'} for broadcast!\n\nGo to Ultra Chat tab → Generate TTS for each question.`)
     }
   }
 

@@ -66,7 +66,14 @@ export function AIPrepTab() {
         console.log('📊 Prep progress updated:', payload)
         setPrepProgress(payload.new)
       })
-      .subscribe()
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Subscribed to prep progress updates')
+        }
+        if (err) {
+          console.warn('⚠️ Subscription error (non-critical):', err)
+        }
+      })
 
     return () => {
       channel.unsubscribe()
