@@ -3,10 +3,11 @@ import { MorningNewsControl } from './MorningNewsControl'
 import { TTSQueuePanel } from './TTSQueuePanel'
 import { EpisodeInfoPanel } from './EpisodeInfoPanel'
 import { VoiceSearchControlPanel } from './VoiceSearchControlPanel'
-import { Layout, MessageSquare, Newspaper, Info, Mic } from 'lucide-react'
+import { AIPrepTab } from './AIPrepTab'
+import { Layout, MessageSquare, Newspaper, Info, Mic, Sparkles } from 'lucide-react'
 
 export function MorningShowDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'news' | 'chat' | 'voice'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'aiprep' | 'news' | 'chat' | 'voice'>('overview')
   const [voiceSearchActive, setVoiceSearchActive] = useState(false)
 
   return (
@@ -29,8 +30,8 @@ export function MorningShowDashboard() {
             <button
               onClick={() => setActiveTab('overview')}
               className={`px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${
-                activeTab === 'overview' 
-                  ? 'bg-cyan-600 text-white shadow-lg' 
+                activeTab === 'overview'
+                  ? 'bg-cyan-600 text-white shadow-lg'
                   : 'text-gray-400 hover:text-white hover:bg-gray-800'
               }`}
             >
@@ -38,10 +39,21 @@ export function MorningShowDashboard() {
               Overview
             </button>
             <button
+              onClick={() => setActiveTab('aiprep')}
+              className={`px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${
+                activeTab === 'aiprep'
+                  ? 'bg-purple-600 text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              AI Prep
+            </button>
+            <button
               onClick={() => setActiveTab('news')}
               className={`px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${
-                activeTab === 'news' 
-                  ? 'bg-cyan-600 text-white shadow-lg' 
+                activeTab === 'news'
+                  ? 'bg-cyan-600 text-white shadow-lg'
                   : 'text-gray-400 hover:text-white hover:bg-gray-800'
               }`}
             >
@@ -88,6 +100,12 @@ export function MorningShowDashboard() {
             <div className="h-full">
               <MorningNewsControl />
             </div>
+          </div>
+        )}
+
+        {activeTab === 'aiprep' && (
+          <div className="h-full">
+            <AIPrepTab />
           </div>
         )}
 
