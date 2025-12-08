@@ -129,67 +129,77 @@ export function ShowScript({ episodeId }: ShowScriptProps) {
 
   const exportAsMarkdown = () => {
     let markdown = `# ${episodeInfo?.episode_title || 'SHOW SCRIPT'}\n\n`
-    markdown += `**Episode #${episodeInfo?.episode_number}** | ${episodeInfo?.episode_date}\n\n`
+    markdown += `**Episode #${episodeInfo?.episode_number}** • ${episodeInfo?.episode_date}\n\n`
     markdown += `**Topic:** ${episodeInfo?.episode_topic}\n\n`
-    markdown += `---\n\n`
+    markdown += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`
 
     for (const segment of segments) {
       const segmentContent = content[segment.id] || {}
       const icon = getSegmentIcon(segment.segment_type)
 
-      markdown += `## ${icon} SEGMENT ${segment.segment_number}: ${segment.title.toUpperCase()}\n\n`
+      // Segment header with extra spacing
+      markdown += `\n\n## ${icon} SEGMENT ${segment.segment_number}: ${segment.title.toUpperCase()}\n\n`
 
       if (segment.planned_duration_seconds) {
-        markdown += `**Duration:** ${formatDuration(segment.planned_duration_seconds)}\n\n`
+        markdown += `⏱️ **Duration:** ${formatDuration(segment.planned_duration_seconds)}\n\n`
       }
 
-      // News stories
+      markdown += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`
+
+      // News stories with clear separation
       if (segmentContent.news?.length > 0) {
         markdown += `### 📰 NEWS STORIES\n\n`
         segmentContent.news.forEach((story: NewsStory, i: number) => {
-          markdown += `#### ${i + 1}. ${story.title}\n\n`
-          markdown += `**Layer 1 (Surface):**  \n${story.layer1_surface}\n\n`
-          markdown += `**Layer 2 (Reality):**  \n${story.layer2_reality}\n\n`
-          markdown += `**Layer 3 (Narrative):**  \n${story.layer3_narrative}\n\n`
-          markdown += `---\n\n`
+          markdown += `**${i + 1}. ${story.title}**\n\n`
+          markdown += `🔵 **Layer 1 (Surface)**  \n${story.layer1_surface}\n\n`
+          markdown += `🟣 **Layer 2 (Reality)**  \n${story.layer2_reality}\n\n`
+          markdown += `🔴 **Layer 3 (Narrative)**  \n${story.layer3_narrative}\n\n`
+          markdown += `────────────────────────────────────────────────────────────────\n\n`
         })
       }
 
-      // Questions
+      // Questions with numbered format
       if (segmentContent.questions?.length > 0) {
-        markdown += `### ❓ LISTENER QUESTIONS (TTS Ready)\n\n`
+        markdown += `### ❓ LISTENER QUESTIONS (TTS Ready ✅)\n\n`
         segmentContent.questions.forEach((q: Question, i: number) => {
-          markdown += `**Q${i + 1}:** ${q.question}\n\n`
-          markdown += `*Scores: TTS ${q.tts_suitability_score}/10 | Relevance ${q.relevance_score}/10*\n\n`
+          markdown += `**Q${i + 1}**\n\n`
+          markdown += `"${q.question}"\n\n`
+          markdown += `📊 TTS: ${q.tts_suitability_score}/10 | Relevance: ${q.relevance_score}/10 | Engagement: ${q.engagement_score}/10\n\n`
+          markdown += `\n`
         })
       }
 
-      // Talking points
+      // Talking points with clear bullets
       if (segmentContent.talkingPoints?.length > 0) {
-        markdown += `### 💡 TALKING POINTS\n\n`
-        segmentContent.talkingPoints.forEach((point: TalkingPoint) => {
-          markdown += `- ${point.text}\n`
+        markdown += `### 💡 HOST TALKING POINTS\n\n`
+        segmentContent.talkingPoints.forEach((point: TalkingPoint, i: number) => {
+          markdown += `${i + 1}. ${point.text}\n\n`
         })
-        markdown += `\n`
       }
 
-      // Clip lines
+      // Clip lines with quotation styling
       if (segmentContent.clipLines?.length > 0) {
         markdown += `### 💬 CLIP LINES\n\n`
         segmentContent.clipLines.forEach((line: ClipLine) => {
-          markdown += `> "${line.text}"\n\n`
+          markdown += `> 💬 "${line.text}"\n\n`
         })
       }
 
-      markdown += `---\n\n`
+      markdown += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`
     }
+
+    // Footer
+    markdown += `\n\n---\n\n`
+    markdown += `🤖 Generated with AI Episode Prep  \n`
+    markdown += `Powered by Perplexity AI  \n`
+    markdown += `Export Date: ${new Date().toLocaleString()}\n`
 
     // Download markdown file
     const blob = new Blob([markdown], { type: 'text/markdown' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `Episode-${episodeInfo?.episode_number}-Script.md`
+    a.download = `Episode-${episodeInfo?.episode_number}-Broadcast-Script.md`
     a.click()
     URL.revokeObjectURL(url)
   }

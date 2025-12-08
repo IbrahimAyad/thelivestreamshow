@@ -51,8 +51,8 @@ export async function generateAIContent(segment: any, episodeId: string): Promis
   // Save generated content to database
   await saveAIContentToDatabase(content, segment.id, episodeId)
 
-  // Auto-approve and queue top content
-  await autoApproveAndQueue(episodeId)
+  // Note: Auto-approval happens in SegmentsList after ALL segments are generated
+  // Not here (would run 9 times and create duplicates)
 
   return content
 }
@@ -409,8 +409,9 @@ async function saveAIContentToDatabase(content: AIGeneratedContent, segmentId: s
 
 /**
  * Auto-approve top content and queue for broadcast
+ * Call this ONCE after all segments are generated
  */
-async function autoApproveAndQueue(episodeId: string) {
+export async function autoApproveAndQueue(episodeId: string) {
   console.log('🤖 Auto-approving and queueing top content...')
 
   try {

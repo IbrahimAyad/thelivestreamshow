@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
-import { generateAIContent } from '../../lib/api/contentGenerator'
+import { generateAIContent, autoApproveAndQueue } from '../../lib/api/contentGenerator'
 import { Sparkles, Loader2, CheckCircle2, Clock, FileText } from 'lucide-react'
 
 interface SegmentsListProps {
@@ -101,6 +101,7 @@ export function SegmentsList({ episodeId, onContentGenerated }: SegmentsListProp
   }
 
   const handleGenerateAll = async () => {
+    // Generate content for all segments
     for (const segment of segments) {
       if (segment.ai_generation_status !== 'completed') {
         await handleGenerateContent(segment)
@@ -108,6 +109,11 @@ export function SegmentsList({ episodeId, onContentGenerated }: SegmentsListProp
         await new Promise(resolve => setTimeout(resolve, 2000))
       }
     }
+
+    // After ALL segments are done, run auto-approval ONCE
+    console.log('✅ All segments generated. Starting auto-approval...')
+    await autoApproveAndQueue(episodeId)
+    console.log('✅ Auto-approval complete!')
   }
 
   if (isLoading) {
