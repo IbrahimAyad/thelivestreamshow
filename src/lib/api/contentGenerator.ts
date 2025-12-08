@@ -565,6 +565,18 @@ async function autoGenerateTTS(questions: any[]) {
     }
 
     console.log(`✅ TTS generation complete`)
+
+    // Mark episode as 100% complete and ready for broadcast
+    await supabase
+      .from('episode_prep_progress')
+      .update({
+        prep_status: 'ready_for_broadcast',
+        prep_completion_percent: 100
+      })
+      .eq('episode_info_id', episodeId)
+
+    console.log('🎉 Episode prep 100% complete! Ready for broadcast.')
+
   } catch (error) {
     console.error('❌ Error in auto-generate TTS:', error)
   }

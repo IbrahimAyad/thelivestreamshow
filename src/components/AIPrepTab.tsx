@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useEpisodeInfo } from '../hooks/useEpisodeInfo'
-import { Sparkles, FileText, Loader2, CheckCircle2, AlertCircle, Brain } from 'lucide-react'
+import { Sparkles, FileText, Loader2, CheckCircle2, AlertCircle, Brain, MoreVertical, Trash2, Archive, Radio, Tv } from 'lucide-react'
+import { clearEpisodeContent, archiveAndCreateNew, markAsReady, goLive } from '../lib/episodeManagement'
 import { ScriptImporter } from './episode-prep/ScriptImporter'
 import { PrepProgress } from './episode-prep/PrepProgress'
 import { SegmentsList } from './episode-prep/SegmentsList'
@@ -12,6 +13,8 @@ export function AIPrepTab() {
   const [prepProgress, setPrepProgress] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeSubTab, setActiveSubTab] = useState<'import' | 'segments' | 'script'>('import')
+  const [showActionsMenu, setShowActionsMenu] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
     if (episodeInfo) {
@@ -65,6 +68,11 @@ export function AIPrepTab() {
       }, (payload) => {
         console.log('📊 Prep progress updated:', payload)
         setPrepProgress(payload.new)
+
+        // Show completion notification
+        if (payload.new.prep_completion_percent === 100 && payload.old?.prep_completion_percent !== 100) {
+          showCompletionNotification()
+        }
       })
       .subscribe((status, err) => {
         if (status === 'SUBSCRIBED') {
@@ -78,6 +86,106 @@ export function AIPrepTab() {
     return () => {
       channel.unsubscribe()
     }
+  }
+
+  const showCompletionNotification = () => {
+    // Create a simple notification
+    const notification = document.createElement('div')
+    notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-2xl z-50 animate-slide-in'
+    notification.innerHTML = `
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">✅</span>
+        <div>
+          <p class="font-bold">Episode Ready for Broadcast!</p>
+          <p class="text-sm opacity-90">All content generated and TTS ready</p>
+        </div>
+      </div>
+    `
+    document.body.appendChild(notification)
+    setTimeout(() => {
+      notification.remove()
+    }, 5000)
+  }
+
+  const handleClearEpisode = async () => {
+    if (!episodeInfo) return
+
+    if (!confirm('Clear all AI-generated content for this episode? This cannot be undone.\n\nEpisode info will be kept, but all segments, questions, and news will be deleted.')) {
+      return
+    }
+
+    setActionLoading(true)
+    const result = await clearEpisodeContent(episodeInfo.id)
+    setActionLoading(false)
+
+    if (result.success) {
+      alert('✅ Episode content cleared successfully')
+      loadPrepProgress()
+      setActiveSubTab('import')
+    } else {
+      alert('❌ Failed to clear episode. Check console for errors.')
+    }
+
+    setShowActionsMenu(false)
+  }
+
+  const handleArchiveAndCreateNew = async () => {
+    if (!episodeInfo) return
+
+    if (!confirm(`Archive Episode #${episodeInfo.episode_number} and create Episode #${(episodeInfo.episode_number || 0) + 1}?\n\nCurrent episode will be moved to archive, and a new episode will be created.`)) {
+      return
+    }
+
+    setActionLoading(true)
+    const result = await archiveAndCreateNew(episodeInfo.id)
+    setActionLoading(false)
+
+    if (result.success) {
+      alert(`✅ Archived Episode #${episodeInfo.episode_number}\n📝 Created Episode #${result.newEpisode.episode_number}\n\nRefresh the page to see the new episode.`)
+      window.location.reload()
+    } else {
+      alert('❌ Failed to archive and create new. Check console for errors.')
+    }
+
+    setShowActionsMenu(false)
+  }
+
+  const handleMarkAsReady = async () => {
+    if (!episodeInfo) return
+
+    setActionLoading(true)
+    const result = await markAsReady(episodeInfo.id)
+    setActionLoading(false)
+
+    if (result.success) {
+      alert('✅ Episode marked as ready for broadcast')
+      loadPrepProgress()
+    } else {
+      alert('❌ Failed to mark as ready. Check console for errors.')
+    }
+
+    setShowActionsMenu(false)
+  }
+
+  const handleGoLive = async () => {
+    if (!episodeInfo) return
+
+    if (!confirm('Set this episode to LIVE status?\n\nThis will lock the episode from further editing.')) {
+      return
+    }
+
+    setActionLoading(true)
+    const result = await goLive(episodeInfo.id)
+    setActionLoading(false)
+
+    if (result.success) {
+      alert('🔴 Episode is now LIVE!')
+      loadPrepProgress()
+    } else {
+      alert('❌ Failed to go live. Check console for errors.')
+    }
+
+    setShowActionsMenu(false)
   }
 
   if (!episodeInfo) {
@@ -124,17 +232,76 @@ export function AIPrepTab() {
             </div>
           </div>
 
-          {/* Prep Status Badge */}
-          <div className="flex flex-col items-end gap-2">
-            <StatusBadge status={prepProgress?.prep_status || 'not_started'} />
-            {prepProgress && (
-              <div className="text-right">
-                <p className="text-sm text-gray-400">Completion</p>
-                <p className="text-2xl font-bold text-cyan-400">
-                  {prepProgress.prep_completion_percent || 0}%
-                </p>
-              </div>
-            )}
+          {/* Prep Status Badge and Actions */}
+          <div className="flex items-start gap-4">
+            <div className="flex flex-col items-end gap-2">
+              <StatusBadge status={prepProgress?.prep_status || 'not_started'} />
+              {prepProgress && (
+                <div className="text-right">
+                  <p className="text-sm text-gray-400">Completion</p>
+                  <p className="text-2xl font-bold text-cyan-400">
+                    {prepProgress.prep_completion_percent || 0}%
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Episode Actions Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setShowActionsMenu(!showActionsMenu)}
+                className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-600 transition-colors"
+                disabled={actionLoading}
+              >
+                {actionLoading ? (
+                  <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                ) : (
+                  <MoreVertical className="w-5 h-5 text-gray-400" />
+                )}
+              </button>
+
+              {showActionsMenu && (
+                <div className="absolute right-0 mt-2 w-64 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl z-50">
+                  <div className="p-2">
+                    <p className="text-xs text-gray-400 px-3 py-2 font-semibold">Episode Actions</p>
+
+                    <button
+                      onClick={handleMarkAsReady}
+                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-700 rounded text-left text-sm text-white transition-colors"
+                    >
+                      <Tv className="w-4 h-4 text-blue-400" />
+                      Mark as Ready for Broadcast
+                    </button>
+
+                    <button
+                      onClick={handleGoLive}
+                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-700 rounded text-left text-sm text-white transition-colors"
+                    >
+                      <Radio className="w-4 h-4 text-red-400" />
+                      Go Live
+                    </button>
+
+                    <div className="h-px bg-gray-700 my-2" />
+
+                    <button
+                      onClick={handleArchiveAndCreateNew}
+                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-700 rounded text-left text-sm text-white transition-colors"
+                    >
+                      <Archive className="w-4 h-4 text-purple-400" />
+                      Archive & Start New Episode
+                    </button>
+
+                    <button
+                      onClick={handleClearEpisode}
+                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-red-900/30 rounded text-left text-sm text-red-400 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Clear Episode Content
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
