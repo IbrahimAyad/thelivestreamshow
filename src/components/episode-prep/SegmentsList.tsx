@@ -262,7 +262,7 @@ export function SegmentsList({ episodeId, onContentGenerated }: SegmentsListProp
                       {segment.original_content.substring(0, 500)}
                       {segment.original_content.length > 500 ? '...' : ''}
                     </pre>
-                  </details>
+                  </div>
                 </details>
               )}
             </div>
