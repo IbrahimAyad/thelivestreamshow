@@ -109,23 +109,42 @@ export function AIContentReview({ episodeId, onApprovalChange }: AIContentReview
   }
 
   const queueNewsStories = async (stories: any[]) => {
-    for (const item of stories) {
+    let successCount = 0
+    let errorCount = 0
+
+    for (let i = 0; i < stories.length; i++) {
+      const item = stories[i]
       const story = item.content_data
 
-      // Insert to morning_news_stories table
+      // Create summary from Three Layers
+      const summary = `${story.layer1_surface || ''} ${story.layer2_reality || ''}`.trim()
+
+      // Create talking points array
+      const talkingPoints = [
+        `Surface: ${story.layer1_surface || 'N/A'}`,
+        `Reality: ${story.layer2_reality || 'N/A'}`,
+        `Narrative: ${story.layer3_narrative || 'N/A'}`
+      ]
+
+      // Insert to morning_news_stories table with ALL required fields
       const { error } = await supabase
         .from('morning_news_stories')
         .insert({
-          headline: story.title,
+          headline: story.title || 'Untitled Story',
+          summary: summary || story.layer1_surface || 'No summary available',
           category: 'general',
-          source: 'AI Generated',
+          source: 'AI Generated (Perplexity)',
+          talking_points: talkingPoints,
           is_visible: true,
-          display_order: 1
+          display_order: i + 1
         })
 
       if (error) {
         console.error('Error queueing news story:', error)
+        console.error('Story data:', story)
+        errorCount++
       } else {
+        console.log('✅ Queued news story:', story.title)
         // Mark as queued
         await supabase
           .from('episode_ai_content')
@@ -134,7 +153,13 @@ export function AIContentReview({ episodeId, onApprovalChange }: AIContentReview
             queued_at: new Date().toISOString()
           })
           .eq('id', item.id)
+
+        successCount++
       }
+    }
+
+    if (errorCount > 0) {
+      alert(`Queued ${successCount} stories successfully, ${errorCount} failed. Check console for errors.`)
     }
   }
 
