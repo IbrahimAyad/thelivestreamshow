@@ -47,11 +47,12 @@ import { useDualDeckAudioPlayer } from './hooks/studio/useDualDeckAudioPlayer'
 import { useProductionAlertHotkey } from './hooks/useProductionAlertHotkey'
 import { ShowIntroController } from './components/ShowIntroController'
 import { supabase } from './lib/supabase'
-import { Monitor, ExternalLink, Keyboard, Home, Music2, Image as ImageIcon, Sparkles } from 'lucide-react'
+import { Monitor, ExternalLink, Keyboard, Home, Music2, Image as ImageIcon, Sparkles, FileText } from 'lucide-react'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { AITab } from './components/AITab'
+import { FilesTab } from './components/FilesTab'
 
-type Tab = 'dashboard' | 'studio' | 'media' | 'ai'
+type Tab = 'dashboard' | 'studio' | 'media' | 'ai' | 'files'
 
 function App() {
   const broadcastUrl = window.location.origin + '/broadcast'
@@ -230,6 +231,16 @@ function App() {
                     <span className="text-xs px-2 py-0.5 bg-yellow-500/20 text-yellow-300 rounded">BETA</span>
                   </button>
                 )}
+                <button
+                  onClick={() => setActiveTab('files')}
+                  className={`flex items-center gap-2 px-6 py-3 font-semibold transition-all ${activeTab === 'files'
+                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white border-b-2 border-emerald-400'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    }`}
+                >
+                  <FileText className="w-5 h-5" />
+                  Files
+                </button>
               </div>
             </div>
           </header>
@@ -476,6 +487,12 @@ function App() {
             {activeTab === 'ai' && import.meta.env.VITE_ENABLE_AI_TAB !== 'false' && (
               <ErrorBoundary sectionName="AI Tab">
                 <AITab />
+              </ErrorBoundary>
+            )}
+
+            {activeTab === 'files' && (
+              <ErrorBoundary sectionName="Files Tab">
+                <FilesTab />
               </ErrorBoundary>
             )}
           </main>

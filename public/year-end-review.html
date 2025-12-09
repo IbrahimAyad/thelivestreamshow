@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOU, INC. — 2025 → 2026 Year-End Performance Review</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #C41E3A;
+            --dark-red: #8B0000;
+            --gold: #D4AF37;
+            --light-gold: #F4D03F;
+            --dark-gold: #B8860B;
+            --black: #0D0D0D;
+            --dark-gray: #1A1A1A;
+            --medium-gray: #2D2D2D;
+            --light-gray: #4A4A4A;
+            --text-gray: #CCCCCC;
+            --white: #FFFFFF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @page {
+            size: letter;
+            margin: 0.5in;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background: var(--dark-gray);
+            color: var(--text-gray);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                color: #1a1a1a;
+            }
+            .document {
+                box-shadow: none;
+                max-width: 100%;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            .no-print {
+                display: none;
+            }
+            .block-card {
+                break-inside: avoid;
+            }
+            input[type="text"],
+            input[type="number"],
+            textarea {
+                border: 1px solid #ccc !important;
+                background: #f9f9f9 !important;
+            }
+        }
+
+        /* Document Container */
+        .document {
+            max-width: 850px;
+            margin: 0 auto;
+            background: var(--black);
+            box-shadow: 0 0 60px rgba(196, 30, 58, 0.3);
+        }
+
+        /* Header Section */
+        .header {
+            background: linear-gradient(135deg, var(--black) 0%, var(--dark-gray) 50%, var(--black) 100%);
+            padding: 60px 50px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 4px solid var(--gold);
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-red), var(--gold), var(--primary-red));
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(212, 175, 55, 0.03) 35px, rgba(212, 175, 55, 0.03) 70px);
+            pointer-events: none;
+        }
+
+        .logo-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+            padding: 8px 25px;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            border: 2px solid var(--gold);
+            box-shadow: 0 4px 20px rgba(196, 30, 58, 0.4);
+        }
+
+        .logo-badge span {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.1em;
+            letter-spacing: 0.3em;
+            color: var(--white);
+        }
+
+        .main-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 4em;
+            color: var(--gold);
+            letter-spacing: 0.08em;
+            text-shadow: 
+                3px 3px 0 var(--primary-red),
+                6px 6px 0 rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .subtitle {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.5em;
+            font-weight: 500;
+            color: var(--white);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .year-badge {
+            display: inline-block;
+            background: var(--gold);
+            color: var(--black);
+            padding: 5px 20px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3em;
+            letter-spacing: 0.1em;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .tagline {
+            font-style: italic;
+            color: var(--text-gray);
+            margin-top: 25px;
+            font-size: 1.2em;
+            border-top: 1px solid var(--light-gray);
+            padding-top: 20px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Employee Info Section */
+        .employee-section {
+            background: var(--dark-gray);
+            padding: 40px 50px;
+            border-bottom: 2px solid var(--medium-gray);
+        }
+
+        .employee-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .info-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .info-field label {
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--gold);
+        }
+
+        .info-field input {
+            background: var(--medium-gray);
+            border: 2px solid var(--light-gray);
+            padding: 12px 15px;
+            font-size: 1em;
+            color: var(--white);
+            font-family: 'Source Sans Pro', sans-serif;
+            transition: border-color 0.3s;
+        }
+
+        .info-field input:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        .info-field.full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Section Headers */
+        .section-header {
+            background: linear-gradient(90deg, var(--primary-red), var(--dark-red));
+            padding: 20px 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: var(--gold);
+        }
+
+        .section-header h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2em;
+            color: var(--white);
+            letter-spacing: 0.15em;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-header h2::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.5), transparent);
+        }
+
+        /* Content Sections */
+        .content-section {
+            padding: 40px 50px;
+            background: var(--black);
+        }
+
+        .content-section.alt {
+            background: var(--dark-gray);
+        }
+
+        /* Goal Ladder Section */
+        .goal-intro {
+            text-align: center;
+            padding: 30px 0 40px;
+            border-bottom: 1px solid var(--medium-gray);
+            margin-bottom: 40px;
+        }
+
+        .goal-intro h3 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.4em;
+            color: var(--gold);
+            letter-spacing: 0.1em;
+            margin-bottom: 15px;
+        }
+
+        .goal-intro p {
+            font-size: 1.1em;
+            color: var(--text-gray);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .vs-comparison {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .vs-item {
+            flex: 1;
+            max-width: 280px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .vs-item.goal {
+            background: linear-gradient(135deg, rgba(0, 100, 0, 0.2), rgba(0, 60, 0, 0.3));
+            border: 2px solid #228B22;
+            border-radius: 5px;
+        }
+
+        .vs-item.dream {
+            background: linear-gradient(135deg, rgba(139, 0, 0, 0.2), rgba(80, 0, 0, 0.3));
+            border: 2px solid var(--primary-red);
+            border-radius: 5px;
+        }
+
+        .vs-badge {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5em;
+            color: var(--gold);
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+        }
+
+        /* Goal Level Cards */
+        .goal-ladder {
+            display: grid;
+            gap: 25px;
+        }
+
+        .goal-level {
+            background: var(--medium-gray);
+            border-left: 5px solid;
+            padding: 25px 30px;
+            position: relative;
+        }
+
+        .goal-level.level-1 { border-color: #228B22; }
+        .goal-level.level-2 { border-color: var(--gold); }
+        .goal-level.level-3 { border-color: #FF6B35; }
+        .goal-level.level-4 { border-color: var(--primary-red); }
+
+        .level-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .level-badge {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3em;
+            letter-spacing: 0.1em;
+        }
+
+        .level-1 .level-badge { color: #228B22; }
+        .level-2 .level-badge { color: var(--gold); }
+        .level-3 .level-badge { color: #FF6B35; }
+        .level-4 .level-badge { color: var(--primary-red); }
+
+        .level-years {
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.9em;
+            color: var(--text-gray);
+            background: var(--black);
+            padding: 5px 15px;
+            border-radius: 3px;
+        }
+
+        .level-desc {
+            font-size: 0.95em;
+            color: var(--text-gray);
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .level-keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .keyword {
+            font-size: 0.75em;
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            color: var(--white);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .goal-input {
+            width: 100%;
+            background: var(--black);
+            border: 2px solid var(--light-gray);
+            padding: 15px;
+            color: var(--white);
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 1em;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .goal-input:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        .goal-input::placeholder {
+            color: var(--light-gray);
+        }
+
+        /* Block Cards */
+        .blocks-grid {
+            display: grid;
+            gap: 30px;
+        }
+
+        .block-card {
+            background: var(--dark-gray);
+            border: 2px solid var(--medium-gray);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .block-header {
+            background: linear-gradient(135deg, var(--medium-gray), var(--dark-gray));
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--light-gray);
+        }
+
+        .block-number {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3em;
+            color: var(--primary-red);
+            line-height: 1;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+        }
+
+        .block-title-group {
+            flex: 1;
+            margin-left: 20px;
+        }
+
+        .block-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8em;
+            color: var(--gold);
+            letter-spacing: 0.1em;
+        }
+
+        .block-question {
+            font-size: 0.9em;
+            color: var(--text-gray);
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        .block-score-circle {
+            width: 70px;
+            height: 70px;
+            border: 4px solid var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--black);
+        }
+
+        .block-score-circle input {
+            width: 40px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8em;
+            color: var(--gold);
+        }
+
+        .block-score-circle input:focus {
+            outline: none;
+        }
+
+        .block-content {
+            padding: 25px;
+        }
+
+        .assessment-section {
+            margin-bottom: 25px;
+        }
+
+        .assessment-label {
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gold);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .assessment-label::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background: var(--primary-red);
+        }
+
+        .assessment-textarea {
+            width: 100%;
+            background: var(--black);
+            border: 2px solid var(--medium-gray);
+            padding: 15px;
+            color: var(--white);
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 0.95em;
+            resize: vertical;
+            min-height: 100px;
+            line-height: 1.6;
+        }
+
+        .assessment-textarea:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        .challenge-box {
+            background: linear-gradient(135deg, rgba(196, 30, 58, 0.1), rgba(139, 0, 0, 0.15));
+            border: 2px solid var(--primary-red);
+            padding: 20px;
+        }
+
+        .challenge-box .assessment-label {
+            color: var(--primary-red);
+        }
+
+        .challenge-box .assessment-label::before {
+            background: var(--gold);
+        }
+
+        /* Score Summary */
+        .score-summary {
+            background: linear-gradient(135deg, var(--black), var(--dark-gray));
+            border: 3px solid var(--gold);
+            padding: 40px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .score-summary h3 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2em;
+            color: var(--gold);
+            letter-spacing: 0.15em;
+            margin-bottom: 30px;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .score-item {
+            background: var(--medium-gray);
+            padding: 15px 10px;
+            border-radius: 5px;
+        }
+
+        .score-item .label {
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-gray);
+            margin-bottom: 5px;
+        }
+
+        .score-item .value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5em;
+            color: var(--gold);
+        }
+
+        .total-score {
+            display: inline-block;
+            background: var(--gold);
+            color: var(--black);
+            padding: 20px 60px;
+            font-family: 'Bebas Neue', sans-serif;
+        }
+
+        .total-score .label {
+            font-size: 1em;
+            letter-spacing: 0.15em;
+        }
+
+        .total-score .value {
+            font-size: 3em;
+            line-height: 1;
+        }
+
+        .total-score .max {
+            font-size: 1.2em;
+            opacity: 0.7;
+        }
+
+        /* Declaration Section */
+        .declaration-section {
+            background: linear-gradient(135deg, var(--dark-gray), var(--black));
+            padding: 50px;
+            text-align: center;
+            border-top: 4px solid var(--gold);
+            position: relative;
+        }
+
+        .declaration-section::before {
+            content: '★';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2em;
+            color: var(--gold);
+            background: var(--black);
+            padding: 0 20px;
+        }
+
+        .declaration-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5em;
+            color: var(--gold);
+            letter-spacing: 0.15em;
+            margin-bottom: 30px;
+        }
+
+        .declaration-statement {
+            font-size: 1.3em;
+            color: var(--white);
+            margin-bottom: 30px;
+        }
+
+        .declaration-inputs {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .declaration-inputs span {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.2em;
+            color: var(--text-gray);
+        }
+
+        .declaration-input {
+            background: var(--medium-gray);
+            border: 2px solid var(--gold);
+            padding: 12px 20px;
+            font-size: 1.1em;
+            color: var(--gold);
+            font-family: 'Source Sans Pro', sans-serif;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .declaration-input:focus {
+            outline: none;
+            background: var(--black);
+        }
+
+        .arrow-connector {
+            font-size: 2em;
+            color: var(--primary-red);
+        }
+
+        /* Signature Section */
+        .signature-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px solid var(--medium-gray);
+        }
+
+        .signature-field {
+            text-align: center;
+        }
+
+        .signature-line {
+            border-bottom: 2px solid var(--light-gray);
+            height: 60px;
+            margin-bottom: 10px;
+        }
+
+        .signature-field label {
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-gray);
+        }
+
+        /* Print Button */
+        .print-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .print-btn {
+            background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+            color: var(--white);
+            border: 2px solid var(--gold);
+            padding: 15px 30px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(196, 30, 58, 0.4);
+        }
+
+        .print-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(196, 30, 58, 0.6);
+        }
+
+        .print-btn.secondary {
+            background: linear-gradient(135deg, var(--medium-gray), var(--dark-gray));
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 40px 25px;
+            }
+            .main-title {
+                font-size: 2.5em;
+            }
+            .content-section,
+            .employee-section {
+                padding: 30px 25px;
+            }
+            .employee-grid {
+                grid-template-columns: 1fr;
+            }
+            .vs-comparison {
+                flex-direction: column;
+            }
+            .score-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .signature-section {
+                grid-template-columns: 1fr;
+            }
+            .declaration-inputs {
+                flex-direction: column;
+            }
+        }
+
+        /* Grade Reference */
+        .grade-reference {
+            background: var(--medium-gray);
+            padding: 20px 25px;
+            margin-top: 30px;
+            border-radius: 5px;
+        }
+
+        .grade-reference h4 {
+            font-family: 'Oswald', sans-serif;
+            color: var(--gold);
+            margin-bottom: 15px;
+            font-size: 1em;
+            letter-spacing: 0.1em;
+        }
+
+        .grade-scale {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .grade-item {
+            text-align: center;
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .grade-item .score {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5em;
+            color: var(--white);
+        }
+
+        .grade-item .label {
+            font-size: 0.7em;
+            color: var(--text-gray);
+            text-transform: uppercase;
+        }
+
+        .grade-item.poor .score { color: #FF4444; }
+        .grade-item.below .score { color: #FF8C00; }
+        .grade-item.average .score { color: #FFD700; }
+        .grade-item.good .score { color: #90EE90; }
+        .grade-item.excellent .score { color: #00FF7F; }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-badge">
+                <span>THE LIVE STREAM SHOW</span>
+            </div>
+            <h1 class="main-title">YOU, INC.</h1>
+            <p class="subtitle">Personal Year-End Performance Review</p>
+            <div class="year-badge">2025 → 2026</div>
+            <p class="tagline">"If you were the CEO of YOU Inc., how would you grade your year?"</p>
+        </header>
+
+        <!-- Employee Information -->
+        <section class="employee-section">
+            <div class="employee-grid">
+                <div class="info-field">
+                    <label>Cast Member Name</label>
+                    <input type="text" placeholder="Enter your name">
+                </div>
+                <div class="info-field">
+                    <label>Review Date</label>
+                    <input type="text" placeholder="MM/DD/YYYY">
+                </div>
+                <div class="info-field">
+                    <label>Your Title / Role</label>
+                    <input type="text" placeholder="CEO of YOU, Inc.">
+                </div>
+                <div class="info-field">
+                    <label>Years Active</label>
+                    <input type="text" placeholder="How long you've been building?">
+                </div>
+                <div class="info-field full-width">
+                    <label>Your One-Sentence Mission Statement</label>
+                    <input type="text" placeholder="What are you ultimately trying to build or become?">
+                </div>
+            </div>
+        </section>
+
+        <!-- Goal Ladder Section -->
+        <div class="section-header">
+            <h2>The Goal Ladder</h2>
+        </div>
+        
+        <section class="content-section">
+            <div class="goal-intro">
+                <h3>Keeping Ambition High & Delusion Low</h3>
+                <p>The mistake most people make is trying to put a 10-year dream into a 12-month container. That kills motivation. Instead, use the four-level ladder below.</p>
+            </div>
+
+            <div class="vs-comparison">
+                <div class="vs-item goal">
+                    <strong style="color: #228B22;">A goal you can actually hit</strong>
+                    <p style="font-size: 0.85em; margin-top: 10px;">Builds credibility with yourself</p>
+                </div>
+                <div class="vs-badge">VS</div>
+                <div class="vs-item dream">
+                    <strong style="color: var(--primary-red);">A dream that makes you feel like you're failing</strong>
+                    <p style="font-size: 0.85em; margin-top: 10px;">Creates frustration and quitting</p>
+                </div>
+            </div>
+
+            <div class="goal-ladder">
+                <!-- Level 1 -->
+                <div class="goal-level level-1">
+                    <div class="level-header">
+                        <span class="level-badge">LEVEL 1 — 1-YEAR GOALS</span>
+                        <span class="level-years">Realistic & Measurable</span>
+                    </div>
+                    <p class="level-desc">These must be practical, achievable, based on current resources, with clear steps. These are your actual performance metrics for the scorecard.</p>
+                    <div class="level-keywords">
+                        <span class="keyword">Practical</span>
+                        <span class="keyword">Achievable</span>
+                        <span class="keyword">Clear Steps</span>
+                        <span class="keyword">Stack Wins</span>
+                    </div>
+                    <textarea class="goal-input" placeholder="Write your 1-year goals here... (Example: Increase income by $20k, Lose 15 lbs, Save $10k, Launch one new product)"></textarea>
+                </div>
+
+                <!-- Level 2 -->
+                <div class="goal-level level-2">
+                    <div class="level-header">
+                        <span class="level-badge">LEVEL 2 — 3-YEAR GOALS</span>
+                        <span class="level-years">Stretch Goals</span>
+                    </div>
+                    <p class="level-desc">A bit scary. Require growth. But not unrealistic. These force you to change identity and shape your behavior.</p>
+                    <div class="level-keywords">
+                        <span class="keyword">Identity Shift</span>
+                        <span class="keyword">Growth Required</span>
+                        <span class="keyword">Behavior Shaping</span>
+                    </div>
+                    <textarea class="goal-input" placeholder="Write your 3-year goals here... (Example: Double income, Buy first property, Build a team, Top 10% in industry)"></textarea>
+                </div>
+
+                <!-- Level 3 -->
+                <div class="goal-level level-3">
+                    <div class="level-header">
+                        <span class="level-badge">LEVEL 3 — 5-YEAR GOALS</span>
+                        <span class="level-years">Transformation Goals</span>
+                    </div>
+                    <p class="level-desc">These require new skill levels, major environment changes, new social circles, and new discipline. They create direction as North Star goals.</p>
+                    <div class="level-keywords">
+                        <span class="keyword">New Skills</span>
+                        <span class="keyword">Environment Change</span>
+                        <span class="keyword">New Circle</span>
+                        <span class="keyword">North Star</span>
+                    </div>
+                    <textarea class="goal-input" placeholder="Write your 5-year goals here... (Example: Million-dollar business, National audience, Real estate portfolio, Financial freedom)"></textarea>
+                </div>
+
+                <!-- Level 4 -->
+                <div class="goal-level level-4">
+                    <div class="level-header">
+                        <span class="level-badge">LEVEL 4 — 10-YEAR GOALS</span>
+                        <span class="level-years">Dream Goals</span>
+                    </div>
+                    <p class="level-desc">Not meant to be hyper-specific. They define the future version of you. Set your ambition ceiling, keep imagination alive, give your mission meaning.</p>
+                    <div class="level-keywords">
+                        <span class="keyword">Vision</span>
+                        <span class="keyword">Legacy</span>
+                        <span class="keyword">Ultimate Self</span>
+                        <span class="keyword">Meaning</span>
+                    </div>
+                    <textarea class="goal-input" placeholder="Write your 10-year vision here... (Example: Generational wealth, Recognized leader, Time & location freedom, Dream family life)"></textarea>
+                </div>
+            </div>
+
+            <div class="grade-reference">
+                <h4>Why This Matters for Your Scorecard</h4>
+                <p style="color: var(--text-gray); font-size: 0.95em; line-height: 1.7;">
+                    You should NOT be scoring yourself based on 10-year dreams. Grade yourself on: <strong style="color: var(--white);">1-Year Execution</strong> (Did you hit your 12-month responsibilities?), <strong style="color: var(--white);">3-Year Alignment</strong> (Did your actions move you closer?), <strong style="color: var(--white);">5-Year Trajectory</strong> (Are your habits evolving?), and <strong style="color: var(--white);">10-Year Congruence</strong> (Are your decisions consistent with who you want to become?).
+                </p>
+            </div>
+        </section>
+
+        <div class="page-break"></div>
+
+        <!-- 12 Blocks Section -->
+        <div class="section-header">
+            <h2>The 12 Performance Blocks</h2>
+        </div>
+
+        <section class="content-section">
+            <div class="grade-reference" style="margin-bottom: 30px; margin-top: 0;">
+                <h4>Scoring Guide</h4>
+                <div class="grade-scale">
+                    <div class="grade-item poor">
+                        <div class="score">1-2</div>
+                        <div class="label">Critical Failure</div>
+                    </div>
+                    <div class="grade-item below">
+                        <div class="score">3-4</div>
+                        <div class="label">Below Expectations</div>
+                    </div>
+                    <div class="grade-item average">
+                        <div class="score">5-6</div>
+                        <div class="label">Met Some Goals</div>
+                    </div>
+                    <div class="grade-item good">
+                        <div class="score">7-8</div>
+                        <div class="label">Exceeded Goals</div>
+                    </div>
+                    <div class="grade-item excellent">
+                        <div class="score">9-10</div>
+                        <div class="label">Elite Performance</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="blocks-grid">
+                <!-- Block 1: WILL -->
+                <div class="block-card">
+                    <div class="block-header">
+                        <span class="block-number">01</span>
+                        <div class="block-title-group">
+                            <div class="block-title">WILL</div>
+                            <div class="block-question">Did I show up consistently, even when I didn't feel like it?</div>
+                        </div>
+                        <div class="block-score-circle">
+                            <input type="number" min="1" max="10" placeholder="—">
+                        </div>
+                    </div>
+                    <div class="block-content">
+                        <div class="assessment-section">
+                            <div class="assessment-label">Self-Assessment</div>
+                            <textarea class="assessment-textarea" placeholder="Where you succeeded... where you quit... where you surprised yourself..."></textarea>
+                        </div>
+                        <div class="challenge-box">
+                            <div class="assessment-label">2026 Challenge</div>
+                            <textarea class="assessment-textarea" placeholder="What's one habit I must develop to upgrade my consistency?"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block 2: SKILL -->
+                <div class="block-card">
+                    <div class="block-header">
+                        <span class="block-number">02</span>
+                        <div class="block-title-group">
+                            <div class="block-title">SKILL</div>
+                            <div class="block-question">Did I improve the core skills required to win? Or did I stay the same?</div>
+                        </div>
+                        <div class="block-score-circle">
+                            <input type="number" min="1" max="10" placeholder="—">
+                        </div>
+                    </div>
+                    <div class="block-content">
+                        <div class="assessment-section">
+                            <div class="assessment-label">Self-Assessment</div>
+                            <textarea class="assessment-textarea" placeholder="Name the #1 skill you improved in 2025, and the skill that held you back..."></textarea>
+                        </div>
+                        <div class="challenge-box">
+                            <div class="assessment-label">2026 Challenge</div>
+                            <textarea class="assessment-textarea" placeholder="What one new skill would double my value next year?"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block 3: MISSION -->
+                <div class="block-card">
+                    <div class="block-header">
+                        <span class="block-number">03</span>
+                        <div class="block-title-group">
+                            <div class="block-title">MISSION</div>
+                            <div class="block-question">Did I actually know what I was chasing this year? Or was I winging it?</div>
+                        </div>
+                        <div class="block-score-circle">
+                            <input type="number" min="1" max="10" placeholder="—">
+                        </div>
+                    </div>
+                    <div class="block-content">
+                        <div class="assessment-section">
+                            <div class="assessment-label">Self-Assessment</div>
+                            <textarea class="assessment-textarea" placeholder="Were your actions aligned with any mission at all?"></textarea>
+                        </div>
+                        <div class="challenge-box">
+                            <div class="assessment-label">2026 Mission Statement</div>
+                            <textarea class="assessment-textarea" placeholder='Set a single mission sentence: "2026 will be the year I ________."'></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block 4: PLAN -->
+                <div class="block-card">
+                    <div class="block-header">
+                        <span class="block-number">04</span>
+                        <div class="block-title-group">
+                            <div class="block-title">PLAN</div>
+                            <div class="block-question">Did I work a plan... or did I just react to life?</div>
+                        </div>
+                        <div class="block-score-circle">
+                            <input type="number" min="1" max="10" placeholder="—">
+                        </div>
+                    </div>
+                    <div class="block-content">
+                        <div class="assessment-section">
+                            <div class="assessment-label">Self-Assessment</div>
+                            <textarea class="assessment-textarea" placeholder="Where your planning helped you, where lack of planning destroyed momentum..."></textarea>
+                        </div>
+                        <div class="challenge-box">
+                            <div class="assessment-label">2026 Challenge</div>
+                            <textarea class="assessment-textarea" placeholder="What system or routine must I set in stone by January 15th?"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block 5: DREAMS -->
+                <div class="block-card">
+                    <div class="block-header">
+                        <span class="block-number">05</span>
+                        <div class="block-title-group">
+                            <div class="block-title">DREAMS</div>
+                            <div class="block-question">Did I honor my dreams, or did I shrink them?</div>
+                        </div>
+                        <div class="block-score-circle">
+                            <input type="number" min="1" max="10" placeholder="—">
+                        </div>
+                    </div>
+                    <div class="block-content">
+                        <div class="assessment-section">
+                            <div class="assessment-label">Self-Assessment</div>
+                            <textarea class="assessment-textarea" placeholder="What dream got closer? What dream got neglected?"></textarea>
+                        </div>
+                        <div class="challenge-box">
+                            <div class="assessment-label">2026 Challenge</div>
+                            <textarea class="assessment-textarea" placeholder="What dream deserves a comeback next year?"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block 6: VISION -->
+                <div class="block-card">
+                    <div class="block-header">
+                        <span class="block-number">06</span>
+                        <div class="block-title-group">
+                            <div class="block-title">VISION</div>
+                            <div class="block-question">Did my vision get clearer or more confused?</div>
+                        </div>
+                        <div class="block-score-circle">
+                            <input type="number" min="1" max="10" placeholder="—">
+                        </div>
+                    </div>
+                    <div class="block-content">
+                        <div class="assessment-section">
+                            <div class="assessment-label">Self-Assessment</div>
+                            <textarea class="assessment-textarea" placeholder="Where did you gain clarity? Where did confusion cost you?"></textarea>
+                        </div>
+                        <div class="challenge-box">
+                            <div class="assessment-label">2026 Challenge</div>
+                            <textarea class="assessment-textarea" placeholder="What does the best version of me actually look like on December 31, 2026?"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page-break"></div>
+
+                <!-- Block 7: ENEMY -->
+                <div class="block-card">
+                    <div class="block-header">
+                        <span class="block-number">07</span>
+                        <div class="block-title-group">
+                            <div class="block-title">ENEMY</div>
+                            <div class="block-question">What was my biggest enemy this year? Myself? Distractions? Fear? People?</div>
+                        </div>
+                        <div class="block-score-circle">
+                            <input type="number" min="1" max="10" placeholder="—">
+                        </div>
+                    </div>
+                    <div class="block-content">
+                        <div class="assessment-section">
+                            <div class="assessment-label">Self-Assessment</div>
+                            <textarea class="assessment-textarea" placeholder="Identify ONE enemy that limited your growth..."></textarea>
+                        </div>
+                        <div class="challenge-box">
+                            <div class="assessment-label">2026 Battle Plan</div>
+                            <textarea class="assessment-textarea" placeholder="What's the battle plan to neutralize that enemy next year?"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block 8: CULTURE -->
+                <div class="block-card">
+                    <div class="block-header">
+                        <span class="block-number">08</span>
+                        <div class="block-title-group">
+                            <div class="block-title">CULTURE</div>
+                            <div class="block-question">Did I create a winning environment... or did I stay in a toxic one?</div>
+                        </div>
+                        <div class="block-score-circle">
+                            <input type="number" min="1" max="10" placeholder="—">
+                        </div>
+                    </div>
+                    <div class="block-content">
+                        <div class="assessment-section">
+                            <div class="assessment-label">Self-Assessment</div>
+                            <textarea class="assessment-textarea" placeholder="Your habits, your room, your calendar, your people..."></textarea>
+                        </div>
+                        <div class="challenge-box">
+                            <div class="assessment-label">2026 Challenge</div>
+                            <textarea class="assessment-textarea" placeholder="What cultural standard am I raising immediately?"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block 9: SYSTEM -->
+                <div class="block-card">
+                    <div class="block-header">
+                        <span class="block-number">09</span>
+                        <div class="block-title-group">
+                            <div class="block-title">SYSTEM</div>
+                            <div class="block-question">Did I build systems that worked even when I didn't feel like working?</div>
+                        </div>
+                        <div class="block-score-circle">
+                            <input type="number" min="1" max="10" placeholder="—">
+                        </div>
+                    </div>
+                    <div class="block-content">
+                        <div class="assessment-section">
+                            <div class="assessment-label">Self-Assessment</div>
+                            <textarea class="assessment-textarea" placeholder="Where your systems saved you... and where lack of systems destroyed progress..."></textarea>
+                        </div>
+                        <div class="challenge-box">
+                            <div class="assessment-label">2026 Challenge</div>
+                            <textarea class="assessment-textarea" placeholder="What's one system I can automate or simplify?"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block 10: CAPITAL -->
+                <div class="block-card">
+                    <div class="block-header">
+                        <span class="block-number">10</span>
+                        <div class="block-title-group">
+                            <div class="block-title">CAPITAL</div>
+                            <div class="block-question">Did I build enough financial, social, or emotional capital?</div>
+                        </div>
+                        <div class="block-score-circle">
+                            <input type="number" min="1" max="10" placeholder="—">
+                        </div>
+                    </div>
+                    <div class="block-content">
+                        <div class="assessment-section">
+                            <div class="assessment-label">Self-Assessment</div>
+                            <textarea class="assessment-textarea" placeholder="Money decisions, networking decisions, self-care..."></textarea>
+                        </div>
+                        <div class="challenge-box">
+                            <div class="assessment-label">2026 Challenge</div>
+                            <textarea class="assessment-textarea" placeholder="What form of capital do I NEED to acquire first?"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block 11: COMPETITION -->
+                <div class="block-card">
+                    <div class="block-header">
+                        <span class="block-number">11</span>
+                        <div class="block-title-group">
+                            <div class="block-title">COMPETITION</div>
+                            <div class="block-question">Who was I competing with in 2025 — myself or others?</div>
+                        </div>
+                        <div class="block-score-circle">
+                            <input type="number" min="1" max="10" placeholder="—">
+                        </div>
+                    </div>
+                    <div class="block-content">
+                        <div class="assessment-section">
+                            <div class="assessment-label">Self-Assessment</div>
+                            <textarea class="assessment-textarea" placeholder="Where competition made you better, and where you let comparison destroy momentum..."></textarea>
+                        </div>
+                        <div class="challenge-box">
+                            <div class="assessment-label">2026 Challenge</div>
+                            <textarea class="assessment-textarea" placeholder='What "unfair advantage" do I want to develop next year?'></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block 12: SUPPORTING CAST -->
+                <div class="block-card">
+                    <div class="block-header">
+                        <span class="block-number">12</span>
+                        <div class="block-title-group">
+                            <div class="block-title">SUPPORTING CAST</div>
+                            <div class="block-question">Did the people around me lift me... or drain me?</div>
+                        </div>
+                        <div class="block-score-circle">
+                            <input type="number" min="1" max="10" placeholder="—">
+                        </div>
+                    </div>
+                    <div class="block-content">
+                        <div class="assessment-section">
+                            <div class="assessment-label">Self-Assessment</div>
+                            <textarea class="assessment-textarea" placeholder="Who added to your life, who subtracted, who multiplied, who divided..."></textarea>
+                        </div>
+                        <div class="challenge-box">
+                            <div class="assessment-label">2026 Challenge</div>
+                            <textarea class="assessment-textarea" placeholder="What boundary or relationship decision MUST be made early in 2026?"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Score Summary -->
+            <div class="score-summary">
+                <h3>Performance Summary</h3>
+                <div class="score-grid">
+                    <div class="score-item">
+                        <div class="label">Will</div>
+                        <div class="value" id="sum1">—</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="label">Skill</div>
+                        <div class="value" id="sum2">—</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="label">Mission</div>
+                        <div class="value" id="sum3">—</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="label">Plan</div>
+                        <div class="value" id="sum4">—</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="label">Dreams</div>
+                        <div class="value" id="sum5">—</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="label">Vision</div>
+                        <div class="value" id="sum6">—</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="label">Enemy</div>
+                        <div class="value" id="sum7">—</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="label">Culture</div>
+                        <div class="value" id="sum8">—</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="label">System</div>
+                        <div class="value" id="sum9">—</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="label">Capital</div>
+                        <div class="value" id="sum10">—</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="label">Competition</div>
+                        <div class="value" id="sum11">—</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="label">Cast</div>
+                        <div class="value" id="sum12">—</div>
+                    </div>
+                </div>
+                <div class="total-score">
+                    <div class="label">Total Score</div>
+                    <div class="value"><span id="totalScore">—</span><span class="max">/120</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Declaration Section -->
+        <section class="declaration-section">
+            <h3 class="declaration-title">2026 Declaration</h3>
+            <p class="declaration-statement">Going into 2026, my identity is shifting...</p>
+            
+            <div class="declaration-inputs">
+                <span>FROM</span>
+                <input type="text" class="declaration-input" placeholder="Who I was...">
+                <span class="arrow-connector">→</span>
+                <span>TO</span>
+                <input type="text" class="declaration-input" placeholder="Who I'm becoming...">
+            </div>
+
+            <div style="margin-top: 30px;">
+                <div class="assessment-label" style="text-align: center; justify-content: center;">My Commitment Statement</div>
+                <textarea class="assessment-textarea" style="max-width: 600px; margin: 15px auto; display: block; min-height: 120px;" placeholder="Write your personal commitment for 2026. What will you do differently? What promise are you making to yourself?"></textarea>
+            </div>
+
+            <div class="signature-section">
+                <div class="signature-field">
+                    <div class="signature-line"></div>
+                    <label>Cast Member Signature</label>
+                </div>
+                <div class="signature-field">
+                    <div class="signature-line"></div>
+                    <label>Date</label>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer style="background: var(--black); padding: 30px; text-align: center; border-top: 2px solid var(--medium-gray);">
+            <p style="color: var(--light-gray); font-size: 0.85em; letter-spacing: 0.05em;">
+                THE LIVE STREAM SHOW • SEASON 4 • "PURPOSEFUL ILLUSION"
+            </p>
+            <p style="color: var(--gold); font-family: 'Oswald', sans-serif; font-size: 0.9em; margin-top: 10px; letter-spacing: 0.1em;">
+                BUILD YOUR EMPIRE. ONE BLOCK AT A TIME.
+            </p>
+        </footer>
+    </div>
+
+    <!-- Print Controls -->
+    <div class="print-controls no-print">
+        <button class="print-btn secondary" onclick="clearForm()">Clear Form</button>
+        <button class="print-btn" onclick="window.print()">Print / Save PDF</button>
+    </div>
+
+    <script>
+        // Auto-calculate scores
+        const scoreInputs = document.querySelectorAll('.block-score-circle input');
+        
+        scoreInputs.forEach((input, index) => {
+            input.addEventListener('input', function() {
+                // Clamp value between 1-10
+                if (this.value > 10) this.value = 10;
+                if (this.value < 1 && this.value !== '') this.value = 1;
+                
+                // Update summary
+                const sumElement = document.getElementById(`sum${index + 1}`);
+                sumElement.textContent = this.value || '—';
+                
+                // Calculate total
+                calculateTotal();
+            });
+        });
+
+        function calculateTotal() {
+            let total = 0;
+            let count = 0;
+            
+            scoreInputs.forEach(input => {
+                if (input.value) {
+                    total += parseInt(input.value);
+                    count++;
+                }
+            });
+            
+            const totalElement = document.getElementById('totalScore');
+            if (count > 0) {
+                totalElement.textContent = total;
+            } else {
+                totalElement.textContent = '—';
+            }
+        }
+
+        function clearForm() {
+            if (confirm('Are you sure you want to clear all entries? This cannot be undone.')) {
+                document.querySelectorAll('input, textarea').forEach(el => {
+                    el.value = '';
+                });
+                document.querySelectorAll('[id^="sum"]').forEach(el => {
+                    el.textContent = '—';
+                });
+                document.getElementById('totalScore').textContent = '—';
+            }
+        }
+
+        // Save form data to localStorage
+        function saveFormData() {
+            const formData = {};
+            document.querySelectorAll('input, textarea').forEach((el, index) => {
+                formData[`field_${index}`] = el.value;
+            });
+            localStorage.setItem('youIncReview', JSON.stringify(formData));
+        }
+
+        function loadFormData() {
+            const saved = localStorage.getItem('youIncReview');
+            if (saved) {
+                const formData = JSON.parse(saved);
+                document.querySelectorAll('input, textarea').forEach((el, index) => {
+                    if (formData[`field_${index}`]) {
+                        el.value = formData[`field_${index}`];
+                        // Trigger input event for score calculations
+                        if (el.type === 'number') {
+                            el.dispatchEvent(new Event('input'));
+                        }
+                    }
+                });
+            }
+        }
+
+        // Auto-save every 30 seconds
+        setInterval(saveFormData, 30000);
+
+        // Save on any input change
+        document.querySelectorAll('input, textarea').forEach(el => {
+            el.addEventListener('change', saveFormData);
+        });
+
+        // Load saved data on page load
+        window.addEventListener('load', loadFormData);
+    </script>
+</body>
+</html>
