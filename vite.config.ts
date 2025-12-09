@@ -21,6 +21,7 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 1000,
     minify: 'esbuild', // Use esbuild (faster than terser)
+    sourcemap: false, // Disable sourcemaps for faster builds
     rollupOptions: {
       output: {
         manualChunks: {
