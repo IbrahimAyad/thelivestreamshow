@@ -47,12 +47,11 @@ import { useDualDeckAudioPlayer } from './hooks/studio/useDualDeckAudioPlayer'
 import { useProductionAlertHotkey } from './hooks/useProductionAlertHotkey'
 import { ShowIntroController } from './components/ShowIntroController'
 import { supabase } from './lib/supabase'
-import { Monitor, ExternalLink, Keyboard, Home, Music2, Image as ImageIcon, Sparkles, FileText } from 'lucide-react'
+import { Monitor, ExternalLink, Keyboard, Home, Music2, Image as ImageIcon, Sparkles, FileText, ArrowRight } from 'lucide-react'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { AITab } from './components/AITab'
-import { FilesTab } from './components/FilesTab'
 
-type Tab = 'dashboard' | 'studio' | 'media' | 'ai' | 'files'
+type Tab = 'dashboard' | 'studio' | 'media' | 'ai'
 
 function App() {
   const broadcastUrl = window.location.origin + '/broadcast'
@@ -231,16 +230,6 @@ function App() {
                     <span className="text-xs px-2 py-0.5 bg-yellow-500/20 text-yellow-300 rounded">BETA</span>
                   </button>
                 )}
-                <button
-                  onClick={() => setActiveTab('files')}
-                  className={`flex items-center gap-2 px-6 py-3 font-semibold transition-all ${activeTab === 'files'
-                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white border-b-2 border-emerald-400'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                    }`}
-                >
-                  <FileText className="w-5 h-5" />
-                  Files
-                </button>
               </div>
             </div>
           </header>
@@ -315,6 +304,40 @@ function App() {
                     </div>
                     <MusicPlayerControls />
                   </div>
+                </div>
+
+                {/* 📋 YEAR-END REVIEW BANNER */}
+                <div className="mb-6">
+                  <a
+                    href="/year-end-review.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block bg-gradient-to-r from-red-900/40 to-yellow-900/40 hover:from-red-900/60 hover:to-yellow-900/60 border-2 border-yellow-600/50 hover:border-yellow-500 rounded-lg p-6 transition-all shadow-lg hover:shadow-yellow-900/50 group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 bg-yellow-600/30 rounded-lg border-2 border-yellow-500/50 group-hover:bg-yellow-600/40 transition-colors">
+                          <FileText className="w-8 h-8 text-yellow-300" />
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-bold text-yellow-300 mb-1 flex items-center gap-2">
+                            YOU, INC. — Year-End Performance Review
+                            <span className="text-xs px-2 py-1 bg-red-600 text-white rounded font-bold">NEW</span>
+                          </h3>
+                          <p className="text-yellow-100/80 text-sm mb-2">
+                            Personal performance review form with 12 performance blocks, goal ladder framework, and 2026 declaration
+                          </p>
+                          <div className="flex items-center gap-4 text-xs text-yellow-200/60">
+                            <span>✅ Auto-save enabled</span>
+                            <span>📊 12 Performance Blocks</span>
+                            <span>🎯 Goal Ladder (1-10 years)</span>
+                            <span>📄 Print/Save as PDF</span>
+                          </div>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-8 h-8 text-yellow-400 group-hover:translate-x-2 transition-transform" />
+                    </div>
+                  </a>
                 </div>
 
                 {/* 🎬 SHOW START - Start Show Controls */}
@@ -487,12 +510,6 @@ function App() {
             {activeTab === 'ai' && import.meta.env.VITE_ENABLE_AI_TAB !== 'false' && (
               <ErrorBoundary sectionName="AI Tab">
                 <AITab />
-              </ErrorBoundary>
-            )}
-
-            {activeTab === 'files' && (
-              <ErrorBoundary sectionName="Files Tab">
-                <FilesTab />
               </ErrorBoundary>
             )}
           </main>
