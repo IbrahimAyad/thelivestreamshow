@@ -19,7 +19,16 @@ export default defineConfig({
     },
   },
   build: {
+    chunkSizeWarningLimit: 1000,
+    minify: 'esbuild', // Use esbuild (faster than terser)
     rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'supabase': ['@supabase/supabase-js'],
+          'lucide': ['lucide-react'],
+        }
+      },
       onwarn(warning, warn) {
         // Suppress certain warnings
         if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return
