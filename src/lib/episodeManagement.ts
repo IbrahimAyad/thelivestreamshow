@@ -7,6 +7,7 @@ import { supabase } from './supabase'
 
 /**
  * Clear all AI-generated content for an episode (keeps episode_info)
+ * Also clears Ultra Chat messages
  */
 export async function clearEpisodeContent(episodeId: string) {
   console.log('🗑️ Clearing episode content...')
@@ -30,6 +31,23 @@ export async function clearEpisodeContent(episodeId: string) {
       .delete()
       .eq('episode_info_id', episodeId)
 
+    // Clear Ultra Chat messages (show_questions table)
+    console.log('🗑️ Clearing Ultra Chat messages...')
+    const { data: questions } = await supabase
+      .from('show_questions')
+      .select('id')
+
+    const questionCount = questions?.length || 0
+
+    if (questionCount > 0) {
+      await supabase
+        .from('show_questions')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000') // Delete all
+
+      console.log(`✅ Cleared ${questionCount} Ultra Chat messages`)
+    }
+
     // Reset prep progress
     await supabase
       .from('episode_prep_progress')
@@ -50,7 +68,7 @@ export async function clearEpisodeContent(episodeId: string) {
       .eq('episode_info_id', episodeId)
 
     console.log('✅ Episode content cleared successfully')
-    return { success: true }
+    return { success: true, questionCount }
 
   } catch (error) {
     console.error('❌ Error clearing episode:', error)

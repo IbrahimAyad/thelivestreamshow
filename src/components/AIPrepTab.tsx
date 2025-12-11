@@ -110,7 +110,7 @@ export function AIPrepTab() {
   const handleClearEpisode = async () => {
     if (!episodeInfo) return
 
-    if (!confirm('Clear all AI-generated content for this episode? This cannot be undone.\n\nEpisode info will be kept, but all segments, questions, and news will be deleted.')) {
+    if (!confirm('Clear all AI-generated content AND Ultra Chat messages for this episode? This cannot be undone.\n\nEpisode info will be kept, but all segments, questions, news, and Ultra Chat messages will be deleted.')) {
       return
     }
 
@@ -119,7 +119,16 @@ export function AIPrepTab() {
     setActionLoading(false)
 
     if (result.success) {
-      alert('✅ Episode content cleared successfully')
+      const messages = []
+      messages.push('✅ Episode content cleared successfully')
+      messages.push('• AI content: Cleared')
+      messages.push('• Segments: Cleared')
+      messages.push('• Scripts: Cleared')
+      if (result.questionCount && result.questionCount > 0) {
+        messages.push(`• Ultra Chat: ${result.questionCount} messages removed`)
+      }
+      messages.push('• Progress: Reset to 0%')
+      alert(messages.join('\n'))
       loadPrepProgress()
       setActiveSubTab('import')
     } else {
