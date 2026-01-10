@@ -53,7 +53,7 @@ import { AITab } from '../components/AITab'
 
 type Tab = 'dashboard' | 'studio' | 'media' | 'ai'
 
-function App() {
+export default function AdminDashboard() {
   const broadcastUrl = window.location.origin + '/broadcast'
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false)
@@ -518,5 +518,3 @@ function App() {
     </AuthProviderWithBoundary>
   )
 }
-
-export default App
