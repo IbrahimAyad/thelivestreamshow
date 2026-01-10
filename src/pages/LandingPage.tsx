@@ -1,7 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { UltraChatModal } from '../components/UltraChatModal'
 
 export function LandingPage() {
+  const [isUltraChatOpen, setIsUltraChatOpen] = useState(false)
   useEffect(() => {
     // Navigation scroll effect
     const nav = document.getElementById('nav')
@@ -1117,6 +1119,84 @@ export function LandingPage() {
           .footer-links { flex-wrap: wrap; justify-content: center; }
           .footer-social { justify-content: center; }
         }
+
+        /* Ultra Chat Floating Action Button */
+        .ultra-chat-fab {
+          position: fixed;
+          bottom: 2rem;
+          right: 2rem;
+          z-index: 9998;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 1rem 1.5rem;
+          background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
+          border: none;
+          border-radius: 50px;
+          color: white;
+          font-weight: 600;
+          font-size: 1rem;
+          cursor: pointer;
+          box-shadow: 0 10px 40px rgba(6, 182, 212, 0.3), 0 0 20px rgba(139, 92, 246, 0.2);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: ultra-chat-pulse 2s ease-in-out infinite;
+        }
+
+        .ultra-chat-fab:hover {
+          transform: translateY(-3px) scale(1.05);
+          box-shadow: 0 15px 50px rgba(6, 182, 212, 0.4), 0 0 30px rgba(139, 92, 246, 0.3);
+        }
+
+        .ultra-chat-fab:active {
+          transform: translateY(-1px) scale(1.02);
+        }
+
+        .ultra-chat-icon {
+          width: 20px;
+          height: 20px;
+          flex-shrink: 0;
+        }
+
+        .ultra-chat-label {
+          white-space: nowrap;
+          font-family: 'Space Grotesk', sans-serif;
+          letter-spacing: 0.02em;
+        }
+
+        @keyframes ultra-chat-pulse {
+          0%, 100% {
+            box-shadow: 0 10px 40px rgba(6, 182, 212, 0.3), 0 0 20px rgba(139, 92, 246, 0.2);
+          }
+          50% {
+            box-shadow: 0 10px 40px rgba(6, 182, 212, 0.5), 0 0 30px rgba(139, 92, 246, 0.4);
+          }
+        }
+
+        @media (max-width: 768px) {
+          .ultra-chat-fab {
+            bottom: 1.5rem;
+            right: 1.5rem;
+            padding: 0.875rem 1.25rem;
+            font-size: 0.9rem;
+          }
+
+          .ultra-chat-label {
+            display: none;
+          }
+
+          .ultra-chat-fab {
+            width: 56px;
+            height: 56px;
+            padding: 0;
+            justify-content: center;
+            border-radius: 50%;
+          }
+
+          .ultra-chat-icon {
+            width: 24px;
+            height: 24px;
+          }
+        }
       `}</style>
 
       <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -1162,7 +1242,12 @@ export function LandingPage() {
               </svg>
               Watch Now
             </a>
-            <a href="#shows" className="btn-secondary">Explore Shows</a>
+            <button onClick={() => setIsUltraChatOpen(true)} className="btn-secondary">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Send Ultra Chat
+            </button>
           </div>
         </div>
 
@@ -1545,6 +1630,24 @@ export function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Floating Ultra Chat Button */}
+      <button
+        onClick={() => setIsUltraChatOpen(true)}
+        className="ultra-chat-fab"
+        aria-label="Send Ultra Chat"
+      >
+        <svg className="ultra-chat-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13 10V3L4 14h7v7l9-11h-7z" fill="currentColor" />
+        </svg>
+        <span className="ultra-chat-label">Ultra Chat</span>
+      </button>
+
+      {/* Ultra Chat Modal */}
+      <UltraChatModal
+        isOpen={isUltraChatOpen}
+        onClose={() => setIsUltraChatOpen(false)}
+      />
     </>
   )
 }
