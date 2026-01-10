@@ -3,6 +3,8 @@ import { LandingPage } from './pages/LandingPage'
 import AdminDashboard from './pages/AdminDashboard'
 import { AdminGate } from './components/AdminGate'
 import { BroadcastOverlayView } from './components/BroadcastOverlayView'
+import { BroadcastVideoPlayer } from './components/BroadcastVideoPlayer'
+import Whiteboard from './pages/dashboard/Whiteboard'
 import { useEffect } from 'react'
 
 function AppContent() {
@@ -27,6 +29,8 @@ function AppContent() {
         </AdminGate>
       } />
       <Route path="/broadcast" element={<BroadcastOverlayView />} />
+      <Route path="/broadcast/video-player" element={<BroadcastVideoPlayer />} />
+      <Route path="/whiteboard" element={<Whiteboard />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
