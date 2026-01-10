@@ -81,6 +81,17 @@ export function LandingPage() {
 
   return (
     <>
+      {/* SEO Meta Tags */}
+      <title>The Live Stream Show | Purposeful Illusion</title>
+      <meta name="description" content="The Live Stream Show - Purposeful Illusion. Live debates, morning shows, gaming streams, and unfiltered conversations. Season 4 now streaming." />
+      <meta property="og:title" content="The Live Stream Show | Purposeful Illusion" />
+      <meta property="og:description" content="Where entertainment meets innovation. Live debates, morning shows, gaming streams." />
+      <meta property="og:url" content="https://thelivestreamshow.com" />
+      <meta property="og:type" content="website" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="The Live Stream Show" />
+      <meta name="twitter:description" content="Purposeful Illusion - Season 4 Now Streaming" />
+
       <style>{`
         :root {
           --bg-deep: #0a0e17;
@@ -504,6 +515,513 @@ export function LandingPage() {
           margin: 0 auto;
         }
 
+        /* About Section */
+        .about {
+          padding: 8rem 4rem;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .about-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 4rem;
+          max-width: 1200px;
+          margin: 0 auto;
+          align-items: center;
+        }
+
+        .about-visual {
+          position: relative;
+          aspect-ratio: 4/3;
+          background: var(--bg-elevated);
+          border-radius: 20px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .about-visual-inner {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background:
+            radial-gradient(circle at 30% 30%, rgba(6, 182, 212, 0.2), transparent 50%),
+            radial-gradient(circle at 70% 70%, rgba(139, 92, 246, 0.2), transparent 50%);
+        }
+
+        .about-play-btn {
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          background: var(--gradient-accent);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 10px 40px rgba(6, 182, 212, 0.4);
+        }
+
+        .about-play-btn:hover {
+          transform: scale(1.1);
+        }
+
+        .about-play-btn svg {
+          width: 30px;
+          height: 30px;
+          fill: var(--bg-deep);
+          margin-left: 5px;
+        }
+
+        .about-content h3 {
+          font-family: 'Syne', sans-serif;
+          font-size: 2rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .about-content p {
+          color: var(--text-secondary);
+          margin-bottom: 1.5rem;
+          font-size: 1.1rem;
+        }
+
+        .about-features {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+          margin-top: 2rem;
+        }
+
+        .about-feature {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          color: var(--text-secondary);
+        }
+
+        .about-feature-icon {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: rgba(6, 182, 212, 0.2);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .about-feature-icon svg {
+          width: 12px;
+          height: 12px;
+          stroke: var(--accent-primary);
+          stroke-width: 3;
+          fill: none;
+        }
+
+        /* Shows Section */
+        .shows {
+          padding: 8rem 4rem;
+          background: var(--bg-surface);
+        }
+
+        .shows-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 2rem;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .show-card {
+          background: var(--bg-elevated);
+          border-radius: 20px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          transition: all 0.4s ease;
+          position: relative;
+        }
+
+        .show-card:hover {
+          transform: translateY(-10px);
+          border-color: rgba(6, 182, 212, 0.3);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .show-card-image {
+          aspect-ratio: 16/10;
+          background: var(--bg-deep);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .show-card-gradient {
+          position: absolute;
+          inset: 0;
+        }
+
+        .show-card:nth-child(1) .show-card-gradient {
+          background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(139, 92, 246, 0.3));
+        }
+
+        .show-card:nth-child(2) .show-card-gradient {
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(239, 68, 68, 0.3));
+        }
+
+        .show-card:nth-child(3) .show-card-gradient {
+          background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(6, 182, 212, 0.3));
+        }
+
+        .show-card-badge {
+          position: absolute;
+          top: 1rem;
+          left: 1rem;
+          padding: 0.4rem 1rem;
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(10px);
+          border-radius: 50px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+        }
+
+        .show-card-content {
+          padding: 1.5rem;
+        }
+
+        .show-card-title {
+          font-family: 'Syne', sans-serif;
+          font-size: 1.5rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+        }
+
+        .show-card-description {
+          color: var(--text-secondary);
+          font-size: 0.95rem;
+          margin-bottom: 1rem;
+        }
+
+        .show-card-meta {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          color: var(--text-muted);
+          font-size: 0.85rem;
+        }
+
+        /* Cast Section */
+        .cast {
+          padding: 8rem 4rem;
+          position: relative;
+        }
+
+        .cast-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 2rem;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .cast-card {
+          position: relative;
+          border-radius: 20px;
+          overflow: hidden;
+          background: var(--bg-elevated);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          transition: all 0.4s ease;
+          cursor: pointer;
+        }
+
+        .cast-card:hover {
+          transform: translateY(-8px);
+          border-color: var(--accent-primary);
+          box-shadow: 0 20px 60px rgba(6, 182, 212, 0.2);
+        }
+
+        .cast-card-image {
+          aspect-ratio: 1;
+          background: var(--bg-deep);
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+
+        .cast-card-placeholder {
+          font-size: 4rem;
+          opacity: 0.3;
+        }
+
+        .cast-card-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to top, var(--bg-elevated), transparent 50%);
+        }
+
+        .cast-card-content {
+          padding: 1.25rem;
+          text-align: center;
+        }
+
+        .cast-card-name {
+          font-family: 'Syne', sans-serif;
+          font-size: 1.25rem;
+          font-weight: 700;
+          margin-bottom: 0.25rem;
+        }
+
+        .cast-card-role {
+          color: var(--accent-primary);
+          font-size: 0.85rem;
+          font-weight: 500;
+        }
+
+        /* Schedule Section */
+        .schedule {
+          padding: 8rem 4rem;
+          background: var(--bg-surface);
+        }
+
+        .schedule-container {
+          max-width: 1000px;
+          margin: 0 auto;
+        }
+
+        .schedule-item {
+          display: grid;
+          grid-template-columns: 150px 1fr auto;
+          gap: 2rem;
+          align-items: center;
+          padding: 2rem 0;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          transition: all 0.3s ease;
+        }
+
+        .schedule-item:hover {
+          background: rgba(6, 182, 212, 0.05);
+          margin: 0 -2rem;
+          padding: 2rem;
+          border-radius: 15px;
+          border-color: transparent;
+        }
+
+        .schedule-time {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 1.5rem;
+          color: var(--accent-primary);
+          letter-spacing: 0.05em;
+        }
+
+        .schedule-info h4 {
+          font-family: 'Syne', sans-serif;
+          font-size: 1.3rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .schedule-info p {
+          color: var(--text-secondary);
+          font-size: 0.95rem;
+        }
+
+        .schedule-status {
+          padding: 0.5rem 1.25rem;
+          border-radius: 50px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .schedule-status.upcoming {
+          background: rgba(6, 182, 212, 0.2);
+          color: var(--accent-primary);
+        }
+
+        /* Updates Section */
+        .updates {
+          padding: 8rem 4rem;
+        }
+
+        .updates-grid {
+          display: grid;
+          grid-template-columns: 2fr 1fr;
+          gap: 2rem;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .update-featured {
+          background: var(--bg-elevated);
+          border-radius: 20px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          transition: all 0.3s ease;
+        }
+
+        .update-featured:hover {
+          border-color: rgba(6, 182, 212, 0.3);
+        }
+
+        .update-featured-image {
+          aspect-ratio: 21/9;
+          background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(139, 92, 246, 0.2));
+          position: relative;
+        }
+
+        .update-featured-badge {
+          position: absolute;
+          top: 1.5rem;
+          left: 1.5rem;
+          padding: 0.5rem 1rem;
+          background: var(--accent-warm);
+          color: var(--bg-deep);
+          border-radius: 50px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+
+        .update-featured-content {
+          padding: 2rem;
+        }
+
+        .update-featured-date {
+          color: var(--text-muted);
+          font-size: 0.85rem;
+          margin-bottom: 0.75rem;
+        }
+
+        .update-featured-title {
+          font-family: 'Syne', sans-serif;
+          font-size: 1.75rem;
+          margin-bottom: 1rem;
+        }
+
+        .update-featured-excerpt {
+          color: var(--text-secondary);
+          margin-bottom: 1.5rem;
+        }
+
+        .updates-sidebar {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .update-small {
+          background: var(--bg-elevated);
+          border-radius: 15px;
+          padding: 1.25rem;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          transition: all 0.3s ease;
+        }
+
+        .update-small:hover {
+          border-color: rgba(6, 182, 212, 0.3);
+          transform: translateX(5px);
+        }
+
+        .update-small-date {
+          color: var(--text-muted);
+          font-size: 0.8rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .update-small-title {
+          font-weight: 600;
+          font-size: 1rem;
+          line-height: 1.4;
+        }
+
+        /* Newsletter Section */
+        .newsletter {
+          padding: 6rem 4rem;
+          background: var(--bg-surface);
+        }
+
+        .newsletter-container {
+          max-width: 800px;
+          margin: 0 auto;
+          text-align: center;
+          padding: 4rem;
+          background: var(--bg-elevated);
+          border-radius: 30px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .newsletter-glow {
+          position: absolute;
+          width: 400px;
+          height: 400px;
+          border-radius: 50%;
+          filter: blur(100px);
+          opacity: 0.1;
+        }
+
+        .newsletter-glow-1 {
+          top: -200px;
+          left: -200px;
+          background: var(--accent-primary);
+        }
+
+        .newsletter-glow-2 {
+          bottom: -200px;
+          right: -200px;
+          background: var(--accent-secondary);
+        }
+
+        .newsletter-content {
+          position: relative;
+          z-index: 10;
+        }
+
+        .newsletter h2 {
+          font-family: 'Syne', sans-serif;
+          font-size: 2.5rem;
+          margin-bottom: 1rem;
+        }
+
+        .newsletter p {
+          color: var(--text-secondary);
+          margin-bottom: 2rem;
+          font-size: 1.1rem;
+        }
+
+        .newsletter-form {
+          display: flex;
+          gap: 1rem;
+          max-width: 500px;
+          margin: 0 auto;
+        }
+
+        .newsletter-input {
+          flex: 1;
+          padding: 1rem 1.5rem;
+          background: var(--bg-deep);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 50px;
+          color: var(--text-primary);
+          font-family: 'Space Grotesk', sans-serif;
+          font-size: 1rem;
+          outline: none;
+          transition: border-color 0.3s ease;
+        }
+
+        .newsletter-input:focus {
+          border-color: var(--accent-primary);
+        }
+
+        .newsletter-input::placeholder {
+          color: var(--text-muted);
+        }
+
         .reveal {
           opacity: 0;
           transform: translateY(40px);
@@ -554,16 +1072,50 @@ export function LandingPage() {
           color: var(--accent-primary);
         }
 
+        .footer-social {
+          display: flex;
+          gap: 1rem;
+        }
+
+        .footer-social a {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: var(--bg-elevated);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-secondary);
+          text-decoration: none;
+          transition: all 0.3s ease;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          font-size: 1.25rem;
+        }
+
+        .footer-social a:hover {
+          background: var(--accent-primary);
+          color: var(--bg-deep);
+          transform: translateY(-3px);
+        }
+
         @media (max-width: 1024px) {
           .nav { padding: 1rem 2rem; }
           .nav-links { display: none; }
           .hero { padding: 6rem 2rem 4rem; }
           .stats-grid { grid-template-columns: repeat(2, 1fr); }
+          .about-grid { grid-template-columns: 1fr; }
+          .shows-grid { grid-template-columns: 1fr 1fr; }
+          .cast-grid { grid-template-columns: repeat(2, 1fr); }
+          .updates-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 768px) {
+          .shows-grid { grid-template-columns: 1fr; }
+          .schedule-item { grid-template-columns: 1fr; gap: 0.75rem; }
+          .newsletter-form { flex-direction: column; }
           .footer-content { flex-direction: column; gap: 2rem; text-align: center; }
           .footer-links { flex-wrap: wrap; justify-content: center; }
+          .footer-social { justify-content: center; }
         }
       `}</style>
 
@@ -641,6 +1193,341 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* About Section */}
+      <section className="about" id="about">
+        <div className="section-header reveal">
+          <p className="section-label">About The Show</p>
+          <h2 className="section-title">More Than Just a Stream</h2>
+          <p className="section-subtitle">
+            A production studio and content platform pushing the boundaries of live entertainment
+          </p>
+        </div>
+
+        <div className="about-grid">
+          <div className="about-visual reveal">
+            <div className="about-visual-inner">
+              <a href="https://youtube.com/@thelivestreamshow" target="_blank" rel="noopener noreferrer" className="about-play-btn">
+                <svg viewBox="0 0 24 24">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+              </a>
+            </div>
+          </div>
+          <div className="about-content reveal">
+            <h3>Built Different</h3>
+            <p>
+              The Live Stream Show isn't just content—it's a movement. We've created a space
+              where authentic conversations thrive, where debates get heated (but stay
+              respectful), and where community isn't just a buzzword.
+            </p>
+            <p>
+              From our flagship debate series "Address All The Smoke" to our collaborative
+              Morning Show with Blue Olive Media, we're redefining what streaming can be.
+            </p>
+            <div className="about-features">
+              <div className="about-feature">
+                <span className="about-feature-icon">
+                  <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                </span>
+                Professional Production
+              </div>
+              <div className="about-feature">
+                <span className="about-feature-icon">
+                  <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                </span>
+                Live Debates
+              </div>
+              <div className="about-feature">
+                <span className="about-feature-icon">
+                  <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                </span>
+                Gaming Content
+              </div>
+              <div className="about-feature">
+                <span className="about-feature-icon">
+                  <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                </span>
+                Community Driven
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Shows Section */}
+      <section className="shows" id="shows">
+        <div className="section-header reveal">
+          <p className="section-label">Our Shows</p>
+          <h2 className="section-title">What We're Creating</h2>
+          <p className="section-subtitle">
+            Multiple formats, one mission: authentic entertainment
+          </p>
+        </div>
+
+        <div className="shows-grid">
+          <div className="show-card reveal">
+            <div className="show-card-image">
+              <div className="show-card-gradient" />
+              <span className="show-card-badge">Flagship</span>
+            </div>
+            <div className="show-card-content">
+              <h3 className="show-card-title">Address All The Smoke</h3>
+              <p className="show-card-description">
+                Our signature debate series where panelists tackle the hottest takes
+                and most controversial topics. No filter, all substance.
+              </p>
+              <div className="show-card-meta">
+                <span>📺 Weekly</span>
+                <span>🔥 Season 4</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="show-card reveal">
+            <div className="show-card-image">
+              <div className="show-card-gradient" />
+              <span className="show-card-badge">Daily</span>
+            </div>
+            <div className="show-card-content">
+              <h3 className="show-card-title">The Morning Stream</h3>
+              <p className="show-card-description">
+                Start your day right. News, vibes, and conversations with Blue Olive Media.
+                Your new morning routine.
+              </p>
+              <div className="show-card-meta">
+                <span>☀️ Weekdays</span>
+                <span>☕ 9AM EST</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="show-card reveal">
+            <div className="show-card-image">
+              <div className="show-card-gradient" />
+              <span className="show-card-badge">Gaming</span>
+            </div>
+            <div className="show-card-content">
+              <h3 className="show-card-title">Warzone Sessions</h3>
+              <p className="show-card-description">
+                Call of Duty Warzone gameplay with commentary, squad runs,
+                and community game nights. Get in the lobby.
+              </p>
+              <div className="show-card-meta">
+                <span>🎮 Live</span>
+                <span>🏆 Ranked</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Cast Section */}
+      <section className="cast" id="cast">
+        <div className="section-header reveal">
+          <p className="section-label">Season 4 Cast</p>
+          <h2 className="section-title">Meet The Crew</h2>
+          <p className="section-subtitle">
+            The voices and personalities that make it all happen
+          </p>
+        </div>
+
+        <div className="cast-grid">
+          <div className="cast-card reveal">
+            <div className="cast-card-image">
+              <div className="cast-card-placeholder">🎙️</div>
+              <div className="cast-card-overlay" />
+            </div>
+            <div className="cast-card-content">
+              <h4 className="cast-card-name">Abe</h4>
+              <p className="cast-card-role">Host & Creator</p>
+            </div>
+          </div>
+
+          <div className="cast-card reveal">
+            <div className="cast-card-image">
+              <div className="cast-card-placeholder">🐍</div>
+              <div className="cast-card-overlay" />
+            </div>
+            <div className="cast-card-content">
+              <h4 className="cast-card-name">Rattlesnake</h4>
+              <p className="cast-card-role">Panelist</p>
+            </div>
+          </div>
+
+          <div className="cast-card reveal">
+            <div className="cast-card-image">
+              <div className="cast-card-placeholder">🏈</div>
+              <div className="cast-card-overlay" />
+            </div>
+            <div className="cast-card-content">
+              <h4 className="cast-card-name">Jags</h4>
+              <p className="cast-card-role">Panelist</p>
+            </div>
+          </div>
+
+          <div className="cast-card reveal">
+            <div className="cast-card-image">
+              <div className="cast-card-placeholder">💫</div>
+              <div className="cast-card-overlay" />
+            </div>
+            <div className="cast-card-content">
+              <h4 className="cast-card-name">Babs</h4>
+              <p className="cast-card-role">Panelist</p>
+            </div>
+          </div>
+
+          <div className="cast-card reveal">
+            <div className="cast-card-image">
+              <div className="cast-card-placeholder">🦅</div>
+              <div className="cast-card-overlay" />
+            </div>
+            <div className="cast-card-content">
+              <h4 className="cast-card-name">El Garza</h4>
+              <p className="cast-card-role">Panelist</p>
+            </div>
+          </div>
+
+          <div className="cast-card reveal">
+            <div className="cast-card-image">
+              <div className="cast-card-placeholder">✈️</div>
+              <div className="cast-card-overlay" />
+            </div>
+            <div className="cast-card-content">
+              <h4 className="cast-card-name">Howard Hughes</h4>
+              <p className="cast-card-role">Panelist</p>
+            </div>
+          </div>
+
+          <div className="cast-card reveal">
+            <div className="cast-card-image">
+              <div className="cast-card-placeholder">👁️</div>
+              <div className="cast-card-overlay" />
+            </div>
+            <div className="cast-card-content">
+              <h4 className="cast-card-name">Dr. MindEye</h4>
+              <p className="cast-card-role">Panelist</p>
+            </div>
+          </div>
+
+          <div className="cast-card reveal">
+            <div className="cast-card-image">
+              <div className="cast-card-placeholder">🤖</div>
+              <div className="cast-card-overlay" />
+            </div>
+            <div className="cast-card-content">
+              <h4 className="cast-card-name">Beta Bot</h4>
+              <p className="cast-card-role">AI Co-Host</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Schedule Section */}
+      <section className="schedule" id="schedule">
+        <div className="section-header reveal">
+          <p className="section-label">This Week</p>
+          <h2 className="section-title">Stream Schedule</h2>
+          <p className="section-subtitle">
+            Don't miss a moment. Set your reminders.
+          </p>
+        </div>
+
+        <div className="schedule-container">
+          <div className="schedule-item reveal">
+            <div className="schedule-time">MON 9PM EST</div>
+            <div className="schedule-info">
+              <h4>Address All The Smoke</h4>
+              <p>Weekly debate series with the full panel</p>
+            </div>
+            <span className="schedule-status upcoming">Upcoming</span>
+          </div>
+
+          <div className="schedule-item reveal">
+            <div className="schedule-time">TUE-FRI 9AM</div>
+            <div className="schedule-info">
+              <h4>The Morning Stream</h4>
+              <p>Daily morning show with Blue Olive Media</p>
+            </div>
+            <span className="schedule-status upcoming">Upcoming</span>
+          </div>
+
+          <div className="schedule-item reveal">
+            <div className="schedule-time">WED 8PM EST</div>
+            <div className="schedule-info">
+              <h4>Warzone Wednesday</h4>
+              <p>Community game night - join the squad</p>
+            </div>
+            <span className="schedule-status upcoming">Upcoming</span>
+          </div>
+
+          <div className="schedule-item reveal">
+            <div className="schedule-time">SAT 7PM EST</div>
+            <div className="schedule-info">
+              <h4>Saturday Night Special</h4>
+              <p>Extended content and special guests</p>
+            </div>
+            <span className="schedule-status upcoming">Upcoming</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Updates Section */}
+      <section className="updates" id="updates">
+        <div className="section-header reveal">
+          <p className="section-label">Latest News</p>
+          <h2 className="section-title">Updates & Announcements</h2>
+        </div>
+
+        <div className="updates-grid">
+          <div className="update-featured reveal">
+            <div className="update-featured-image">
+              <span className="update-featured-badge">New</span>
+            </div>
+            <div className="update-featured-content">
+              <p className="update-featured-date">January 2026</p>
+              <h3 className="update-featured-title">Season 4 Officially Launches</h3>
+              <p className="update-featured-excerpt">
+                The wait is over. Season 4 of The Live Stream Show brings new panelists,
+                upgraded production, and more fire content than ever before. Get ready
+                for our biggest season yet.
+              </p>
+              <a href="#shows" className="btn-secondary">Learn More</a>
+            </div>
+          </div>
+
+          <div className="updates-sidebar">
+            <div className="update-small reveal">
+              <p className="update-small-date">Coming Soon</p>
+              <h4 className="update-small-title">New YouTube Channel Network Expansion</h4>
+            </div>
+            <div className="update-small reveal">
+              <p className="update-small-date">In Development</p>
+              <h4 className="update-small-title">Custom Overlay System for Creators</h4>
+            </div>
+            <div className="update-small reveal">
+              <p className="update-small-date">Community</p>
+              <h4 className="update-small-title">Discord Subscriber Benefits Updated</h4>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter Section */}
+      <section className="newsletter">
+        <div className="newsletter-container reveal">
+          <div className="newsletter-glow newsletter-glow-1" />
+          <div className="newsletter-glow newsletter-glow-2" />
+          <div className="newsletter-content">
+            <h2>Stay Connected</h2>
+            <p>Get notified when we go live, plus exclusive updates and behind-the-scenes content.</p>
+            <form className="newsletter-form" onSubmit={(e) => { e.preventDefault(); alert('Newsletter signup coming soon!'); }}>
+              <input type="email" className="newsletter-input" placeholder="Enter your email" required />
+              <button type="submit" className="btn-primary">Subscribe</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-logo">THE LIVE STREAM SHOW</div>
@@ -649,6 +1536,12 @@ export function LandingPage() {
             <a href="#">Terms</a>
             <a href="#">Contact</a>
             <Link to="/admin">Admin</Link>
+          </div>
+          <div className="footer-social">
+            <a href="https://youtube.com/@thelivestreamshow" target="_blank" rel="noopener noreferrer" title="YouTube">📺</a>
+            <a href="#" title="Discord">💬</a>
+            <a href="#" title="Twitter">🐦</a>
+            <a href="#" title="Instagram">📷</a>
           </div>
         </div>
       </footer>
