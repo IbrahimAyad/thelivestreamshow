@@ -924,7 +924,7 @@ export function LandingPage() {
         /* Book Showcase Section */
         .book-showcase {
           padding: 8rem 4rem;
-          background: linear-gradient(135deg, #1a1f35 0%, #0a0e17 50%, #1a1f35 100%);
+          background: linear-gradient(135deg, #1a1f2e 0%, #0f1419 50%, #1a1f2e 100%);
           position: relative;
           overflow: hidden;
         }
@@ -947,12 +947,12 @@ export function LandingPage() {
           align-items: center;
           gap: 0.5rem;
           padding: 0.5rem 1.25rem;
-          background: rgba(139, 92, 246, 0.15);
-          border: 1px solid rgba(139, 92, 246, 0.3);
+          background: rgba(197, 162, 103, 0.15);
+          border: 1px solid rgba(197, 162, 103, 0.3);
           border-radius: 50px;
           font-size: 0.9rem;
           font-weight: 600;
-          color: #a78bfa;
+          color: #c5a267;
           margin-bottom: 2rem;
         }
 
@@ -971,7 +971,7 @@ export function LandingPage() {
         .book-title-main {
           font-size: 4rem;
           font-weight: 900;
-          background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+          background: linear-gradient(135deg, #c5a267, #d4af6a);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -1030,14 +1030,14 @@ export function LandingPage() {
         }
 
         .book-cta-button.primary {
-          background: linear-gradient(135deg, #8b5cf6, #a78bfa);
-          color: white;
-          box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+          background: linear-gradient(135deg, #c5a267, #d4af6a);
+          color: #1a1f2e;
+          box-shadow: 0 10px 30px rgba(197, 162, 103, 0.3);
         }
 
         .book-cta-button.primary:hover {
           transform: translateY(-3px);
-          box-shadow: 0 15px 40px rgba(139, 92, 246, 0.4);
+          box-shadow: 0 15px 40px rgba(197, 162, 103, 0.4);
         }
 
         .book-cta-button.secondary {
@@ -1066,11 +1066,10 @@ export function LandingPage() {
         .book-cover {
           width: 350px;
           height: 500px;
-          background: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
           border-radius: 12px;
           box-shadow:
-            0 20px 60px rgba(139, 92, 246, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            0 20px 60px rgba(197, 162, 103, 0.3),
+            0 0 0 1px rgba(197, 162, 103, 0.1);
           position: relative;
           overflow: hidden;
           transform: perspective(1000px) rotateY(-5deg);
@@ -1084,34 +1083,18 @@ export function LandingPage() {
         .book-cover-glow {
           position: absolute;
           inset: -30px;
-          background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 70%);
+          background: radial-gradient(circle, rgba(197, 162, 103, 0.2), transparent 70%);
           animation: pulse 3s ease-in-out infinite;
+          pointer-events: none;
         }
 
-        .book-cover-content {
+        .book-cover-image {
           position: relative;
           z-index: 1;
+          width: 100%;
           height: 100%;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 3rem 2rem;
-          color: white;
-        }
-
-        .book-cover-title {
-          font-size: 3rem;
-          font-weight: 900;
-          line-height: 1;
-          font-family: 'Syne', sans-serif;
-          text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .book-cover-author {
-          font-size: 1.25rem;
-          font-weight: 600;
-          letter-spacing: 0.2rem;
-          opacity: 0.9;
+          object-fit: cover;
+          display: block;
         }
 
         /* Shows Section */
@@ -2357,10 +2340,11 @@ export function LandingPage() {
           <div className="book-visual reveal">
             <div className="book-cover">
               <div className="book-cover-glow"></div>
-              <div className="book-cover-content">
-                <div className="book-cover-title">THE<br/>THIRTEENTH<br/>MONTH</div>
-                <div className="book-cover-author">ABE AYAD</div>
-              </div>
+              <img
+                src="https://imagedelivery.net/QI-O2U_ayTU_H_Ilcb4c6Q/df3ab7be-ff4d-4623-8708-7eb55dcb8a00/public"
+                alt="The Thirteenth Month Book Cover"
+                className="book-cover-image"
+              />
             </div>
           </div>
         </div>
