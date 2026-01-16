@@ -921,6 +921,199 @@ export function LandingPage() {
           50% { opacity: 0.8; transform: scale(1.05); }
         }
 
+        /* Book Showcase Section */
+        .book-showcase {
+          padding: 8rem 4rem;
+          background: linear-gradient(135deg, #1a1f35 0%, #0a0e17 50%, #1a1f35 100%);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .book-showcase-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 6rem;
+          align-items: center;
+        }
+
+        .book-content {
+          color: white;
+        }
+
+        .book-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1.25rem;
+          background: rgba(139, 92, 246, 0.15);
+          border: 1px solid rgba(139, 92, 246, 0.3);
+          border-radius: 50px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          color: #a78bfa;
+          margin-bottom: 2rem;
+        }
+
+        .book-badge-icon {
+          width: 16px;
+          height: 16px;
+        }
+
+        .book-title {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          margin-bottom: 2rem;
+        }
+
+        .book-title-main {
+          font-size: 4rem;
+          font-weight: 900;
+          background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          line-height: 1.1;
+          font-family: 'Syne', sans-serif;
+        }
+
+        .book-subtitle {
+          font-size: 1.5rem;
+          color: rgba(255, 255, 255, 0.7);
+          font-weight: 400;
+        }
+
+        .book-description {
+          font-size: 1.1rem;
+          line-height: 1.8;
+          color: rgba(255, 255, 255, 0.8);
+          margin-bottom: 2.5rem;
+        }
+
+        .book-features {
+          display: flex;
+          gap: 2rem;
+          margin-bottom: 3rem;
+        }
+
+        .book-feature {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          font-size: 1rem;
+          color: rgba(255, 255, 255, 0.9);
+        }
+
+        .book-feature-icon {
+          font-size: 1.5rem;
+        }
+
+        .book-cta-group {
+          display: flex;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+
+        .book-cta-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 1rem 2rem;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 1rem;
+          text-decoration: none;
+          transition: all 0.3s ease;
+          font-family: 'Syne', sans-serif;
+        }
+
+        .book-cta-button.primary {
+          background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+          color: white;
+          box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+
+        .book-cta-button.primary:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 15px 40px rgba(139, 92, 246, 0.4);
+        }
+
+        .book-cta-button.secondary {
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+          border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .book-cta-button.secondary:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .book-cta-icon {
+          width: 20px;
+          height: 20px;
+          stroke-width: 2;
+        }
+
+        .book-visual {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .book-cover {
+          width: 350px;
+          height: 500px;
+          background: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
+          border-radius: 12px;
+          box-shadow:
+            0 20px 60px rgba(139, 92, 246, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+          position: relative;
+          overflow: hidden;
+          transform: perspective(1000px) rotateY(-5deg);
+          transition: transform 0.5s ease;
+        }
+
+        .book-cover:hover {
+          transform: perspective(1000px) rotateY(0deg) scale(1.05);
+        }
+
+        .book-cover-glow {
+          position: absolute;
+          inset: -30px;
+          background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 70%);
+          animation: pulse 3s ease-in-out infinite;
+        }
+
+        .book-cover-content {
+          position: relative;
+          z-index: 1;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 3rem 2rem;
+          color: white;
+        }
+
+        .book-cover-title {
+          font-size: 3rem;
+          font-weight: 900;
+          line-height: 1;
+          font-family: 'Syne', sans-serif;
+          text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .book-cover-author {
+          font-size: 1.25rem;
+          font-weight: 600;
+          letter-spacing: 0.2rem;
+          opacity: 0.9;
+        }
+
         /* Shows Section */
         .shows {
           padding: 8rem 4rem;
@@ -1848,6 +2041,10 @@ export function LandingPage() {
           .game-showcase-container { grid-template-columns: 1fr; gap: 4rem; }
           .game-title-top { font-size: 2rem; }
           .game-title-main { font-size: 3.5rem; }
+          .book-showcase { padding: 4rem 2rem; }
+          .book-showcase-container { grid-template-columns: 1fr; gap: 3rem; }
+          .book-title-main { font-size: 3rem; }
+          .book-cover { width: 280px; height: 400px; }
           .about-grid { grid-template-columns: 1fr; }
           .shows-grid { grid-template-columns: 1fr 1fr; }
           .cast-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1860,6 +2057,13 @@ export function LandingPage() {
           .game-title-main { font-size: 2.5rem; letter-spacing: 0.2rem; }
           .game-features-grid { grid-template-columns: 1fr; }
           .game-cta-button { padding: 1rem 2rem; font-size: 1rem; width: 100%; justify-content: center; }
+          .book-showcase { padding: 3rem 1.5rem; }
+          .book-title-main { font-size: 2.5rem; }
+          .book-subtitle { font-size: 1.2rem; }
+          .book-features { flex-direction: column; gap: 1rem; }
+          .book-cta-button { width: 100%; justify-content: center; }
+          .book-cover { width: 250px; height: 350px; transform: perspective(1000px) rotateY(0deg); }
+          .book-cover-title { font-size: 2.5rem; }
           .shows-grid { grid-template-columns: 1fr; }
           .schedule-item { grid-template-columns: 1fr; gap: 0.75rem; }
           .newsletter-form { flex-direction: column; }
@@ -2096,6 +2300,67 @@ export function LandingPage() {
                 />
                 <div className="game-visual-shine"></div>
               </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Book Section */}
+      <section className="book-showcase" id="book">
+        <div className="book-showcase-container">
+          <div className="book-content reveal">
+            <div className="book-badge">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="book-badge-icon">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+              Twilight Philosophical Fiction
+            </div>
+            <h2 className="book-title">
+              <span className="book-title-main">The Thirteenth Month</span>
+              <span className="book-subtitle">A Study of Time, Dimensions, and Human Perception</span>
+            </h2>
+            <p className="book-description">
+              Dive into the philosophical exploration of time, reality, and consciousness. Written by Abe Ayad, this book challenges our understanding of calendars, physics, and the very fabric of existence. Perfect for fans of philosophical fiction and temporal mysteries.
+            </p>
+            <div className="book-features">
+              <div className="book-feature">
+                <div className="book-feature-icon">📖</div>
+                <div>33 Chapters</div>
+              </div>
+              <div className="book-feature">
+                <div className="book-feature-icon">⏱️</div>
+                <div>6-8 Hour Read</div>
+              </div>
+              <div className="book-feature">
+                <div className="book-feature-icon">🌙</div>
+                <div>Twilight Universe</div>
+              </div>
+            </div>
+            <div className="book-cta-group">
+              <a href="/book/chapter-01.html" target="_blank" className="book-cta-button primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="book-cta-icon">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                Read Online Free
+              </a>
+              <a href="#" className="book-cta-button secondary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="book-cta-icon">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download PDF/EPUB
+              </a>
+            </div>
+          </div>
+          <div className="book-visual reveal">
+            <div className="book-cover">
+              <div className="book-cover-glow"></div>
+              <div className="book-cover-content">
+                <div className="book-cover-title">THE<br/>THIRTEENTH<br/>MONTH</div>
+                <div className="book-cover-author">ABE AYAD</div>
+              </div>
             </div>
           </div>
         </div>
