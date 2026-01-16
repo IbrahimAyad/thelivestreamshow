@@ -1426,7 +1426,7 @@ export function LandingPage() {
             morning shows, gaming streams, and unfiltered conversations that challenge the norm.
           </p>
           <div className="hero-actions">
-            <a href="https://youtube.com/@thelivestreamshow" target="_blank" rel="noopener noreferrer" className="btn-primary">
+            <a href="https://www.youtube.com/@AbeLiveStream" target="_blank" rel="noopener noreferrer" className="btn-primary">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <polygon points="5 3 19 12 5 21 5 3" />
               </svg>
@@ -1481,7 +1481,7 @@ export function LandingPage() {
         <div className="about-grid">
           <div className="about-visual reveal">
             <div className="about-visual-inner">
-              <a href="https://youtube.com/@thelivestreamshow" target="_blank" rel="noopener noreferrer" className="about-play-btn">
+              <a href="https://www.youtube.com/@AbeLiveStream" target="_blank" rel="noopener noreferrer" className="about-play-btn">
                 <svg viewBox="0 0 24 24">
                   <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
