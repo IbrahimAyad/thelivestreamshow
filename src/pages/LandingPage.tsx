@@ -1193,6 +1193,67 @@ export function LandingPage() {
           stroke-width: 2;
         }
 
+        .book-download-dropdown {
+          position: relative;
+        }
+
+        .book-download-trigger {
+          cursor: pointer;
+        }
+
+        .book-dropdown-arrow {
+          transition: transform 0.3s ease;
+        }
+
+        .book-download-dropdown:hover .book-dropdown-arrow {
+          transform: rotate(180deg);
+        }
+
+        .book-download-menu {
+          position: absolute;
+          top: calc(100% + 0.5rem);
+          left: 0;
+          background: rgba(26, 31, 46, 0.98);
+          border: 2px solid rgba(197, 162, 103, 0.3);
+          border-radius: 12px;
+          padding: 0.5rem;
+          min-width: 200px;
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(-10px);
+          transition: all 0.3s ease;
+          z-index: 100;
+          backdrop-filter: blur(10px);
+        }
+
+        .book-download-dropdown:hover .book-download-menu {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
+        }
+
+        .book-download-option {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem 1rem;
+          color: white;
+          text-decoration: none;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+          font-size: 0.95rem;
+          font-weight: 600;
+        }
+
+        .book-download-option:hover {
+          background: rgba(197, 162, 103, 0.2);
+          color: #c5a267;
+        }
+
+        .book-download-option svg {
+          fill: currentColor;
+        }
+
         .book-visual {
           display: flex;
           justify-content: center;
@@ -2518,6 +2579,39 @@ export function LandingPage() {
                 </svg>
                 Read Online Free
               </a>
+              <div className="book-download-dropdown">
+                <button className="book-cta-button secondary book-download-trigger">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="book-cta-icon">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Download
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="book-dropdown-arrow" style={{width: '16px', height: '16px'}}>
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                <div className="book-download-menu">
+                  <a href="/The_Thirteenth_Month.pdf" download className="book-download-option">
+                    <svg viewBox="0 0 24 24" fill="currentColor" style={{width: '20px', height: '20px'}}>
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                      <path d="M14 2v6h6"/>
+                      <path d="M12 18v-6"/>
+                      <path d="M9 15l3 3 3-3"/>
+                    </svg>
+                    Download PDF
+                  </a>
+                  <a href="/The_Thirteenth_Month.epub" download className="book-download-option">
+                    <svg viewBox="0 0 24 24" fill="currentColor" style={{width: '20px', height: '20px'}}>
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                      <path d="M12 18v-6"/>
+                      <path d="M9 15l3 3 3-3"/>
+                    </svg>
+                    Download EPUB
+                  </a>
+                </div>
+              </div>
               <button
                 onClick={() => {
                   const bookUrl = `${window.location.origin}/#book`
