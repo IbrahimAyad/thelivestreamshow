@@ -102,8 +102,14 @@ export function UltraChatModal({ isOpen, onClose }: UltraChatModalProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-2xl bg-gradient-to-br from-gray-900 via-gray-900 to-black border-2 border-cyan-500/30 rounded-2xl shadow-2xl shadow-cyan-500/20 overflow-hidden animate-slideUp">
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn"
+      onClick={handleClose}
+    >
+      <div
+        className="relative w-full max-w-2xl bg-gradient-to-br from-gray-900 via-gray-900 to-black border-2 border-cyan-500/30 rounded-xl sm:rounded-2xl shadow-2xl shadow-cyan-500/20 overflow-hidden animate-slideUp max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
 
         {/* Glow Effects */}
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -118,28 +124,28 @@ export function UltraChatModal({ isOpen, onClose }: UltraChatModalProps) {
         </button>
 
         {/* Header */}
-        <div className="relative px-8 pt-8 pb-6 border-b border-gray-800">
+        <div className="relative px-4 sm:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 border-b border-gray-800">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-gradient-to-br from-cyan-500 to-purple-500 rounded-xl">
-              <Zap className="w-6 h-6 text-white" />
+            <div className="p-2 sm:p-3 bg-gradient-to-br from-cyan-500 to-purple-500 rounded-xl">
+              <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Send Ultra Chat</h2>
-              <p className="text-sm text-gray-400">Support the show with a message</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-white">Send Ultra Chat</h2>
+              <p className="text-xs sm:text-sm text-gray-400">Support the show with a message</p>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="relative p-8">
+        <div className="relative p-4 sm:p-8">
           {step === 'compose' && (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Amount Selection */}
               <div>
                 <label className="block text-sm font-semibold text-gray-300 mb-3">
                   Choose Your Support Level
                 </label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                   {AMOUNT_TIERS.map((tier) => {
                     const Icon = tier.icon
                     return (
@@ -150,18 +156,18 @@ export function UltraChatModal({ isOpen, onClose }: UltraChatModalProps) {
                           setCustomAmount('')
                         }}
                         className={`
-                          relative p-4 rounded-xl border-2 transition-all
+                          relative p-3 sm:p-4 rounded-xl border-2 transition-all
                           ${selectedAmount === tier.amount && !customAmount
                             ? `border-transparent bg-gradient-to-br ${tier.color} shadow-lg scale-105`
                             : 'border-gray-700 bg-gray-800 hover:border-gray-600'
                           }
                         `}
                       >
-                        <Icon className={`w-5 h-5 mb-2 mx-auto ${selectedAmount === tier.amount && !customAmount ? 'text-white' : 'text-gray-400'}`} />
-                        <div className={`text-lg font-bold ${selectedAmount === tier.amount && !customAmount ? 'text-white' : 'text-gray-300'}`}>
+                        <Icon className={`w-4 h-4 sm:w-5 sm:h-5 mb-1 sm:mb-2 mx-auto ${selectedAmount === tier.amount && !customAmount ? 'text-white' : 'text-gray-400'}`} />
+                        <div className={`text-base sm:text-lg font-bold ${selectedAmount === tier.amount && !customAmount ? 'text-white' : 'text-gray-300'}`}>
                           {tier.label}
                         </div>
-                        <div className={`text-xs ${selectedAmount === tier.amount && !customAmount ? 'text-white/80' : 'text-gray-500'}`}>
+                        <div className={`text-[10px] sm:text-xs ${selectedAmount === tier.amount && !customAmount ? 'text-white/80' : 'text-gray-500'}`}>
                           {tier.description}
                         </div>
                       </button>
@@ -193,7 +199,7 @@ export function UltraChatModal({ isOpen, onClose }: UltraChatModalProps) {
               </div>
 
               {/* Sender Info */}
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Your Name <span className="text-red-400">*</span>
