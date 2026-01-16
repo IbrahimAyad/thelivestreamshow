@@ -1765,9 +1765,9 @@ export function LandingPage() {
         <div className="about-grid">
           <div className="about-visual reveal">
             <div className="about-visual-inner">
-              <a href="/big-time-lucky-13" className="about-game-link">
+              <a href="https://lucky-13-game.thelivestreamshow.com" target="_blank" rel="noopener noreferrer" className="about-game-link">
                 <img
-                  src="/big-time-lucky-13/images/logo-character.png"
+                  src="/game-character.png"
                   alt="Big Time Lucky 13 Game Character"
                   className="about-game-character"
                 />
