@@ -18,6 +18,14 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    fs: {
+      // Allow serving files from the game directory without processing
+      strict: false
+    }
+  },
+  publicDir: 'public',
+  assetsInclude: ['**/*.mp3', '**/*.wav', '**/*.mp4', '**/*.webp', '**/*.png'],
   build: {
     chunkSizeWarningLimit: 1000,
     minify: 'esbuild', // Use esbuild (faster than terser)
