@@ -811,61 +811,74 @@ export function LandingPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 1.5rem;
+          gap: -20px;
           padding: 2rem;
         }
 
         .morning-polaroid {
           position: relative;
           background: #FFFFFF;
-          padding: 12px 12px 50px 12px;
-          box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-          transition: transform 0.3s ease;
+          padding: 14px 14px 60px 14px;
+          box-shadow:
+            0 20px 50px rgba(0, 0, 0, 0.6),
+            0 5px 15px rgba(0, 0, 0, 0.3),
+            inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+          transition: all 0.3s ease;
           z-index: 1;
+        }
+
+        .morning-polaroid:hover {
+          transform: scale(1.05) !important;
+          z-index: 5 !important;
+          box-shadow:
+            0 30px 70px rgba(0, 0, 0, 0.7),
+            0 10px 25px rgba(0, 0, 0, 0.4);
         }
 
         .morning-polaroid img {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          object-position: top center;
           display: block;
         }
 
         .morning-polaroid.polaroid-1 {
-          width: 180px;
-          height: 220px;
-          transform: rotate(-8deg);
-          animation: polaroidFloat1 3s ease-in-out infinite;
+          width: 220px;
+          height: 270px;
+          transform: rotate(-10deg) translateX(30px);
+          animation: polaroidFloat1 4s ease-in-out infinite;
         }
 
         .morning-polaroid.polaroid-2 {
-          width: 190px;
-          height: 230px;
-          transform: rotate(5deg);
-          animation: polaroidFloat2 3s ease-in-out infinite 1s;
-          z-index: 2;
+          width: 240px;
+          height: 290px;
+          transform: rotate(3deg);
+          animation: polaroidFloat2 4s ease-in-out infinite 1.3s;
+          z-index: 3;
         }
 
         .morning-polaroid.polaroid-3 {
-          width: 185px;
-          height: 225px;
-          transform: rotate(-6deg);
-          animation: polaroidFloat3 3s ease-in-out infinite 2s;
+          width: 225px;
+          height: 275px;
+          transform: rotate(-8deg) translateX(-30px);
+          animation: polaroidFloat3 4s ease-in-out infinite 2.6s;
+          z-index: 2;
         }
 
         @keyframes polaroidFloat1 {
-          0%, 100% { transform: rotate(-8deg) translateY(0); }
-          50% { transform: rotate(-8deg) translateY(-10px); }
+          0%, 100% { transform: rotate(-10deg) translateX(30px) translateY(0); }
+          50% { transform: rotate(-10deg) translateX(30px) translateY(-12px); }
         }
 
         @keyframes polaroidFloat2 {
-          0%, 100% { transform: rotate(5deg) translateY(0); }
-          50% { transform: rotate(5deg) translateY(-15px); }
+          0%, 100% { transform: rotate(3deg) translateY(0); }
+          50% { transform: rotate(3deg) translateY(-18px); }
         }
 
         @keyframes polaroidFloat3 {
-          0%, 100% { transform: rotate(-6deg) translateY(0); }
-          50% { transform: rotate(-6deg) translateY(-12px); }
+          0%, 100% { transform: rotate(-8deg) translateX(-30px) translateY(0); }
+          50% { transform: rotate(-8deg) translateX(-30px) translateY(-15px); }
         }
 
         .morning-title-overlay {
@@ -892,47 +905,54 @@ export function LandingPage() {
 
         .morning-word.morning {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 4rem;
+          font-size: 5rem;
           color: #FF8C42;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.2em;
           text-shadow:
-            4px 4px 0 rgba(0, 0, 0, 0.5),
-            0 0 40px rgba(255, 140, 66, 0.6),
-            0 0 60px rgba(255, 140, 66, 0.4);
+            6px 6px 0 rgba(0, 0, 0, 0.7),
+            -2px -2px 0 rgba(0, 0, 0, 0.3),
+            0 0 50px rgba(255, 140, 66, 0.8),
+            0 0 80px rgba(255, 140, 66, 0.5);
         }
 
         .morning-word.stream {
           font-family: 'Pacifico', cursive;
-          font-size: 3rem;
-          color: #FFFFFF;
+          font-size: 3.5rem;
+          color: #E8E8E8;
+          margin-left: 0.5rem;
           text-shadow:
-            3px 3px 0 rgba(0, 0, 0, 0.5),
-            0 0 30px rgba(255, 255, 255, 0.6);
+            4px 4px 0 rgba(0, 0, 0, 0.7),
+            -2px -2px 0 rgba(0, 0, 0, 0.3),
+            0 0 40px rgba(255, 255, 255, 0.8);
         }
 
         .morning-word.show {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 4rem;
+          font-size: 5rem;
           color: #FFFFFF;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.2em;
           text-shadow:
-            4px 4px 0 rgba(0, 0, 0, 0.5),
-            0 0 40px rgba(139, 92, 246, 0.6),
-            0 0 60px rgba(139, 92, 246, 0.4);
+            6px 6px 0 rgba(0, 0, 0, 0.7),
+            -2px -2px 0 rgba(0, 0, 0, 0.3),
+            0 0 50px rgba(139, 92, 246, 0.8),
+            0 0 80px rgba(139, 92, 246, 0.5);
         }
 
         .morning-live-badge-card {
           display: inline-flex;
           align-items: center;
           gap: 0.75rem;
-          padding: 0.75rem 2rem;
-          background: linear-gradient(135deg, rgba(230, 57, 70, 0.95), rgba(193, 18, 31, 0.95));
+          padding: 1rem 2.5rem;
+          background: linear-gradient(135deg, #e63946 0%, #c1121f 100%);
           border-radius: 50px;
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 1.1rem;
-          letter-spacing: 0.2em;
+          font-size: 1.3rem;
+          letter-spacing: 0.25em;
           color: #FFFFFF;
-          box-shadow: 0 8px 30px rgba(230, 57, 70, 0.7);
+          box-shadow:
+            0 10px 40px rgba(230, 57, 70, 0.8),
+            0 0 60px rgba(230, 57, 70, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
           pointer-events: auto;
         }
 
