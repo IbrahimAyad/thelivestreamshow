@@ -1035,6 +1035,136 @@ export function LandingPage() {
           transform: translateY(0);
         }
 
+        /* Social Media Section */
+        .social-section {
+          padding: 6rem 2rem;
+          background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-surface) 100%);
+        }
+
+        .social-container {
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .social-cards {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 2rem;
+          margin-top: 3rem;
+        }
+
+        .social-card {
+          position: relative;
+          padding: 2.5rem 2rem;
+          background: var(--bg-elevated);
+          border: 2px solid rgba(255, 255, 255, 0.05);
+          border-radius: 20px;
+          text-align: center;
+          text-decoration: none;
+          color: var(--text-primary);
+          overflow: hidden;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .social-card:hover {
+          transform: translateY(-10px);
+          border-color: transparent;
+        }
+
+        .social-card-glow {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+          opacity: 0;
+          transition: opacity 0.4s ease;
+        }
+
+        .social-card:hover .social-card-glow {
+          opacity: 0.1;
+        }
+
+        .social-card-icon {
+          width: 48px;
+          height: 48px;
+          margin: 0 auto 1.5rem;
+          position: relative;
+          z-index: 1;
+          transition: all 0.4s ease;
+        }
+
+        .social-card:hover .social-card-icon {
+          transform: scale(1.2) rotate(5deg);
+        }
+
+        .social-card h3 {
+          font-family: 'Syne', sans-serif;
+          font-size: 1.5rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+          position: relative;
+          z-index: 1;
+        }
+
+        .social-card p {
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          position: relative;
+          z-index: 1;
+        }
+
+        /* Brand-specific card colors */
+        .social-card-youtube:hover {
+          box-shadow: 0 20px 60px rgba(255, 0, 0, 0.3);
+        }
+
+        .social-card-youtube:hover .social-card-glow {
+          background: linear-gradient(135deg, #FF0000, #CC0000);
+          opacity: 0.15;
+        }
+
+        .social-card-youtube:hover .social-card-icon {
+          color: #FF0000;
+        }
+
+        .social-card-tiktok:hover {
+          box-shadow: 0 20px 60px rgba(0, 242, 234, 0.3);
+        }
+
+        .social-card-tiktok:hover .social-card-glow {
+          background: linear-gradient(135deg, #00f2ea, #ff0050);
+          opacity: 0.15;
+        }
+
+        .social-card-tiktok:hover .social-card-icon {
+          color: #00f2ea;
+        }
+
+        .social-card-twitter:hover {
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .social-card-twitter:hover .social-card-glow {
+          background: linear-gradient(135deg, #000000, #333333);
+          opacity: 0.2;
+        }
+
+        .social-card-twitter:hover .social-card-icon {
+          color: #ffffff;
+        }
+
+        .social-card-twitch:hover {
+          box-shadow: 0 20px 60px rgba(145, 70, 255, 0.3);
+        }
+
+        .social-card-twitch:hover .social-card-glow {
+          background: linear-gradient(135deg, #9146FF, #6441a5);
+          opacity: 0.15;
+        }
+
+        .social-card-twitch:hover .social-card-icon {
+          color: #9146FF;
+        }
+
         .footer {
           padding: 4rem;
           border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -1080,8 +1210,8 @@ export function LandingPage() {
         }
 
         .footer-social a {
-          width: 44px;
-          height: 44px;
+          width: 48px;
+          height: 48px;
           border-radius: 50%;
           background: var(--bg-elevated);
           display: flex;
@@ -1089,15 +1219,75 @@ export function LandingPage() {
           justify-content: center;
           color: var(--text-secondary);
           text-decoration: none;
-          transition: all 0.3s ease;
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          font-size: 1.25rem;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .footer-social a svg {
+          width: 20px;
+          height: 20px;
+          position: relative;
+          z-index: 1;
+          transition: transform 0.4s ease;
+        }
+
+        .footer-social a::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+          opacity: 0;
+          transition: opacity 0.4s ease;
         }
 
         .footer-social a:hover {
-          background: var(--accent-primary);
-          color: var(--bg-deep);
-          transform: translateY(-3px);
+          transform: translateY(-5px) scale(1.1);
+          border-color: transparent;
+          box-shadow: 0 10px 30px rgba(6, 182, 212, 0.4);
+        }
+
+        .footer-social a:hover::before {
+          opacity: 1;
+        }
+
+        .footer-social a:hover svg {
+          transform: scale(1.1);
+          color: white;
+        }
+
+        /* Brand-specific hover colors */
+        .social-youtube:hover {
+          box-shadow: 0 10px 30px rgba(255, 0, 0, 0.4);
+        }
+
+        .social-youtube:hover::before {
+          background: linear-gradient(135deg, #FF0000, #CC0000);
+        }
+
+        .social-tiktok:hover {
+          box-shadow: 0 10px 30px rgba(0, 242, 234, 0.4);
+        }
+
+        .social-tiktok:hover::before {
+          background: linear-gradient(135deg, #00f2ea, #ff0050);
+        }
+
+        .social-twitter:hover {
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .social-twitter:hover::before {
+          background: linear-gradient(135deg, #000000, #333333);
+        }
+
+        .social-twitch:hover {
+          box-shadow: 0 10px 30px rgba(145, 70, 255, 0.4);
+        }
+
+        .social-twitch:hover::before {
+          background: linear-gradient(135deg, #9146FF, #6441a5);
         }
 
         @media (max-width: 1024px) {
@@ -1597,6 +1787,55 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Social Media Section */}
+      <section className="social-section">
+        <div className="social-container reveal">
+          <div className="section-header">
+            <p className="section-label">Connect With Us</p>
+            <h2 className="section-title">Follow The Stream</h2>
+            <p className="section-subtitle">Join our community across all platforms</p>
+          </div>
+
+          <div className="social-cards">
+            <a href="https://www.youtube.com/@AbeLiveStream" target="_blank" rel="noopener noreferrer" className="social-card social-card-youtube">
+              <div className="social-card-glow" />
+              <svg className="social-card-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+              <h3>YouTube</h3>
+              <p>Watch full episodes & highlights</p>
+            </a>
+
+            <a href="https://www.tiktok.com/@abestream" target="_blank" rel="noopener noreferrer" className="social-card social-card-tiktok">
+              <div className="social-card-glow" />
+              <svg className="social-card-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+              </svg>
+              <h3>TikTok</h3>
+              <p>Quick clips & behind the scenes</p>
+            </a>
+
+            <a href="https://twitter.com/abe_nasty" target="_blank" rel="noopener noreferrer" className="social-card social-card-twitter">
+              <div className="social-card-glow" />
+              <svg className="social-card-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+              <h3>X (Twitter)</h3>
+              <p>Real-time updates & discussions</p>
+            </a>
+
+            <a href="https://www.twitch.tv/abelivestream" target="_blank" rel="noopener noreferrer" className="social-card social-card-twitch">
+              <div className="social-card-glow" />
+              <svg className="social-card-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
+              </svg>
+              <h3>Twitch</h3>
+              <p>Live streams & gaming content</p>
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Newsletter Section */}
       <section className="newsletter">
         <div className="newsletter-container reveal">
@@ -1623,10 +1862,26 @@ export function LandingPage() {
             <Link to="/admin">Admin</Link>
           </div>
           <div className="footer-social">
-            <a href="https://youtube.com/@thelivestreamshow" target="_blank" rel="noopener noreferrer" title="YouTube">📺</a>
-            <a href="#" title="Discord">💬</a>
-            <a href="#" title="Twitter">🐦</a>
-            <a href="#" title="Instagram">📷</a>
+            <a href="https://www.youtube.com/@AbeLiveStream" target="_blank" rel="noopener noreferrer" title="YouTube" className="social-youtube">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+            </a>
+            <a href="https://www.tiktok.com/@abestream" target="_blank" rel="noopener noreferrer" title="TikTok" className="social-tiktok">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+              </svg>
+            </a>
+            <a href="https://twitter.com/abe_nasty" target="_blank" rel="noopener noreferrer" title="X (Twitter)" className="social-twitter">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+            </a>
+            <a href="https://www.twitch.tv/abelivestream" target="_blank" rel="noopener noreferrer" title="Twitch" className="social-twitch">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
+              </svg>
+            </a>
           </div>
         </div>
       </footer>
