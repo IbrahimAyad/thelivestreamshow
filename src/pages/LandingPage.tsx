@@ -656,6 +656,271 @@ export function LandingPage() {
           fill: none;
         }
 
+        /* Game Showcase Section */
+        .game-showcase {
+          position: relative;
+          padding: 8rem 4rem;
+          background: linear-gradient(135deg, #0a0e17 0%, #1a1f35 50%, #0a0e17 100%);
+          overflow: hidden;
+        }
+
+        .game-showcase-bg {
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(circle at 20% 30%, rgba(255, 215, 0, 0.08), transparent 40%),
+            radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.12), transparent 40%),
+            radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.06), transparent 60%);
+          pointer-events: none;
+        }
+
+        .game-showcase-container {
+          position: relative;
+          max-width: 1200px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 6rem;
+          align-items: center;
+        }
+
+        .game-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1.25rem;
+          background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2));
+          border: 1px solid rgba(255, 215, 0, 0.4);
+          border-radius: 50px;
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #FFD700;
+          text-transform: uppercase;
+          letter-spacing: 1.5px;
+          margin-bottom: 2rem;
+        }
+
+        .game-badge-icon {
+          width: 16px;
+          height: 16px;
+        }
+
+        .game-title {
+          font-family: 'Syne', sans-serif;
+          margin-bottom: 1rem;
+          display: flex;
+          flex-direction: column;
+          line-height: 1;
+        }
+
+        .game-title-top {
+          font-size: 2.5rem;
+          font-weight: 800;
+          background: linear-gradient(135deg, #FFD700, #FFA500);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          letter-spacing: 0.5rem;
+        }
+
+        .game-title-main {
+          font-size: 4.5rem;
+          font-weight: 900;
+          color: white;
+          letter-spacing: 0.3rem;
+          margin-top: 0.5rem;
+          text-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+        }
+
+        .game-title-13 {
+          background: linear-gradient(135deg, #FFD700, #FF8C00);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          filter: drop-shadow(0 0 20px rgba(255, 140, 0, 0.6));
+        }
+
+        .game-tagline {
+          font-size: 1.5rem;
+          color: var(--accent-primary);
+          font-weight: 600;
+          margin-bottom: 1.5rem;
+          font-style: italic;
+        }
+
+        .game-description {
+          font-size: 1.1rem;
+          color: var(--text-secondary);
+          line-height: 1.8;
+          margin-bottom: 3rem;
+        }
+
+        .game-features-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+          margin-bottom: 3rem;
+        }
+
+        .game-feature-item {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1rem;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 215, 0, 0.15);
+          border-radius: 12px;
+          transition: all 0.3s ease;
+        }
+
+        .game-feature-item:hover {
+          background: rgba(255, 215, 0, 0.08);
+          border-color: rgba(255, 215, 0, 0.3);
+          transform: translateY(-2px);
+        }
+
+        .game-feature-icon {
+          font-size: 2rem;
+          filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.4));
+        }
+
+        .game-feature-title {
+          font-weight: 700;
+          color: white;
+          font-size: 1rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .game-feature-desc {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+        }
+
+        .game-cta-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1.25rem 3rem;
+          background: linear-gradient(135deg, #FFD700, #FF8C00);
+          border: none;
+          border-radius: 50px;
+          font-family: 'Syne', sans-serif;
+          font-size: 1.1rem;
+          font-weight: 800;
+          color: #0a0e17;
+          text-decoration: none;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow:
+            0 10px 40px rgba(255, 215, 0, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .game-cta-button::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          transform: translateX(-100%);
+          transition: transform 0.6s ease;
+        }
+
+        .game-cta-button:hover::before {
+          transform: translateX(100%);
+        }
+
+        .game-cta-button:hover {
+          transform: translateY(-2px);
+          box-shadow:
+            0 15px 50px rgba(255, 215, 0, 0.6),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .game-cta-arrow {
+          width: 20px;
+          height: 20px;
+          transition: transform 0.3s ease;
+        }
+
+        .game-cta-button:hover .game-cta-arrow {
+          transform: translateX(5px);
+        }
+
+        .game-disclaimer {
+          margin-top: 1.5rem;
+          font-size: 0.9rem;
+          color: var(--text-muted);
+          font-style: italic;
+        }
+
+        .game-showcase-visual {
+          position: relative;
+        }
+
+        .game-visual-frame {
+          position: relative;
+          aspect-ratio: 1;
+          border-radius: 20px;
+          background:
+            linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(139, 92, 246, 0.1));
+          padding: 2rem;
+          border: 2px solid rgba(255, 215, 0, 0.3);
+          box-shadow:
+            0 20px 60px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .game-visual-glow {
+          position: absolute;
+          inset: -20px;
+          background: radial-gradient(circle, rgba(255, 215, 0, 0.2), transparent 70%);
+          filter: blur(40px);
+          animation: pulse 3s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        .game-visual-link {
+          position: relative;
+          display: block;
+          width: 100%;
+          height: 100%;
+          cursor: pointer;
+        }
+
+        .game-character-img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          filter: drop-shadow(0 20px 40px rgba(139, 92, 246, 0.6));
+          transition: transform 0.3s ease;
+        }
+
+        .game-visual-link:hover .game-character-img {
+          transform: scale(1.05);
+        }
+
+        .game-visual-shine {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+          transform: translateX(-100%);
+          transition: transform 0.8s ease;
+          pointer-events: none;
+        }
+
+        .game-visual-link:hover .game-visual-shine {
+          transform: translateX(100%);
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 0.5; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
         /* Shows Section */
         .shows {
           padding: 8rem 4rem;
@@ -1579,6 +1844,10 @@ export function LandingPage() {
           .nav-links { display: none; }
           .hero { padding: 6rem 2rem 4rem; }
           .stats-grid { grid-template-columns: repeat(2, 1fr); }
+          .game-showcase { padding: 4rem 2rem; }
+          .game-showcase-container { grid-template-columns: 1fr; gap: 4rem; }
+          .game-title-top { font-size: 2rem; }
+          .game-title-main { font-size: 3.5rem; }
           .about-grid { grid-template-columns: 1fr; }
           .shows-grid { grid-template-columns: 1fr 1fr; }
           .cast-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1586,6 +1855,11 @@ export function LandingPage() {
         }
 
         @media (max-width: 768px) {
+          .game-showcase { padding: 3rem 1.5rem; }
+          .game-title-top { font-size: 1.5rem; letter-spacing: 0.3rem; }
+          .game-title-main { font-size: 2.5rem; letter-spacing: 0.2rem; }
+          .game-features-grid { grid-template-columns: 1fr; }
+          .game-cta-button { padding: 1rem 2rem; font-size: 1rem; width: 100%; justify-content: center; }
           .shows-grid { grid-template-columns: 1fr; }
           .schedule-item { grid-template-columns: 1fr; gap: 0.75rem; }
           .newsletter-form { flex-direction: column; }
@@ -1752,6 +2026,81 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Big Time Lucky 13 Game Section */}
+      <section className="game-showcase" id="game">
+        <div className="game-showcase-bg"></div>
+        <div className="game-showcase-container">
+          <div className="game-showcase-content reveal">
+            <div className="game-badge">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="game-badge-icon">
+                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+              </svg>
+              Featured Game
+            </div>
+            <h2 className="game-title">
+              <span className="game-title-top">BIG TIME</span>
+              <span className="game-title-main">LUCKY <span className="game-title-13">13</span></span>
+            </h2>
+            <p className="game-tagline">Where Destiny Meets Fortune</p>
+            <p className="game-description">
+              Experience the thrill of high-end slot gaming reimagined for streaming entertainment.
+              Stunning visuals, immersive soundscapes, and the excitement of Vegas—all without the gambling.
+              Pure fun, pure entertainment.
+            </p>
+            <div className="game-features-grid">
+              <div className="game-feature-item">
+                <div className="game-feature-icon">🎰</div>
+                <div className="game-feature-text">
+                  <div className="game-feature-title">Premium Slots</div>
+                  <div className="game-feature-desc">Vegas-quality experience</div>
+                </div>
+              </div>
+              <div className="game-feature-item">
+                <div className="game-feature-icon">🌙</div>
+                <div className="game-feature-text">
+                  <div className="game-feature-title">Lunar Theme</div>
+                  <div className="game-feature-desc">Mystical moon phases</div>
+                </div>
+              </div>
+              <div className="game-feature-item">
+                <div className="game-feature-icon">🎭</div>
+                <div className="game-feature-text">
+                  <div className="game-feature-title">No Gambling</div>
+                  <div className="game-feature-desc">Pure entertainment only</div>
+                </div>
+              </div>
+              <div className="game-feature-item">
+                <div className="game-feature-icon">✨</div>
+                <div className="game-feature-text">
+                  <div className="game-feature-title">Free to Play</div>
+                  <div className="game-feature-desc">Stream-ready slots</div>
+                </div>
+              </div>
+            </div>
+            <a href="https://lucky-13-game.thelivestreamshow.com" target="_blank" rel="noopener noreferrer" className="game-cta-button">
+              <span className="game-cta-text">Play Big Time Lucky 13</span>
+              <svg className="game-cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </a>
+            <p className="game-disclaimer">Streaming slots without the gambling • For fun and entertainment</p>
+          </div>
+          <div className="game-showcase-visual reveal">
+            <div className="game-visual-frame">
+              <div className="game-visual-glow"></div>
+              <a href="https://lucky-13-game.thelivestreamshow.com" target="_blank" rel="noopener noreferrer" className="game-visual-link">
+                <img
+                  src="/game-character.png"
+                  alt="Big Time Lucky 13 Lunar Goddess"
+                  className="game-character-img"
+                />
+                <div className="game-visual-shine"></div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* About Section */}
       <section className="about" id="about">
         <div className="section-header reveal">
@@ -1763,23 +2112,6 @@ export function LandingPage() {
         </div>
 
         <div className="about-grid">
-          <div className="about-visual reveal">
-            <div className="about-visual-inner">
-              <a href="https://lucky-13-game.thelivestreamshow.com" target="_blank" rel="noopener noreferrer" className="about-game-link">
-                <img
-                  src="/game-character.png"
-                  alt="Big Time Lucky 13 Game Character"
-                  className="about-game-character"
-                />
-                <div className="about-game-overlay">
-                  <span className="about-game-badge">Play Now</span>
-                  <svg className="about-play-icon" viewBox="0 0 24 24">
-                    <polygon points="5 3 19 12 5 21 5 3" />
-                  </svg>
-                </div>
-              </a>
-            </div>
-          </div>
           <div className="about-content reveal">
             <h3>Built Different</h3>
             <p>
