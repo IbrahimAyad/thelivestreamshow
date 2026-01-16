@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { UltraChatModal } from '../components/UltraChatModal'
 import { LatestEpisodes, LatestShorts } from '../components/LatestEpisodes'
+import { MetaTags, META_CONFIGS } from '../components/MetaTags'
 
 export function LandingPage() {
   const [isUltraChatOpen, setIsUltraChatOpen] = useState(false)
   const [trailerExpanded, setTrailerExpanded] = useState(false)
+  const [currentSection, setCurrentSection] = useState<'default' | 'game' | 'book'>('default')
   useEffect(() => {
     // Navigation scroll effect
     const nav = document.getElementById('nav')
@@ -75,26 +77,49 @@ export function LandingPage() {
     }, { threshold: 0.5 })
     if (statsSection) statsObserver.observe(statsSection)
 
+    // Detect game and book sections for dynamic meta tags
+    const gameSection = document.getElementById('game')
+    const bookSection = document.getElementById('book-section')
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          if (entry.target.id === 'game') {
+            setCurrentSection('game')
+          } else if (entry.target.id === 'book-section') {
+            setCurrentSection('book')
+          }
+        } else if (entry.boundingClientRect.top > 0) {
+          setCurrentSection('default')
+        }
+      })
+    }, { threshold: 0.3 })
+
+    if (gameSection) sectionObserver.observe(gameSection)
+    if (bookSection) sectionObserver.observe(bookSection)
+
+    // Check URL hash on load
+    const hash = window.location.hash
+    if (hash === '#game') {
+      setCurrentSection('game')
+    } else if (hash === '#book') {
+      setCurrentSection('book')
+    }
+
     return () => {
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('scroll', revealOnScroll)
       window.removeEventListener('mousemove', handleMouseMove)
       if (statsSection) statsObserver.unobserve(statsSection)
+      if (gameSection) sectionObserver.unobserve(gameSection)
+      if (bookSection) sectionObserver.unobserve(bookSection)
     }
   }, [])
 
   return (
     <>
-      {/* SEO Meta Tags */}
-      <title>The Live Stream Show | Purposeful Illusion</title>
-      <meta name="description" content="The Live Stream Show - Purposeful Illusion. Live debates, morning shows, gaming streams, and unfiltered conversations. Season 4 now streaming." />
-      <meta property="og:title" content="The Live Stream Show | Purposeful Illusion" />
-      <meta property="og:description" content="Where entertainment meets innovation. Live debates, morning shows, gaming streams." />
-      <meta property="og:url" content="https://thelivestreamshow.com" />
-      <meta property="og:type" content="website" />
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="The Live Stream Show" />
-      <meta name="twitter:description" content="Purposeful Illusion - Season 4 Now Streaming" />
+      {/* Dynamic SEO Meta Tags */}
+      <MetaTags {...META_CONFIGS[currentSection]} />
 
       <style>{`
         :root {
@@ -885,28 +910,43 @@ export function LandingPage() {
           color: var(--text-secondary);
         }
 
+        .game-cta-group {
+          display: flex;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+
         .game-cta-button {
           display: inline-flex;
           align-items: center;
           gap: 1rem;
           padding: 1.25rem 3rem;
-          background: linear-gradient(135deg, #FFD700, #FF8C00);
           border: none;
           border-radius: 50px;
           font-family: 'Syne', sans-serif;
           font-size: 1.1rem;
           font-weight: 800;
-          color: #0a0e17;
           text-decoration: none;
           text-transform: uppercase;
           letter-spacing: 1px;
           cursor: pointer;
           transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .game-cta-button.primary {
+          background: linear-gradient(135deg, #FFD700, #FF8C00);
+          color: #0a0e17;
           box-shadow:
             0 10px 40px rgba(255, 215, 0, 0.4),
             inset 0 1px 0 rgba(255, 255, 255, 0.3);
-          position: relative;
-          overflow: hidden;
+        }
+
+        .game-cta-button.secondary {
+          background: rgba(255, 255, 255, 0.1);
+          color: #FFD700;
+          border: 2px solid rgba(255, 215, 0, 0.3);
         }
 
         .game-cta-button::before {
@@ -922,11 +962,16 @@ export function LandingPage() {
           transform: translateX(100%);
         }
 
-        .game-cta-button:hover {
+        .game-cta-button.primary:hover {
           transform: translateY(-2px);
           box-shadow:
             0 15px 50px rgba(255, 215, 0, 0.6),
             inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .game-cta-button.secondary:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 215, 0, 0.5);
         }
 
         .game-cta-arrow {
@@ -1116,6 +1161,8 @@ export function LandingPage() {
           text-decoration: none;
           transition: all 0.3s ease;
           font-family: 'Syne', sans-serif;
+          border: none;
+          cursor: pointer;
         }
 
         .book-cta-button.primary {
@@ -2383,12 +2430,37 @@ export function LandingPage() {
                 </div>
               </div>
             </div>
-            <a href="https://lucky-13-game.thelivestreamshow.com" target="_blank" rel="noopener noreferrer" className="game-cta-button">
-              <span className="game-cta-text">Play Big Time Lucky 13</span>
-              <svg className="game-cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
-            </a>
+            <div className="game-cta-group">
+              <a href="https://lucky-13-game.thelivestreamshow.com" target="_blank" rel="noopener noreferrer" className="game-cta-button primary">
+                <span className="game-cta-text">Play Big Time Lucky 13</span>
+                <svg className="game-cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </a>
+              <button
+                onClick={(event) => {
+                  const gameUrl = `${window.location.origin}/#game`
+                  navigator.clipboard.writeText(gameUrl)
+                  // Show feedback
+                  const btn = event?.currentTarget
+                  const originalText = btn?.innerHTML
+                  if (btn) {
+                    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="game-cta-arrow"><polyline points="20 6 9 17 4 12"></polyline></svg> Link Copied!'
+                    setTimeout(() => { if (originalText) btn.innerHTML = originalText }, 2000)
+                  }
+                }}
+                className="game-cta-button secondary"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="game-cta-arrow">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                <span className="game-cta-text">Share Game</span>
+              </button>
+            </div>
             <p className="game-disclaimer">Streaming slots without the gambling • For fun and entertainment</p>
           </div>
           <div className="game-showcase-visual reveal">
@@ -2408,7 +2480,7 @@ export function LandingPage() {
       </section>
 
       {/* Book Section */}
-      <section className="book-showcase" id="book">
+      <section className="book-showcase" id="book-section">
         <div className="book-showcase-container">
           <div className="book-content reveal">
             <div className="book-badge">
@@ -2446,14 +2518,29 @@ export function LandingPage() {
                 </svg>
                 Read Online Free
               </a>
-              <a href="#" className="book-cta-button secondary">
+              <button
+                onClick={() => {
+                  const bookUrl = `${window.location.origin}/#book`
+                  navigator.clipboard.writeText(bookUrl)
+                  // Show feedback
+                  const btn = event?.currentTarget
+                  const originalText = btn?.innerHTML
+                  if (btn) {
+                    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="book-cta-icon"><polyline points="20 6 9 17 4 12"></polyline></svg> Link Copied!'
+                    setTimeout(() => { if (originalText) btn.innerHTML = originalText }, 2000)
+                  }
+                }}
+                className="book-cta-button secondary"
+              >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="book-cta-icon">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                 </svg>
-                Download PDF/EPUB
-              </a>
+                Share Book
+              </button>
             </div>
           </div>
           <div className="book-visual reveal">
