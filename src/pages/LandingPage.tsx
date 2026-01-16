@@ -554,28 +554,61 @@ export function LandingPage() {
             radial-gradient(circle at 70% 70%, rgba(139, 92, 246, 0.2), transparent 50%);
         }
 
-        .about-play-btn {
-          width: 100px;
-          height: 100px;
-          border-radius: 50%;
-          background: var(--gradient-accent);
+        .about-game-link {
+          position: relative;
+          display: block;
+          width: 100%;
+          height: 100%;
+          text-decoration: none;
+          cursor: pointer;
+        }
+
+        .about-game-character {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          transition: transform 0.3s ease;
+          filter: drop-shadow(0 20px 40px rgba(139, 92, 246, 0.5));
+        }
+
+        .about-game-link:hover .about-game-character {
+          transform: scale(1.05);
+        }
+
+        .about-game-overlay {
+          position: absolute;
+          bottom: 2rem;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
           align-items: center;
-          justify-content: center;
-          cursor: pointer;
+          gap: 1rem;
+          background: rgba(0, 0, 0, 0.8);
+          backdrop-filter: blur(10px);
+          padding: 1rem 2rem;
+          border-radius: 50px;
+          border: 2px solid rgba(139, 92, 246, 0.5);
           transition: all 0.3s ease;
-          box-shadow: 0 10px 40px rgba(6, 182, 212, 0.4);
         }
 
-        .about-play-btn:hover {
-          transform: scale(1.1);
+        .about-game-link:hover .about-game-overlay {
+          background: var(--gradient-accent);
+          border-color: transparent;
+          box-shadow: 0 10px 40px rgba(6, 182, 212, 0.6);
         }
 
-        .about-play-btn svg {
-          width: 30px;
-          height: 30px;
-          fill: var(--bg-deep);
-          margin-left: 5px;
+        .about-game-badge {
+          font-family: 'Syne', sans-serif;
+          font-weight: 700;
+          font-size: 1.1rem;
+          color: white;
+          letter-spacing: 0.5px;
+        }
+
+        .about-play-icon {
+          width: 24px;
+          height: 24px;
+          fill: white;
         }
 
         .about-content h3 {
@@ -1732,10 +1765,18 @@ export function LandingPage() {
         <div className="about-grid">
           <div className="about-visual reveal">
             <div className="about-visual-inner">
-              <a href="https://www.youtube.com/@AbeLiveStream" target="_blank" rel="noopener noreferrer" className="about-play-btn">
-                <svg viewBox="0 0 24 24">
-                  <polygon points="5 3 19 12 5 21 5 3" />
-                </svg>
+              <a href="/big-time-lucky-13" className="about-game-link">
+                <img
+                  src="/big-time-lucky-13/images/logo-character.png"
+                  alt="Big Time Lucky 13 Game Character"
+                  className="about-game-character"
+                />
+                <div className="about-game-overlay">
+                  <span className="about-game-badge">Play Now</span>
+                  <svg className="about-play-icon" viewBox="0 0 24 24">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                </div>
               </a>
             </div>
           </div>

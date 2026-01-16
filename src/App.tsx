@@ -5,6 +5,7 @@ import { AdminGate } from './components/AdminGate'
 import { BroadcastOverlayView } from './components/BroadcastOverlayView'
 import { BroadcastVideoPlayer } from './components/BroadcastVideoPlayer'
 import Whiteboard from './pages/dashboard/Whiteboard'
+import BigTimeLucky13 from './pages/BigTimeLucky13'
 import { useEffect, Component, ReactNode } from 'react'
 
 // Global Error Boundary
@@ -54,6 +55,7 @@ function AppContent() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/big-time-lucky-13" element={<BigTimeLucky13 />} />
       <Route path="/admin/*" element={
         <AdminGate>
           <AdminDashboard />

@@ -239,6 +239,7 @@
 !**/public/*.html
 !**/public/graphics/
 !**/public/animations/
+!**/public/big-time-lucky-13/
 
 # Vue.js
 **/dist/
