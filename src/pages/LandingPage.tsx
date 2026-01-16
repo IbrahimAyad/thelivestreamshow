@@ -804,10 +804,78 @@ export function LandingPage() {
           50% { opacity: 1; }
         }
 
-        .morning-card-content {
+        .morning-polaroids {
           position: relative;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 1.5rem;
+          padding: 2rem;
+        }
+
+        .morning-polaroid {
+          position: relative;
+          background: #FFFFFF;
+          padding: 12px 12px 50px 12px;
+          box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+          transition: transform 0.3s ease;
+          z-index: 1;
+        }
+
+        .morning-polaroid img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        .morning-polaroid.polaroid-1 {
+          width: 180px;
+          height: 220px;
+          transform: rotate(-8deg);
+          animation: polaroidFloat1 3s ease-in-out infinite;
+        }
+
+        .morning-polaroid.polaroid-2 {
+          width: 190px;
+          height: 230px;
+          transform: rotate(5deg);
+          animation: polaroidFloat2 3s ease-in-out infinite 1s;
           z-index: 2;
+        }
+
+        .morning-polaroid.polaroid-3 {
+          width: 185px;
+          height: 225px;
+          transform: rotate(-6deg);
+          animation: polaroidFloat3 3s ease-in-out infinite 2s;
+        }
+
+        @keyframes polaroidFloat1 {
+          0%, 100% { transform: rotate(-8deg) translateY(0); }
+          50% { transform: rotate(-8deg) translateY(-10px); }
+        }
+
+        @keyframes polaroidFloat2 {
+          0%, 100% { transform: rotate(5deg) translateY(0); }
+          50% { transform: rotate(5deg) translateY(-15px); }
+        }
+
+        @keyframes polaroidFloat3 {
+          0%, 100% { transform: rotate(-6deg) translateY(0); }
+          50% { transform: rotate(-6deg) translateY(-12px); }
+        }
+
+        .morning-title-overlay {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 10;
           text-align: center;
+          pointer-events: none;
         }
 
         .morning-large-title {
@@ -824,25 +892,33 @@ export function LandingPage() {
 
         .morning-word.morning {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 5rem;
+          font-size: 4rem;
           color: #FF8C42;
           letter-spacing: 0.15em;
-          text-shadow: 4px 4px 0 rgba(255, 107, 53, 0.3), 0 0 40px rgba(255, 140, 66, 0.4);
+          text-shadow:
+            4px 4px 0 rgba(0, 0, 0, 0.5),
+            0 0 40px rgba(255, 140, 66, 0.6),
+            0 0 60px rgba(255, 140, 66, 0.4);
         }
 
         .morning-word.stream {
           font-family: 'Pacifico', cursive;
-          font-size: 3.5rem;
-          color: #B8B8B8;
-          text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3), 0 0 30px rgba(184, 184, 184, 0.3);
+          font-size: 3rem;
+          color: #FFFFFF;
+          text-shadow:
+            3px 3px 0 rgba(0, 0, 0, 0.5),
+            0 0 30px rgba(255, 255, 255, 0.6);
         }
 
         .morning-word.show {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 5rem;
+          font-size: 4rem;
           color: #FFFFFF;
           letter-spacing: 0.15em;
-          text-shadow: 4px 4px 0 rgba(139, 92, 246, 0.3), 0 0 40px rgba(139, 92, 246, 0.4);
+          text-shadow:
+            4px 4px 0 rgba(0, 0, 0, 0.5),
+            0 0 40px rgba(139, 92, 246, 0.6),
+            0 0 60px rgba(139, 92, 246, 0.4);
         }
 
         .morning-live-badge-card {
@@ -850,13 +926,14 @@ export function LandingPage() {
           align-items: center;
           gap: 0.75rem;
           padding: 0.75rem 2rem;
-          background: linear-gradient(135deg, rgba(230, 57, 70, 0.9), rgba(193, 18, 31, 0.9));
+          background: linear-gradient(135deg, rgba(230, 57, 70, 0.95), rgba(193, 18, 31, 0.95));
           border-radius: 50px;
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 1.25rem;
+          font-size: 1.1rem;
           letter-spacing: 0.2em;
           color: #FFFFFF;
-          box-shadow: 0 8px 30px rgba(230, 57, 70, 0.5);
+          box-shadow: 0 8px 30px rgba(230, 57, 70, 0.7);
+          pointer-events: auto;
         }
 
         .live-dot-card {
@@ -865,13 +942,6 @@ export function LandingPage() {
           background: #FFFFFF;
           border-radius: 50%;
           animation: livePulse 1.5s ease-in-out infinite;
-        }
-
-        .morning-card-overlay {
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0, 0, 0, 0.3) 100%);
-          pointer-events: none;
         }
 
         .section-header {
@@ -2751,7 +2821,18 @@ export function LandingPage() {
           <div className="morning-show-visual reveal">
             <div className="morning-visual-card">
               <div className="morning-card-glow"></div>
-              <div className="morning-card-content">
+              <div className="morning-polaroids">
+                <div className="morning-polaroid polaroid-1">
+                  <img src="/morning-show/morning-show-1.webp" alt="Morning Show Host" />
+                </div>
+                <div className="morning-polaroid polaroid-2">
+                  <img src="/morning-show/morning-show-2.webp" alt="Morning Show Co-Host" />
+                </div>
+                <div className="morning-polaroid polaroid-3">
+                  <img src="/morning-show/morning-show-3.webp" alt="Morning Show Guest" />
+                </div>
+              </div>
+              <div className="morning-title-overlay">
                 <div className="morning-large-title">
                   <span className="morning-word morning">MORNING</span>
                   <span className="morning-word stream">Stream</span>
@@ -2762,7 +2843,6 @@ export function LandingPage() {
                   <span>STREAMING DAILY</span>
                 </div>
               </div>
-              <div className="morning-card-overlay"></div>
             </div>
           </div>
         </div>
