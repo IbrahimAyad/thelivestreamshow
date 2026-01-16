@@ -5,6 +5,7 @@ import { LatestEpisodes, LatestShorts } from '../components/LatestEpisodes'
 
 export function LandingPage() {
   const [isUltraChatOpen, setIsUltraChatOpen] = useState(false)
+  const [trailerExpanded, setTrailerExpanded] = useState(false)
   useEffect(() => {
     // Navigation scroll effect
     const nav = document.getElementById('nav')
@@ -343,12 +344,100 @@ export function LandingPage() {
           animation: fadeInUp 0.8s ease-out 0.2s both;
         }
 
+        /* Expandable Trailer */
+        .trailer-container {
+          max-width: 800px;
+          margin: 2rem auto;
+          transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .trailer-container.expanded {
+          max-width: 95vw;
+          margin: 3rem auto;
+        }
+
+        .trailer-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.875rem 2rem;
+          background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+          border: none;
+          border-radius: 50px;
+          color: white;
+          font-weight: 700;
+          font-size: 1rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 10px 30px rgba(6, 182, 212, 0.3);
+          font-family: 'Syne', sans-serif;
+        }
+
+        .trailer-toggle:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 15px 40px rgba(6, 182, 212, 0.4);
+        }
+
+        .trailer-icon {
+          width: 18px;
+          height: 18px;
+          transition: transform 0.3s ease;
+        }
+
+        .trailer-container.expanded .trailer-icon {
+          transform: rotate(90deg);
+        }
+
+        .trailer-video-wrapper {
+          margin-top: 2rem;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+          animation: expandVideo 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+          border: 2px solid rgba(6, 182, 212, 0.3);
+        }
+
+        .trailer-video {
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          border: none;
+          display: block;
+        }
+
+        @keyframes expandVideo {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        .trailer-container.expanded ~ .hero-description {
+          margin-top: 3rem;
+          animation: slideDown 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
         .hero-description {
           font-size: 1.25rem;
           color: var(--text-secondary);
           max-width: 600px;
           margin: 0 auto 3rem;
           animation: fadeInUp 0.8s ease-out 0.3s both;
+          transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .hero-actions {
@@ -2047,6 +2136,9 @@ export function LandingPage() {
           .book-cta-button { width: 100%; justify-content: center; }
           .book-cover { width: 250px; height: 350px; transform: perspective(1000px) rotateY(0deg); }
           .book-cover-title { font-size: 2.5rem; }
+          .trailer-container.expanded { max-width: 98vw; margin: 2rem auto; }
+          .trailer-toggle { padding: 0.75rem 1.5rem; font-size: 0.9rem; }
+          .trailer-video-wrapper { margin-top: 1.5rem; }
           .shows-grid { grid-template-columns: 1fr; }
           .schedule-item { grid-template-columns: 1fr; gap: 0.75rem; }
           .newsletter-form { flex-direction: column; }
@@ -2166,6 +2258,33 @@ export function LandingPage() {
             <span className="hero-title-line hero-title-gradient">STREAM SHOW</span>
           </h1>
           <p className="hero-tagline">Purposeful Illusion</p>
+
+          {/* Expandable Trailer */}
+          <div className={`trailer-container ${trailerExpanded ? 'expanded' : ''}`}>
+            <button
+              className="trailer-toggle"
+              onClick={() => setTrailerExpanded(!trailerExpanded)}
+              aria-label="Watch Trailer"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="trailer-icon">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+              <span>{trailerExpanded ? 'Close Trailer' : 'Watch Trailer'}</span>
+            </button>
+
+            {trailerExpanded && (
+              <div className="trailer-video-wrapper">
+                <iframe
+                  src="https://customer-6njalxhlz5ulnoaq.cloudflarestream.com/56e2518b668d20bcf4b0fae2b12954c0/iframe?autoplay=true&muted=false&loop=false&preload=true"
+                  className="trailer-video"
+                  allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                  allowFullScreen
+                  onEnded={() => setTrailerExpanded(false)}
+                />
+              </div>
+            )}
+          </div>
+
           <p className="hero-description">
             Where entertainment meets innovation. Join our community for live debates,
             morning shows, gaming streams, and unfiltered conversations that challenge the norm.
