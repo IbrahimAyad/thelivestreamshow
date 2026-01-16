@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { UltraChatModal } from '../components/UltraChatModal'
+import { LatestEpisodes, LatestShorts } from '../components/LatestEpisodes'
 
 export function LandingPage() {
   const [isUltraChatOpen, setIsUltraChatOpen] = useState(false)
@@ -844,17 +845,245 @@ export function LandingPage() {
           color: var(--accent-primary);
         }
 
-        /* Updates Section */
-        .updates {
-          padding: 8rem 4rem;
+        /* Latest Episodes Section */
+        .latest-episodes,
+        .latest-shorts {
+          padding: 6rem 2rem;
+          background: var(--bg-deep);
         }
 
-        .updates-grid {
+        .latest-episodes-grid {
           display: grid;
-          grid-template-columns: 2fr 1fr;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
           gap: 2rem;
           max-width: 1200px;
-          margin: 0 auto;
+          margin: 3rem auto 0;
+        }
+
+        .episode-card {
+          background: var(--bg-elevated);
+          border-radius: 16px;
+          overflow: hidden;
+          text-decoration: none;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .episode-card:hover {
+          transform: translateY(-8px);
+          border-color: var(--accent-primary);
+          box-shadow: 0 20px 40px rgba(6, 182, 212, 0.2);
+        }
+
+        .episode-thumbnail {
+          position: relative;
+          width: 100%;
+          padding-top: 56.25%; /* 16:9 */
+          background: var(--bg-surface);
+          overflow: hidden;
+        }
+
+        .episode-thumbnail img {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.3s ease;
+        }
+
+        .episode-card:hover .episode-thumbnail img {
+          transform: scale(1.05);
+        }
+
+        .episode-play-overlay {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.3);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .episode-card:hover .episode-play-overlay {
+          opacity: 1;
+        }
+
+        .episode-play-overlay svg {
+          width: 60px;
+          height: 60px;
+          color: white;
+          filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+        }
+
+        .episode-duration {
+          position: absolute;
+          bottom: 8px;
+          right: 8px;
+          padding: 0.25rem 0.5rem;
+          background: rgba(0, 0, 0, 0.8);
+          color: white;
+          font-size: 0.75rem;
+          font-weight: 600;
+          border-radius: 4px;
+        }
+
+        .episode-content {
+          padding: 1.25rem;
+        }
+
+        .episode-title {
+          font-family: 'Space Grotesk', sans-serif;
+          font-size: 1rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          line-height: 1.4;
+          margin-bottom: 0.75rem;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .episode-meta {
+          display: flex;
+          gap: 1rem;
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+        }
+
+        /* Latest Shorts Section */
+        .latest-shorts-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 1.5rem;
+          max-width: 1200px;
+          margin: 3rem auto 0;
+        }
+
+        .short-card {
+          background: var(--bg-elevated);
+          border-radius: 12px;
+          overflow: hidden;
+          text-decoration: none;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .short-card:hover {
+          transform: translateY(-6px);
+          border-color: var(--accent-secondary);
+          box-shadow: 0 15px 30px rgba(139, 92, 246, 0.2);
+        }
+
+        .short-thumbnail {
+          position: relative;
+          width: 100%;
+          padding-top: 177.77%; /* 9:16 for shorts */
+          background: var(--bg-surface);
+          overflow: hidden;
+        }
+
+        .short-thumbnail img {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.3s ease;
+        }
+
+        .short-card:hover .short-thumbnail img {
+          transform: scale(1.05);
+        }
+
+        .short-play-overlay {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.3);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .short-card:hover .short-play-overlay {
+          opacity: 1;
+        }
+
+        .short-play-overlay svg {
+          width: 40px;
+          height: 40px;
+          color: white;
+          filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+        }
+
+        .short-badge {
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          padding: 0.25rem 0.5rem;
+          background: rgba(139, 92, 246, 0.9);
+          color: white;
+          font-size: 0.65rem;
+          font-weight: 700;
+          border-radius: 4px;
+          letter-spacing: 0.05em;
+        }
+
+        .short-content {
+          padding: 1rem;
+        }
+
+        .short-title {
+          font-family: 'Space Grotesk', sans-serif;
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          line-height: 1.3;
+          margin-bottom: 0.5rem;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .short-views {
+          font-size: 0.75rem;
+          color: var(--text-secondary);
+        }
+
+        .latest-episodes-loading,
+        .latest-episodes-error {
+          max-width: 1200px;
+          margin: 3rem auto;
+          text-align: center;
+          padding: 4rem 2rem;
+        }
+
+        .loading-spinner {
+          width: 48px;
+          height: 48px;
+          border: 4px solid rgba(6, 182, 212, 0.2);
+          border-top-color: var(--accent-primary);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .latest-episodes-loading p,
+        .latest-episodes-error p {
+          color: var(--text-secondary);
+          font-size: 1.1rem;
         }
 
         .update-featured {
@@ -1746,45 +1975,24 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Updates Section */}
-      <section className="updates" id="updates">
+      {/* Latest Episodes Section */}
+      <section className="latest-episodes" id="episodes">
         <div className="section-header reveal">
-          <p className="section-label">Latest News</p>
-          <h2 className="section-title">Updates & Announcements</h2>
+          <p className="section-label">Fresh Content</p>
+          <h2 className="section-title">Latest Episodes</h2>
+          <p className="section-subtitle">Catch up on the newest drops from the show</p>
         </div>
+        <LatestEpisodes />
+      </section>
 
-        <div className="updates-grid">
-          <div className="update-featured reveal">
-            <div className="update-featured-image">
-              <span className="update-featured-badge">New</span>
-            </div>
-            <div className="update-featured-content">
-              <p className="update-featured-date">January 2026</p>
-              <h3 className="update-featured-title">Season 4 Officially Launches</h3>
-              <p className="update-featured-excerpt">
-                The wait is over. Season 4 of The Live Stream Show brings new panelists,
-                upgraded production, and more fire content than ever before. Get ready
-                for our biggest season yet.
-              </p>
-              <a href="#shows" className="btn-secondary">Learn More</a>
-            </div>
-          </div>
-
-          <div className="updates-sidebar">
-            <div className="update-small reveal">
-              <p className="update-small-date">Coming Soon</p>
-              <h4 className="update-small-title">New YouTube Channel Network Expansion</h4>
-            </div>
-            <div className="update-small reveal">
-              <p className="update-small-date">In Development</p>
-              <h4 className="update-small-title">Custom Overlay System for Creators</h4>
-            </div>
-            <div className="update-small reveal">
-              <p className="update-small-date">Community</p>
-              <h4 className="update-small-title">Discord Subscriber Benefits Updated</h4>
-            </div>
-          </div>
+      {/* Latest Shorts Section */}
+      <section className="latest-shorts">
+        <div className="section-header reveal">
+          <p className="section-label">Quick Clips</p>
+          <h2 className="section-title">Latest Shorts</h2>
+          <p className="section-subtitle">Bite-sized moments from the stream</p>
         </div>
+        <LatestShorts />
       </section>
 
       {/* Social Media Section */}
