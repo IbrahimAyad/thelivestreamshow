@@ -57,8 +57,7 @@ export function LatestEpisodes() {
           href={`https://www.youtube.com/watch?v=${video.id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="episode-card reveal"
-          style={{ animationDelay: `${index * 0.1}s` }}
+          className="episode-card"
         >
           <div className="episode-thumbnail">
             <img src={video.thumbnail} alt={video.title} loading="lazy" />
@@ -119,8 +118,7 @@ export function LatestShorts() {
           href={`https://www.youtube.com/shorts/${short.id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="short-card reveal"
-          style={{ animationDelay: `${index * 0.05}s` }}
+          className="short-card"
         >
           <div className="short-thumbnail">
             <img src={short.thumbnail} alt={short.title} loading="lazy" />
