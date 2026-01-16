@@ -106,8 +106,21 @@ export function LatestShorts() {
     fetchShorts()
   }, [getChannelVideos])
 
-  if (isLoading || shorts.length === 0) {
-    return null
+  if (isLoading) {
+    return (
+      <div className="latest-episodes-loading">
+        <div className="loading-spinner" />
+        <p>Loading shorts...</p>
+      </div>
+    )
+  }
+
+  if (shorts.length === 0) {
+    return (
+      <div className="latest-episodes-error">
+        <p>No shorts available yet. Check back soon for bite-sized content!</p>
+      </div>
+    )
   }
 
   return (

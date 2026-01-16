@@ -2469,6 +2469,16 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Latest Shorts Section */}
+      <section className="latest-shorts">
+        <div className="section-header reveal">
+          <p className="section-label">Quick Clips</p>
+          <h2 className="section-title">Latest Shorts</h2>
+          <p className="section-subtitle">Bite-sized moments from the stream</p>
+        </div>
+        <LatestShorts />
+      </section>
+
       {/* About Section */}
       <section className="about" id="about">
         <div className="section-header reveal">
@@ -2746,16 +2756,6 @@ export function LandingPage() {
           <p className="section-subtitle">Catch up on the newest drops from the show</p>
         </div>
         <LatestEpisodes />
-      </section>
-
-      {/* Latest Shorts Section */}
-      <section className="latest-shorts">
-        <div className="section-header reveal">
-          <p className="section-label">Quick Clips</p>
-          <h2 className="section-title">Latest Shorts</h2>
-          <p className="section-subtitle">Bite-sized moments from the stream</p>
-        </div>
-        <LatestShorts />
       </section>
 
       {/* Social Media Section */}
