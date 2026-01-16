@@ -89,14 +89,21 @@ export function LatestShorts() {
     async function fetchShorts() {
       try {
         console.log('🎬 Fetching shorts from channel:', CHANNEL_ID)
-        const results = await getChannelVideos(CHANNEL_ID, 12)
+        const results = await getChannelVideos(CHANNEL_ID, 50)
         console.log('📺 Got results for shorts:', results.length, 'videos')
-        // Filter for shorts (videos under 60 seconds)
+
+        // Filter for shorts (videos under 90 seconds OR title contains #shorts)
         const shortVideos = results.filter(video => {
           const duration = parseDuration(video.duration)
-          return duration < 60
+          const isShortDuration = duration > 0 && duration <= 90
+          const hasShortTag = video.title.toLowerCase().includes('#short') ||
+                              video.title.toLowerCase().includes('short')
+
+          console.log(`Video: "${video.title.substring(0, 40)}..." - Duration: ${duration}s, IsShort: ${isShortDuration || hasShortTag}`)
+          return isShortDuration || hasShortTag
         })
-        console.log('✅ Filtered to', shortVideos.length, 'shorts')
+
+        console.log('✅ Filtered to', shortVideos.length, 'shorts from', results.length, 'videos')
         setShorts(shortVideos.slice(0, 6))
       } catch (err) {
         console.error('❌ Failed to fetch shorts:', err)
