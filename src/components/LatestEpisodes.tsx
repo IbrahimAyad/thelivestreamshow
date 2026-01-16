@@ -10,15 +10,18 @@ export function LatestEpisodes() {
   useEffect(() => {
     async function fetchVideos() {
       try {
+        console.log('🎬 Fetching videos from channel:', CHANNEL_ID)
         const results = await getChannelVideos(CHANNEL_ID, 6)
+        console.log('📺 Got results:', results.length, 'videos')
         // Filter out shorts (videos under 60 seconds)
         const fullVideos = results.filter(video => {
           const duration = parseDuration(video.duration)
           return duration >= 60
         })
+        console.log('✅ Filtered to', fullVideos.length, 'full videos')
         setVideos(fullVideos.slice(0, 4))
       } catch (err) {
-        console.error('Failed to fetch channel videos:', err)
+        console.error('❌ Failed to fetch channel videos:', err)
       }
     }
 
@@ -86,15 +89,18 @@ export function LatestShorts() {
   useEffect(() => {
     async function fetchShorts() {
       try {
+        console.log('🎬 Fetching shorts from channel:', CHANNEL_ID)
         const results = await getChannelVideos(CHANNEL_ID, 12)
+        console.log('📺 Got results for shorts:', results.length, 'videos')
         // Filter for shorts (videos under 60 seconds)
         const shortVideos = results.filter(video => {
           const duration = parseDuration(video.duration)
           return duration < 60
         })
+        console.log('✅ Filtered to', shortVideos.length, 'shorts')
         setShorts(shortVideos.slice(0, 6))
       } catch (err) {
-        console.error('Failed to fetch shorts:', err)
+        console.error('❌ Failed to fetch shorts:', err)
       }
     }
 

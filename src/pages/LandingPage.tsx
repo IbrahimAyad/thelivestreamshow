@@ -850,6 +850,7 @@ export function LandingPage() {
         .latest-shorts {
           padding: 6rem 2rem;
           background: var(--bg-deep);
+          min-height: 400px;
         }
 
         .latest-episodes-grid {
