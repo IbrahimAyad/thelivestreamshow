@@ -605,6 +605,203 @@ export function LandingPage() {
           margin-top: 0.5rem;
         }
 
+        /* Morning Show Section */
+        .morning-show-promo {
+          padding: 8rem 4rem;
+          background: linear-gradient(145deg, #2d1f3d 0%, #1e1a2e 25%, #252040 75%, #1a1528 100%);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .morning-show-container {
+          max-width: 1400px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 4rem;
+          align-items: center;
+        }
+
+        .morning-show-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: rgba(255, 140, 66, 0.2);
+          border: 1px solid #FF8C42;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          color: #FF8C42;
+          margin-bottom: 2rem;
+        }
+
+        .live-indicator {
+          width: 8px;
+          height: 8px;
+          background: #FF8C42;
+          border-radius: 50%;
+          animation: livePulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes livePulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.3); }
+        }
+
+        .morning-show-title {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          margin-bottom: 1rem;
+        }
+
+        .morning-title-top {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 4rem;
+          font-weight: 400;
+          color: #FF8C42;
+          letter-spacing: 0.1em;
+          line-height: 0.85;
+          text-shadow: 4px 4px 0 rgba(255, 107, 53, 0.3);
+        }
+
+        .morning-title-stream {
+          font-family: 'Pacifico', cursive;
+          font-size: 2.5rem;
+          color: #B8B8B8;
+          margin-left: 1rem;
+          text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .morning-title-show {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 4rem;
+          font-weight: 400;
+          color: #FFFFFF;
+          letter-spacing: 0.1em;
+          line-height: 0.85;
+          text-shadow: 4px 4px 0 rgba(139, 92, 246, 0.3);
+        }
+
+        .morning-show-tagline {
+          font-size: 1.5rem;
+          color: #FFD700;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          margin-bottom: 1.5rem;
+          font-weight: 400;
+        }
+
+        .morning-show-description {
+          color: var(--text-secondary);
+          font-size: 1.1rem;
+          line-height: 1.8;
+          margin-bottom: 2rem;
+        }
+
+        .morning-show-features {
+          display: flex;
+          gap: 2rem;
+          margin-bottom: 2rem;
+        }
+
+        .morning-feature {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+        }
+
+        .morning-feature-icon {
+          font-size: 2rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .morning-feature-text {
+          font-size: 0.9rem;
+          color: var(--text-muted);
+        }
+
+        .morning-show-cta {
+          display: inline-flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1.25rem 3rem;
+          background: linear-gradient(135deg, #FF8C42, #FFD700);
+          border: none;
+          border-radius: 50px;
+          font-family: 'Syne', sans-serif;
+          font-size: 1.1rem;
+          font-weight: 800;
+          color: #0a0e17;
+          text-decoration: none;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 10px 40px rgba(255, 140, 66, 0.4);
+        }
+
+        .morning-show-cta:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 15px 50px rgba(255, 140, 66, 0.6);
+        }
+
+        .morning-cta-arrow {
+          width: 20px;
+          height: 20px;
+          transition: transform 0.3s ease;
+        }
+
+        .morning-show-cta:hover .morning-cta-arrow {
+          transform: translateX(5px);
+        }
+
+        .morning-show-visual {
+          position: relative;
+          height: 600px;
+        }
+
+        .morning-show-preview {
+          width: 100%;
+          height: 100%;
+          border: none;
+          border-radius: 20px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+          pointer-events: none;
+        }
+
+        .morning-glow-1 {
+          position: absolute;
+          width: 400px;
+          height: 400px;
+          background: radial-gradient(circle, rgba(255, 140, 66, 0.3), transparent);
+          top: -100px;
+          right: -100px;
+          border-radius: 50%;
+          filter: blur(80px);
+          animation: glowFloat 8s ease-in-out infinite;
+        }
+
+        .morning-glow-2 {
+          position: absolute;
+          width: 300px;
+          height: 300px;
+          background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent);
+          bottom: -50px;
+          left: -50px;
+          border-radius: 50%;
+          filter: blur(80px);
+          animation: glowFloat 8s ease-in-out infinite 2s;
+        }
+
+        @keyframes glowFloat {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(20px, -20px); }
+        }
+
         .section-header {
           text-align: center;
           margin-bottom: 5rem;
@@ -2436,6 +2633,58 @@ export function LandingPage() {
           <div className="stat-item">
             <div className="stat-number">∞</div>
             <div className="stat-label">Hot Takes</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Morning Show Section */}
+      <section className="morning-show-promo" id="morning-show">
+        <div className="morning-show-container">
+          <div className="morning-show-content reveal">
+            <div className="morning-show-badge">
+              <div className="live-indicator"></div>
+              NEW SHOW
+            </div>
+            <h2 className="morning-show-title">
+              <span className="morning-title-top">MORNING</span>
+              <span className="morning-title-stream">Stream</span>
+              <span className="morning-title-show">SHOW</span>
+            </h2>
+            <p className="morning-show-tagline">Start Your Day Right</p>
+            <p className="morning-show-description">
+              Wake up with energy, insight, and conversation. Join us every morning for fresh takes,
+              hot topics, and the community vibe you need to kickstart your day.
+            </p>
+            <div className="morning-show-features">
+              <div className="morning-feature">
+                <div className="morning-feature-icon">☀️</div>
+                <div className="morning-feature-text">Daily at 8 AM EST</div>
+              </div>
+              <div className="morning-feature">
+                <div className="morning-feature-icon">☕</div>
+                <div className="morning-feature-text">Coffee & Conversation</div>
+              </div>
+              <div className="morning-feature">
+                <div className="morning-feature-icon">📰</div>
+                <div className="morning-feature-text">News & Hot Takes</div>
+              </div>
+            </div>
+            <a href="/morning-show-intro.html" target="_blank" className="morning-show-cta">
+              <span>Watch Full Intro</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="morning-cta-arrow">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+          <div className="morning-show-visual reveal">
+            <div className="morning-glow-1"></div>
+            <div className="morning-glow-2"></div>
+            <iframe
+              src="/morning-show-intro.html"
+              className="morning-show-preview"
+              title="Morning Show Intro"
+              loading="lazy"
+            ></iframe>
           </div>
         </div>
       </section>
