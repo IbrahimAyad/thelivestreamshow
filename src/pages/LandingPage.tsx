@@ -2090,7 +2090,7 @@ export function LandingPage() {
               <div className="game-visual-glow"></div>
               <a href="https://lucky-13-game.thelivestreamshow.com" target="_blank" rel="noopener noreferrer" className="game-visual-link">
                 <img
-                  src="/game-character.png"
+                  src="https://imagedelivery.net/QI-O2U_ayTU_H_Ilcb4c6Q/12ae2f85-70ac-4009-8400-6c680a6c1300/public"
                   alt="Big Time Lucky 13 Lunar Goddess"
                   className="game-character-img"
                 />
