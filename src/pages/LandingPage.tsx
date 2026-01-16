@@ -761,45 +761,117 @@ export function LandingPage() {
 
         .morning-show-visual {
           position: relative;
-          height: 600px;
+          height: 500px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
-        .morning-show-preview {
+        .morning-visual-card {
+          position: relative;
+          width: 100%;
+          height: 450px;
+          background: linear-gradient(145deg, #2d1f3d, #1e1a2e);
+          border-radius: 20px;
+          overflow: hidden;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 3rem;
+        }
+
+        .morning-card-glow {
+          position: absolute;
           width: 100%;
           height: 100%;
-          border: none;
-          border-radius: 20px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+          background: radial-gradient(
+            ellipse at top right,
+            rgba(255, 140, 66, 0.15) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            ellipse at bottom left,
+            rgba(139, 92, 246, 0.15) 0%,
+            transparent 50%
+          );
+          animation: glowPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
+        }
+
+        .morning-card-content {
+          position: relative;
+          z-index: 2;
+          text-align: center;
+        }
+
+        .morning-large-title {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          margin-bottom: 2rem;
+        }
+
+        .morning-word {
+          display: block;
+          line-height: 0.9;
+        }
+
+        .morning-word.morning {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 5rem;
+          color: #FF8C42;
+          letter-spacing: 0.15em;
+          text-shadow: 4px 4px 0 rgba(255, 107, 53, 0.3), 0 0 40px rgba(255, 140, 66, 0.4);
+        }
+
+        .morning-word.stream {
+          font-family: 'Pacifico', cursive;
+          font-size: 3.5rem;
+          color: #B8B8B8;
+          text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3), 0 0 30px rgba(184, 184, 184, 0.3);
+        }
+
+        .morning-word.show {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 5rem;
+          color: #FFFFFF;
+          letter-spacing: 0.15em;
+          text-shadow: 4px 4px 0 rgba(139, 92, 246, 0.3), 0 0 40px rgba(139, 92, 246, 0.4);
+        }
+
+        .morning-live-badge-card {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem 2rem;
+          background: linear-gradient(135deg, rgba(230, 57, 70, 0.9), rgba(193, 18, 31, 0.9));
+          border-radius: 50px;
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 1.25rem;
+          letter-spacing: 0.2em;
+          color: #FFFFFF;
+          box-shadow: 0 8px 30px rgba(230, 57, 70, 0.5);
+        }
+
+        .live-dot-card {
+          width: 12px;
+          height: 12px;
+          background: #FFFFFF;
+          border-radius: 50%;
+          animation: livePulse 1.5s ease-in-out infinite;
+        }
+
+        .morning-card-overlay {
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0, 0, 0, 0.3) 100%);
           pointer-events: none;
-        }
-
-        .morning-glow-1 {
-          position: absolute;
-          width: 400px;
-          height: 400px;
-          background: radial-gradient(circle, rgba(255, 140, 66, 0.3), transparent);
-          top: -100px;
-          right: -100px;
-          border-radius: 50%;
-          filter: blur(80px);
-          animation: glowFloat 8s ease-in-out infinite;
-        }
-
-        .morning-glow-2 {
-          position: absolute;
-          width: 300px;
-          height: 300px;
-          background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent);
-          bottom: -50px;
-          left: -50px;
-          border-radius: 50%;
-          filter: blur(80px);
-          animation: glowFloat 8s ease-in-out infinite 2s;
-        }
-
-        @keyframes glowFloat {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(20px, -20px); }
         }
 
         .section-header {
@@ -2677,14 +2749,21 @@ export function LandingPage() {
             </a>
           </div>
           <div className="morning-show-visual reveal">
-            <div className="morning-glow-1"></div>
-            <div className="morning-glow-2"></div>
-            <iframe
-              src="/morning-show-intro.html"
-              className="morning-show-preview"
-              title="Morning Show Intro"
-              loading="lazy"
-            ></iframe>
+            <div className="morning-visual-card">
+              <div className="morning-card-glow"></div>
+              <div className="morning-card-content">
+                <div className="morning-large-title">
+                  <span className="morning-word morning">MORNING</span>
+                  <span className="morning-word stream">Stream</span>
+                  <span className="morning-word show">SHOW</span>
+                </div>
+                <div className="morning-live-badge-card">
+                  <div className="live-dot-card"></div>
+                  <span>STREAMING DAILY</span>
+                </div>
+              </div>
+              <div className="morning-card-overlay"></div>
+            </div>
           </div>
         </div>
       </section>
