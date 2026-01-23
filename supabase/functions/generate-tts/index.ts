@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     }
 
     // IMPORTANT: Only accept ElevenLabs voice IDs
-    const ELEVENLABS_API_KEY = 'sk_9446a36f0833f85e429ae212ff70f3af4095ce86f113a267';
+    const ELEVENLABS_API_KEY = 'sk_97a034f5f818f41867c429f5492f0eb97466afafa5eb3dde';
     const ELEVENLABS_VOICE_ID = voiceId;
 
     // Reject Microsoft Azure voice IDs

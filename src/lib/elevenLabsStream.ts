@@ -3,7 +3,7 @@
  * Low-latency audio streaming for live voice responses
  */
 
-const ELEVENLABS_API_KEY = 'sk_9446a36f0833f85e429ae212ff70f3af4095ce86f113a267'
+const ELEVENLABS_API_KEY = 'sk_97a034f5f818f41867c429f5492f0eb97466afafa5eb3dde'
 const VOICE_ID = 'DTKMou8ccj1ZaWGBiotd' // Jamahal - Professional male voice
 
 export interface StreamTTSOptions {

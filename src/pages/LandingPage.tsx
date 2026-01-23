@@ -817,14 +817,31 @@ export function LandingPage() {
 
         .morning-polaroid {
           position: relative;
-          background: #FFFFFF;
+          background: linear-gradient(135deg, #FAFAFA 0%, #FFFFFF 50%, #F8F8F8 100%);
           padding: 14px 14px 60px 14px;
+          border: 1px solid #E8E8E8;
           box-shadow:
             0 20px 50px rgba(0, 0, 0, 0.6),
             0 5px 15px rgba(0, 0, 0, 0.3),
-            inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+            inset 0 1px 0 rgba(255, 255, 255, 0.9),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.03),
+            inset 1px 0 0 rgba(255, 255, 255, 0.5),
+            inset -1px 0 0 rgba(0, 0, 0, 0.03),
+            inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+            inset 0 0 30px rgba(0, 0, 0, 0.02);
           transition: all 0.3s ease;
           z-index: 1;
+        }
+
+        .morning-polaroid::before {
+          content: '';
+          position: absolute;
+          top: 6px;
+          left: 6px;
+          right: 6px;
+          bottom: 52px;
+          border: 2px solid rgba(0, 0, 0, 0.05);
+          pointer-events: none;
         }
 
         .morning-polaroid:hover {
@@ -841,6 +858,30 @@ export function LandingPage() {
           object-fit: cover;
           object-position: top center;
           display: block;
+          position: relative;
+          z-index: 1;
+        }
+
+        .morning-polaroid::after {
+          content: '';
+          position: absolute;
+          top: 14px;
+          left: 14px;
+          right: 14px;
+          bottom: 60px;
+          z-index: 0;
+        }
+
+        .morning-polaroid.polaroid-1::after {
+          background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+        }
+
+        .morning-polaroid.polaroid-2::after {
+          background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+        }
+
+        .morning-polaroid.polaroid-3::after {
+          background: linear-gradient(135deg, #FFA07A 0%, #FF7F50 100%);
         }
 
         .morning-polaroid.polaroid-1 {

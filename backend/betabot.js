@@ -10,8 +10,12 @@ class BetaBot extends EventEmitter {
             apiKey: process.env.OPENAI_API_KEY
         });
 
+        // ElevenLabs configuration
+        this.elevenLabsApiKey = process.env.ELEVENLABS_API_KEY || 'sk_97a034f5f818f41867c429f5492f0eb97466afafa5eb3dde';
+        this.elevenLabsVoiceId = process.env.ELEVENLABS_VOICE_ID || 'DTKMou8ccj1ZaWGBiotd'; // Jamahal - Professional male voice
+
         this.active = false;
-        this.voice = process.env.BETABOT_VOICE || 'onyx';
+        this.voice = this.elevenLabsVoiceId; // Use ElevenLabs voice ID
         this.model = process.env.BETABOT_MODEL || 'gpt-4';
         this.wakeWord = process.env.BETABOT_WAKE_WORD || 'Hey BetaBot';
 
@@ -124,32 +128,59 @@ class BetaBot extends EventEmitter {
         this.emit('conversation', { sender: 'BetaBot', message: text });
 
         try {
-            // Generate speech using OpenAI TTS
-            const mp3Response = await this.openai.audio.speech.create({
-                model: 'tts-1',
-                voice: this.voice,
-                input: text,
-                speed: 1.0
-            });
+            // Generate speech using ElevenLabs TTS (professional broadcast quality)
+            console.log('🎤 [BetaBot] Generating TTS with ElevenLabs...');
+            console.log(`📝 Text length: ${text.length} chars`);
+            console.log(`🎙️ Voice ID: ${this.elevenLabsVoiceId}`);
+
+            const response = await fetch(
+                `https://api.elevenlabs.io/v1/text-to-speech/${this.elevenLabsVoiceId}`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'xi-api-key': this.elevenLabsApiKey,
+                        'Content-Type': 'application/json',
+                        'Accept': 'audio/mpeg'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        model_id: 'eleven_turbo_v2_5', // Fastest model for live streaming
+                        voice_settings: {
+                            stability: 0.5,
+                            similarity_boost: 0.75,
+                            style: 0.0,
+                            use_speaker_boost: true
+                        }
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
+            }
+
+            console.log('✅ [BetaBot] TTS response received');
 
             // Get audio buffer
-            const buffer = Buffer.from(await mp3Response.arrayBuffer());
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
 
             // Save to temp file
             const tempFile = path.join(__dirname, 'temp_audio.mp3');
             await fs.promises.writeFile(tempFile, buffer);
 
-            // In a real implementation, this would play through BlackHole
-            // For now, we'll use the system's audio output
+            // Play audio through BlackHole or system output
             await this.playAudio(tempFile);
 
             // Clean up
             await fs.promises.unlink(tempFile);
 
+            console.log('✅ [BetaBot] Playback finished');
             this.state = 'listening';
             this.emit('listening');
         } catch (error) {
-            console.error('Error in text-to-speech:', error);
+            console.error('❌ [BetaBot] Error in text-to-speech:', error);
             this.emit('error', error);
             this.state = 'idle';
         }
